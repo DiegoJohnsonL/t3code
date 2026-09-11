@@ -47,6 +47,7 @@ import {
   FileSearchIcon,
   FolderIcon,
   FolderPlusIcon,
+  ImageIcon,
   LinkIcon,
   MessageSquareIcon,
   MonitorIcon,
@@ -168,6 +169,7 @@ import { ProjectFavicon } from "./ProjectFavicon";
 import { ProjectFilePicker } from "./files/ProjectFilePicker";
 import { openLinkPullRequestDialog } from "./pullRequest/LinkPullRequestDialog";
 import { ProjectContentSearchDialog } from "./search/ProjectContentSearchDialog";
+import { toggleBackgroundStudio } from "~/customBackground/backgroundStudioStore";
 import { toggleThemeEditorForTheme } from "./settings/themeEditorStore";
 import { searchSettings, SETTINGS_SECTION_LABELS } from "./settings/settingsSearch";
 import {
@@ -559,6 +561,12 @@ export function CommandPalette({ children }: { children: ReactNode }) {
           themeHalves,
           initialAppearance: resolvedTheme,
         });
+        return;
+      }
+      if (command === "backgroundEditor.toggle") {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleBackgroundStudio();
         return;
       }
       const mode = overlayModeForCommand(command);
@@ -2026,6 +2034,28 @@ function OpenCommandPaletteDialog(props: {
     icon: <ChartNoAxesColumnIcon className={ITEM_ICON_CLASS} />,
     run: async () => {
       await navigate({ to: "/usage" });
+    },
+  });
+
+  actionItems.push({
+    kind: "action",
+    value: "action:background-studio",
+    searchTerms: [
+      "background",
+      "custom",
+      "customize",
+      "wallpaper",
+      "image",
+      "shader",
+      "filter",
+      "gradient",
+      "studio",
+    ],
+    title: "Toggle background editor",
+    icon: <ImageIcon className={ITEM_ICON_CLASS} />,
+    shortcutCommand: "backgroundEditor.toggle",
+    run: async () => {
+      toggleBackgroundStudio();
     },
   });
 

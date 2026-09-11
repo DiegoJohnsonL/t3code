@@ -184,10 +184,10 @@ function ChatRouteLayout() {
     select: (params) => resolveThreadRouteTarget(params),
   });
   return (
-    <>
+    <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
       <ChatRouteGlobalShortcuts />
       {threadTarget ? <ThreadRouteView target={threadTarget} /> : <Outlet />}
-    </>
+    </div>
   );
 }
 
