@@ -1238,7 +1238,10 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   // from TimelineRowCtx, which propagates through LegendList's memo.
   const renderItem = useCallback(
     ({ item }: { item: MessagesTimelineRow }) => (
-      <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-clip" data-timeline-root="true">
+      <div
+        className="mx-auto w-full min-w-0 max-w-3xl [contain:inline-size]"
+        data-timeline-root="true"
+      >
         <TimelineRowContent row={item} />
       </div>
     ),
@@ -2084,7 +2087,7 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
 
   return (
     <div className="group flex flex-col items-end gap-1">
-      <div className="relative max-w-[80%] rounded-2xl bg-message p-3 text-message-foreground">
+      <div className="relative max-w-[80%] rounded-2xl surface-glass p-3 text-message-foreground [--glass-fill:var(--message-surface)]">
         <MessageAuthorHeading>You</MessageAuthorHeading>
         {(regularImages.length > 0 || userVideos.length > 0) && (
           <div className="mb-2 grid max-w-[210px] grid-cols-2 gap-2">
@@ -2092,7 +2095,7 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
               <div
                 key={image.id}
                 className={cn(
-                  "bg-background/70",
+                  "surface-glass",
                   image.source?.kind === "snap-shot" && image.previewUrl
                     ? cn(SNAP_SHOT_ATTACHMENT_FRAME_CLASS, "col-span-2")
                     : "aspect-[4/3] overflow-hidden rounded-lg border border-border/80",
@@ -3498,7 +3501,7 @@ function UserMessagePreviewAnnotationDetails(props: {
   const ctx = use(TimelineRowCtx);
   const visibleElements = props.record.elements ?? [];
   return (
-    <div className="max-w-full overflow-hidden rounded-lg border border-border/70 bg-background/70">
+    <div className="max-w-full overflow-hidden rounded-lg border border-border/70 surface-glass">
       {props.image?.previewUrl ? (
         <button
           type="button"
@@ -4066,7 +4069,7 @@ function UserMessageReviewCommentCard({ comment }: { comment: ReviewCommentConte
   );
 
   return (
-    <div className="space-y-2 rounded-lg border border-border/70 bg-background/70 p-3">
+    <div className="space-y-2 rounded-lg border border-border/70 surface-glass p-3">
       <div className="space-y-1">
         <div className="text-message-foreground text-xs font-medium">
           {formatWorkspaceRelativePath(comment.filePath, ctx.workspaceRoot)}
@@ -4106,7 +4109,7 @@ function UserMessageReviewCommentCard({ comment }: { comment: ReviewCommentConte
         </DiffWorkerPoolProvider>
       )}
       {renderablePatch?.kind === "raw" && (
-        <pre className="overflow-x-auto rounded-md bg-muted/40 p-2 text-xs">
+        <pre className="overflow-x-auto rounded-md surface-glass p-2 text-xs">
           {renderablePatch.text}
         </pre>
       )}
@@ -4981,7 +4984,7 @@ const PlainWorkEntryRow = memo(function PlainWorkEntryRow(props: {
       ) : null}
       {expanded && canExpand && expandedBody && !workEntry.questionAnswer ? (
         <div
-          className="mt-1 ms-7 cursor-default rounded-md bg-muted/40 px-3 py-2"
+          className="mt-1 ms-7 cursor-default rounded-md surface-glass px-3 py-2"
           onClick={stopRowToggle}
           onPointerDown={stopRowToggle}
         >
