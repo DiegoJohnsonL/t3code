@@ -9748,7 +9748,6 @@ export default function ChatView(props: ChatViewProps) {
       className="relative isolate flex min-h-0 min-w-0 flex-1 overflow-hidden"
     >
       <CustomBackground routeKind={isDraftHeroState ? "draft" : "conversation"} />
-      <ChatTopbarBlur />
       <Dialog
         open={
           deviceSetupThread !== null &&
@@ -9780,6 +9779,7 @@ export default function ChatView(props: ChatViewProps) {
         )}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
       >
+        <ChatTopbarBlur />
         {/* Top bar */}
         <WorkspacePageHeader
           data-chat-header
