@@ -39,4 +39,4 @@ Remove the hourly job without deleting the application, data, or signing identit
 
 The `Custom nightly` GitHub Actions workflow runs hourly. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a zip, and the zip's SHA-256 checksum.
 
-The official `Release` workflow must remain disabled in the fork. It expects the maintainers' production signing and deployment credentials.
+All inherited upstream workflows remain disabled in the fork. Some expect the maintainers' production credentials, and others would duplicate work after every automated merge. Only `Custom nightly` runs here.
