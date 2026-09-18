@@ -239,8 +239,7 @@ update_app() (
     "$gh_bin" release view "$release_tag" \
       --repo "$repository" \
       --json assets \
-      --jq '.assets[].name | select(endswith("-arm64.zip"))' \
-      | head -n 1
+      --jq '[.assets[].name | select(endswith("-arm64.zip"))][0] // ""'
   )"
   if [[ -z "$asset_name" ]]; then
     echo "Release $release_tag has no macOS arm64 zip." >&2

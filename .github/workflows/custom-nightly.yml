@@ -51,8 +51,7 @@ jobs:
 
           upstream_tag="$(
             gh api 'repos/pingdotgg/t3code/releases?per_page=30' \
-              --jq '.[] | select(.draft == false and .prerelease == true and (.tag_name | contains("-nightly."))) | .tag_name' \
-              | head -n 1
+              --jq '[.[] | select(.draft == false and .prerelease == true and (.tag_name | contains("-nightly.")))][0].tag_name // ""'
           )"
           if [[ -z "$upstream_tag" ]]; then
             echo "No upstream nightly release was found." >&2
