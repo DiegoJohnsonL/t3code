@@ -66,14 +66,20 @@ jobs:
             exit 1
           fi
 
-          published_upstream_tag="$(
+          published_release_body="$(
             gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=30" \
               --jq '[.[] | select(.draft == false and .prerelease == true and ((.body // "") | contains("<!-- upstream-nightly:")))][0].body // ""' \
-              | sed -n 's/.*<!-- upstream-nightly: \([^ ]*\) -->.*/\1/p'
           )"
+          published_upstream_tag="$(sed -n 's/.*<!-- upstream-nightly: \([^ ]*\) -->.*/\1/p' <<< "$published_release_body")"
+          published_custom_commit="$(sed -n 's/.*<!-- custom-commit: \([^ ]*\) -->.*/\1/p' <<< "$published_release_body")"
+          current_commit="$(git rev-parse HEAD)"
 
-          if [[ "$FORCE_BUILD" != "true" && "$published_upstream_tag" == "$upstream_tag" ]]; then
-            echo "Latest upstream nightly is already published: $upstream_tag"
+          if [[ \
+            "$FORCE_BUILD" != "true" \
+            && "$published_upstream_tag" == "$upstream_tag" \
+            && "$published_custom_commit" == "$current_commit" \
+          ]]; then
+            echo "Latest upstream nightly and customization commit are already published."
             echo "should_build=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -179,6 +185,7 @@ jobs:
           Upstream release: `${{ needs.prepare.outputs.upstream_tag }}`
 
           <!-- upstream-nightly: ${{ needs.prepare.outputs.upstream_tag }} -->
+          <!-- custom-commit: ${{ needs.prepare.outputs.commit }} -->
           EOF
 
           gh release create "${{ needs.prepare.outputs.release_tag }}" \
