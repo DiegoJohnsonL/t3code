@@ -183,10 +183,14 @@ sign_app() {
 install_app() {
   local staged_app="$1"
   local temporary_directory="$2"
+  local allow_restart="$3"
   local previous_app="$temporary_directory/previous.app"
   local was_running=false
 
   if app_is_running; then
+    if [[ "$allow_restart" != "true" ]]; then
+      return 3
+    fi
     was_running=true
   fi
   quit_app
@@ -210,6 +214,7 @@ install_app() {
 }
 
 update_app() (
+  local allow_restart="${1:-false}"
   local gh_bin
   local release_tag
   local release_version
@@ -232,6 +237,10 @@ update_app() (
   current_version="$(installed_version)"
   if [[ "$current_version" == "$release_version" ]]; then
     log "Already running $release_version."
+    return
+  fi
+  if [[ "$allow_restart" != "true" ]] && app_is_running; then
+    log "T3 Code is running; the update will retry after it closes."
     return
   fi
 
@@ -274,7 +283,15 @@ update_app() (
 
   write_entitlements "$temporary_directory/entitlements.plist"
   sign_app "$staged_app" "$temporary_directory/entitlements.plist"
-  install_app "$staged_app" "$temporary_directory"
+  local install_status=0
+  install_app "$staged_app" "$temporary_directory" "$allow_restart" || install_status=$?
+  if [[ "$install_status" -ne 0 ]]; then
+    if [[ "$install_status" -eq 3 ]]; then
+      log "T3 Code started during the update; the update will retry after it closes."
+      return
+    fi
+    return "$install_status"
+  fi
   log "Installed $release_version at $app_path"
 )
 
@@ -353,6 +370,9 @@ main() {
     update)
       update_app
       ;;
+    update-now)
+      update_app true
+      ;;
     status)
       show_status
       ;;
@@ -360,7 +380,7 @@ main() {
       uninstall_updater
       ;;
     *)
-      echo "Usage: $0 {install|update|status|uninstall}" >&2
+      echo "Usage: $0 {install|update|update-now|status|uninstall}" >&2
       exit 2
       ;;
   esac

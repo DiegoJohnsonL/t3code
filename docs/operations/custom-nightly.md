@@ -29,6 +29,12 @@ Inspect or run the updater manually:
 ./scripts/custom-nightly-macos.sh update
 ```
 
+Background checks defer while T3 Code is running. To install immediately, quit and reopen the app as part of the update:
+
+```bash
+./scripts/custom-nightly-macos.sh update-now
+```
+
 Remove the hourly job without deleting the application, data, or signing identity:
 
 ```bash
