@@ -1,0 +1,178 @@
+name: Custom nightly
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Build even when the latest upstream nightly is already published
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: custom-nightly
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Merge upstream nightly
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.prepare.outputs.should_build }}
+      commit: ${{ steps.prepare.outputs.commit }}
+      upstream_tag: ${{ steps.prepare.outputs.upstream_tag }}
+      version: ${{ steps.prepare.outputs.version }}
+      release_tag: ${{ steps.prepare.outputs.release_tag }}
+      release_name: ${{ steps.prepare.outputs.release_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: prepare
+        name: Merge the latest released nightly
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_BUILD: ${{ inputs.force || false }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "t3code-custom-nightly[bot]"
+          git config user.email "t3code-custom-nightly[bot]@users.noreply.github.com"
+          git checkout -B "$GITHUB_REF_NAME" "$GITHUB_SHA"
+          git remote add upstream https://github.com/pingdotgg/t3code.git
+          git fetch upstream --tags --force
+
+          upstream_tag="$(
+            gh api 'repos/pingdotgg/t3code/releases?per_page=30' \
+              --jq '.[] | select(.draft == false and .prerelease == true and (.tag_name | contains("-nightly."))) | .tag_name' \
+              | head -n 1
+          )"
+          if [[ -z "$upstream_tag" ]]; then
+            echo "No upstream nightly release was found." >&2
+            exit 1
+          fi
+
+          published_upstream_tag="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=30" \
+              --jq '[.[] | select(.draft == false and .prerelease == true and ((.body // "") | contains("<!-- upstream-nightly:")))][0].body // ""' \
+              | sed -n 's/.*<!-- upstream-nightly: \([^ ]*\) -->.*/\1/p'
+          )"
+
+          if [[ "$FORCE_BUILD" != "true" && "$published_upstream_tag" == "$upstream_tag" ]]; then
+            echo "Latest upstream nightly is already published: $upstream_tag"
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git merge-base --is-ancestor "$upstream_tag" HEAD; then
+            git merge --no-edit "$upstream_tag"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+          package_version="$(node -p "require('./apps/desktop/package.json').version")"
+          stable_version="${package_version%%-*}"
+          IFS=. read -r major minor patch <<< "$stable_version"
+          target_patch="$((patch + 1))"
+          release_date="$(date -u +%Y%m%d)"
+          release_run="$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))"
+          version="${major}.${minor}.${target_patch}-nightly.${release_date}.${release_run}"
+          commit="$(git rev-parse HEAD)"
+
+          echo "should_build=true" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "upstream_tag=$upstream_tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "release_name=T3 Code Custom Nightly $version" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build macOS arm64
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          fetch-depth: 1
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          cache: true
+          run-install: false
+
+      - name: Install dependencies
+        run: |
+          rustup target add aarch64-apple-darwin
+          vp install \
+            --filter=t3... \
+            --filter=@t3tools/web... \
+            --filter=@t3tools/desktop... \
+            --filter=@t3tools/scripts...
+
+      - name: Load public T3 Connect configuration
+        shell: bash
+        run: |
+          sed -n '/^T3CODE_CLERK_PUBLISHABLE_KEY=/p; /^T3CODE_CLERK_JWT_TEMPLATE=/p; /^T3CODE_CLERK_CLI_OAUTH_CLIENT_ID=/p; /^T3CODE_RELAY_URL=/p' .env.example >> "$GITHUB_ENV"
+
+      - name: Build unsigned desktop artifacts
+        shell: bash
+        run: |
+          node scripts/update-release-package-versions.ts "${{ needs.prepare.outputs.version }}"
+          env -u GITHUB_REPOSITORY -u T3CODE_DESKTOP_UPDATE_REPOSITORY \
+            vp run dist:desktop:dmg:arm64 \
+              --build-version "${{ needs.prepare.outputs.version }}" \
+              --verbose
+
+      - name: Write checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          archives=(release/*-arm64.zip)
+          if [[ ${#archives[@]} -ne 1 ]]; then
+            printf 'Expected one arm64 zip, found %s\n' "${#archives[@]}" >&2
+            exit 1
+          fi
+          archive_name="$(basename "${archives[0]}")"
+          cd release
+          shasum -a 256 "$archive_name" > "$archive_name.sha256"
+
+      - name: Publish custom nightly
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes_file" <<'EOF'
+          Automated custom build of T3 Code for macOS arm64.
+
+          Upstream release: `${{ needs.prepare.outputs.upstream_tag }}`
+
+          <!-- upstream-nightly: ${{ needs.prepare.outputs.upstream_tag }} -->
+          EOF
+
+          gh release create "${{ needs.prepare.outputs.release_tag }}" \
+            release/*.dmg \
+            release/*.zip \
+            release/*.zip.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "${{ needs.prepare.outputs.commit }}" \
+            --title "${{ needs.prepare.outputs.release_name }}" \
+            --notes-file "$notes_file" \
+            --prerelease \
+            --draft
+          gh release edit "${{ needs.prepare.outputs.release_tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft=false
