@@ -51,7 +51,7 @@ create_signing_identity() (
   local export_password
   temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/t3code-signing.XXXXXX")"
   keychain_path="$HOME/Library/Keychains/login.keychain-db"
-  export_password="$(openssl rand -hex 24)"
+  export_password="$(/usr/bin/openssl rand -hex 24)"
 
   cleanup_signing_files() {
     rm -rf "$temporary_directory"
@@ -75,7 +75,7 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always
 EOF
 
-  openssl req \
+  /usr/bin/openssl req \
     -x509 \
     -newkey rsa:2048 \
     -sha256 \
@@ -84,7 +84,7 @@ EOF
     -config "$temporary_directory/openssl.cnf" \
     -keyout "$temporary_directory/key.pem" \
     -out "$temporary_directory/certificate.pem"
-  openssl pkcs12 \
+  /usr/bin/openssl pkcs12 \
     -export \
     -name "$signing_identity" \
     -inkey "$temporary_directory/key.pem" \
