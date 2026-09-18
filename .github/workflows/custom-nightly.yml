@@ -30,9 +30,17 @@ jobs:
       release_tag: ${{ steps.prepare.outputs.release_tag }}
       release_name: ${{ steps.prepare.outputs.release_name }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
+      - name: Checkout customization branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags origin "$GITHUB_REF_NAME"
+          git sparse-checkout set --no-cone '/*' '!/.repos/'
+          git checkout -B "$GITHUB_REF_NAME" FETCH_HEAD
 
       - id: prepare
         name: Merge the latest released nightly
@@ -100,10 +108,17 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.commit }}
-          fetch-depth: 1
+      - name: Checkout release commit
+        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "$RELEASE_COMMIT"
+          git sparse-checkout set --no-cone '/*' '!/.repos/'
+          git checkout --detach FETCH_HEAD
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
@@ -130,7 +145,11 @@ jobs:
         shell: bash
         run: |
           node scripts/update-release-package-versions.ts "${{ needs.prepare.outputs.version }}"
-          env -u GITHUB_REPOSITORY -u T3CODE_DESKTOP_UPDATE_REPOSITORY \
+          env \
+            -u GH_TOKEN \
+            -u GITHUB_TOKEN \
+            -u GITHUB_REPOSITORY \
+            -u T3CODE_DESKTOP_UPDATE_REPOSITORY \
             vp run dist:desktop:dmg:arm64 \
               --build-version "${{ needs.prepare.outputs.version }}" \
               --verbose
