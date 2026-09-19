@@ -238,16 +238,9 @@ export interface ImageDitheringPreset {
   readonly id: string;
   readonly name: string;
   readonly filter: ImageDitheringFilter;
-  readonly fade: number;
-  readonly dim: number;
-  readonly fadeHeight: number;
+  /** Only presets that define a look for the overlay set the fade sliders. */
+  readonly fade?: { readonly fade: number; readonly dim: number; readonly fadeHeight: number };
 }
-
-const DEFAULT_PRESET_FADE = {
-  fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
-  dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
-  fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-} as const;
 
 /**
  * Starting points for the dithering filter. "Original" keeps the picture's
@@ -259,20 +252,16 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "original",
     name: "Original",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    ...DEFAULT_PRESET_FADE,
   },
   {
     id: "faded",
     name: "Faded",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    fade: 100,
-    dim: 55,
-    fadeHeight: 70,
+    fade: { fade: 100, dim: 55, fadeHeight: 70 },
   },
   {
     id: "violet",
     name: "Violet",
-    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "8x8",
@@ -287,7 +276,6 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
   {
     id: "terminal",
     name: "Terminal",
-    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "4x4",
@@ -299,7 +287,6 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
   {
     id: "mono",
     name: "Mono",
-    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "8x8",

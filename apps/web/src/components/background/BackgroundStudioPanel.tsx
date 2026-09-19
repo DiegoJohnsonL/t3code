@@ -149,9 +149,10 @@ function DitheringPresetRow({
         {IMAGE_DITHERING_PRESETS.map((preset) => {
           const active =
             filtersEqual(current, preset.filter) &&
-            record.fade === preset.fade &&
-            record.dim === preset.dim &&
-            record.fadeHeight === preset.fadeHeight;
+            (preset.fade === undefined ||
+              (record.fade === preset.fade.fade &&
+                record.dim === preset.fade.dim &&
+                record.fadeHeight === preset.fade.fadeHeight));
           return (
             <Button
               key={preset.id}
@@ -737,13 +738,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                     <DitheringPresetRow
                       record={record}
                       onPick={(preset) =>
-                        commitRecord({
-                          ...record,
-                          filter: preset.filter,
-                          fade: preset.fade,
-                          dim: preset.dim,
-                          fadeHeight: preset.fadeHeight,
-                        })
+                        commitRecord({ ...record, filter: preset.filter, ...preset.fade })
                       }
                     />
                   ) : null}
