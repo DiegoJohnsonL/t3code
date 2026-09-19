@@ -187,13 +187,15 @@ export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
 export const MIN_CUSTOM_BACKGROUND_FADE = 0;
 export const MAX_CUSTOM_BACKGROUND_FADE = 100;
 /**
- * Strength of the theme-colored overlay, 0 to 100. The bottom edge takes the
- * full value and the top of the pane a fixed share of it; the renderer derives
- * the curve so every playlist keeps the same shape.
+ * Strength of the theme-colored overlay at the bottom edge, 0 to 100. It eases
+ * down to the dim level over the fade height; the renderer owns the curve so
+ * every playlist keeps the same shape.
  */
 export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
 /** How far up the pane, in percent, the overlay climbs before it settles. */
 export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 70;
+/** Flat overlay strength across the whole picture, above the bottom fade. */
+export const DEFAULT_CUSTOM_BACKGROUND_DIM = 35;
 /** Opacity of the picture itself over the theme background, 0 to 100. Lower it for more text contrast. */
 export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 100;
 export const CustomBackgroundFade = Schema.Int.check(
@@ -207,7 +209,7 @@ export interface ImageDitheringPreset {
   readonly name: string;
   readonly filter: ImageDitheringFilter;
   /** Only presets that define a look for the overlay set the fade sliders. */
-  readonly fade?: { readonly fade: number; readonly fadeHeight: number };
+  readonly fade?: { readonly fade: number; readonly fadeHeight: number; readonly dim: number };
 }
 
 /**
@@ -225,7 +227,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "faded",
     name: "Faded",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    fade: { fade: 100, fadeHeight: 85 },
+    fade: { fade: 100, fadeHeight: 85, dim: 55 },
   },
   {
     id: "violet",
@@ -396,6 +398,9 @@ export const CustomBackgroundRecord = Schema.Struct({
   fade: CustomBackgroundFade,
   fadeHeight: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT)),
+  ),
+  dim: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_DIM)),
   ),
   opacity: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_OPACITY)),

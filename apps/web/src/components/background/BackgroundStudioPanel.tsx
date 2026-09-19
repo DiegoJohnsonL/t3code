@@ -92,8 +92,9 @@ const PERSIST_DEBOUNCE_MS = 150;
 const UPLOAD_CONCURRENCY = 4;
 
 const FADE_CONTROLS = [
-  { key: "fade", label: "Fade" },
+  { key: "fade", label: "Bottom fade" },
   { key: "fadeHeight", label: "Fade height" },
+  { key: "dim", label: "Dim" },
   { key: "opacity", label: "Image opacity" },
 ] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
 
@@ -162,7 +163,9 @@ function DitheringPresetRow({
           const active =
             filtersEqual(current, preset.filter) &&
             (preset.fade === undefined ||
-              (record.fade === preset.fade.fade && record.fadeHeight === preset.fade.fadeHeight));
+              (record.fade === preset.fade.fade &&
+                record.fadeHeight === preset.fade.fadeHeight &&
+                record.dim === preset.fade.dim));
           return (
             <Button
               key={preset.id}
@@ -877,7 +880,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                       label={label}
                       min={MIN_CUSTOM_BACKGROUND_FADE}
                       max={MAX_CUSTOM_BACKGROUND_FADE}
-                      step={5}
+                      step={1}
                       value={record[key]}
                       format={(value) => `${Math.round(value)}%`}
                       onChange={(value) =>

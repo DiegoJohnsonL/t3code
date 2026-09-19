@@ -7,6 +7,7 @@ import {
   type CustomBackgroundRecord,
   DEFAULT_CUSTOM_BACKGROUND_FADE,
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+  DEFAULT_CUSTOM_BACKGROUND_DIM,
   DEFAULT_CUSTOM_BACKGROUND_OPACITY,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   defaultCustomBackgroundFilter,
@@ -36,6 +37,7 @@ export function createEmptyBackground(input: {
     filter: input.filter,
     fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
     fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+    dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
     opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
     createdAt: input.createdAt,
   };

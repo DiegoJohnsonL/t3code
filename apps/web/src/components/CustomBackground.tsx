@@ -62,7 +62,7 @@ export const CustomBackground = memo(function CustomBackground({
           filter={record.filter}
           image={shownImage}
           transition={source.kind === "image" ? source.transition : "cut"}
-          fade={{ fade: record.fade, fadeHeight: record.fadeHeight }}
+          fade={{ fade: record.fade, fadeHeight: record.fadeHeight, dim: record.dim }}
           opacity={record.opacity}
           filtersAvailable={filtersAvailable}
         />

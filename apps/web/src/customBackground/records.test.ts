@@ -36,6 +36,7 @@ const sunset: CustomBackgroundRecord = {
   filter: defaultCustomBackgroundFilter("image-dithering"),
   fade: 100,
   fadeHeight: 60,
+  dim: 35,
   opacity: 100,
   createdAt,
 };

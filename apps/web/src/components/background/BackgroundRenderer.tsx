@@ -39,19 +39,19 @@ export interface BackgroundFade {
   fade: number;
   /** Percent of the pane the overlay climbs before it settles. */
   fadeHeight: number;
+  /** Flat overlay strength everywhere above the fade. */
+  dim: number;
 }
 
 const FADE_STOPS = 8;
-// The top of the pane keeps this share of the bottom strength, and the bottom
-// share of the height holds full strength before the ramp begins. Both fixed,
-// so two sliders always produce the same silhouette.
-const TOP_SHARE = 0.55;
+// The bottom share of the height holds full strength before the ramp begins,
+// so the sliders always produce the same silhouette.
 const SOLID_SHARE = 0.45;
 
-export function fadeOverlayGradient({ fade, fadeHeight }: BackgroundFade): string {
+export function fadeOverlayGradient({ fade, fadeHeight, dim }: BackgroundFade): string {
   const stop = (opacity: number, position: number) =>
     `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${Math.round(position)}%`;
-  const top = fade * TOP_SHARE;
+  const top = dim;
   const solid = fadeHeight * SOLID_SHARE;
   const stops = [stop(fade, 0)];
   for (let index = 0; index <= FADE_STOPS; index += 1) {

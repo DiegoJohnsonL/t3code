@@ -170,6 +170,7 @@ describe("LocalApi", () => {
           filter: { kind: "none" as const },
           fade: 100,
           fadeHeight: 60,
+          dim: 35,
           opacity: 100,
           createdAt: "2026-09-08T00:00:00.000Z",
         },

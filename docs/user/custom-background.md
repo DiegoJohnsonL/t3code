@@ -39,13 +39,13 @@ selector off. The picture still shows, without its filter.
 ## Fade
 
 **Image opacity** sets how much of the picture shows over your theme's background at all;
-lower it when text needs more contrast. Two more sliders blend your theme's background
-color over the picture, so the fade always
-matches the theme you picked. **Fade** is the strength: at 100% the bottom edge goes solid,
-and the top of the pane keeps about half of whatever you set. **Fade height** is how far up
-the pane the color reaches; the lower part of that stretch stays solid and the rest eases
-off. For a picture that melts into your theme color halfway up, keep fade at 100% and
-raise fade height.
+lower it when text needs more contrast. The other sliders blend your theme's background
+color over the picture, so the tint always matches the theme you picked. **Bottom fade** is
+the strength at the bottom edge; 100% goes solid. **Fade height** is how far up the pane
+that fade reaches; the lower part of the stretch stays solid and the rest eases off.
+**Dim** is the flat strength everywhere above the fade, so lower it to keep the top and
+sides of the picture bright. For a picture that melts into your theme color halfway up,
+keep bottom fade at 100% and raise fade height.
 
 ## Images
 
