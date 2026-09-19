@@ -93,18 +93,26 @@ export function BackgroundThumbnail({
 }
 
 export function BackgroundImagePicker({
-  selectedImageId,
+  selectedImageIds,
   referencedImageIds,
-  onSelect,
+  onToggle,
   onUpload,
   busy,
 }: {
-  selectedImageId: CustomBackgroundImageId | null;
+  selectedImageIds: ReadonlyArray<CustomBackgroundImageId>;
   referencedImageIds: ReadonlySet<string>;
-  onSelect: (imageId: CustomBackgroundImageId) => void;
+  onToggle: (imageId: CustomBackgroundImageId) => void;
   onUpload: (file: File) => void;
   busy: boolean;
 }) {
+  const previewImageId = selectedImageIds[0] ?? null;
+  const label = busy
+    ? "Preparing image…"
+    : selectedImageIds.length === 0
+      ? "Choose images…"
+      : selectedImageIds.length === 1
+        ? "Change image…"
+        : `${selectedImageIds.length} images in rotation`;
   const images = useStoredBackgroundImages();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -178,14 +186,8 @@ export function BackgroundImagePicker({
                 "cursor-pointer justify-start gap-2 px-[calc(--spacing(2.5)-1px)] data-[dragging=true]:border-primary data-[dragging=true]:bg-primary/10",
               )}
             >
-              <BackgroundThumbnail imageId={selectedImageId} className="size-5 rounded-sm" />
-              <span className="truncate">
-                {selectedImageId === null
-                  ? "Choose image…"
-                  : busy
-                    ? "Preparing image…"
-                    : "Change image…"}
-              </span>
+              <BackgroundThumbnail imageId={previewImageId} className="size-5 rounded-sm" />
+              <span className="truncate">{label}</span>
             </button>
           }
         />
@@ -204,41 +206,50 @@ export function BackgroundImagePicker({
               <span>Upload or drop an image</span>
               <span className="text-[11px]">{BACKGROUND_FILE_TYPES_LABEL}</span>
             </button>
-            {images?.map((image) => (
-              <div key={image.id} className="group relative">
-                <button
-                  type="button"
-                  aria-label={`Use image ${image.width}×${image.height}`}
-                  aria-pressed={image.id === selectedImageId}
-                  onClick={() => {
-                    setOpen(false);
-                    onSelect(image.id);
-                  }}
-                  className={backgroundPickerTileClass(image.id === selectedImageId)}
-                >
-                  <BackgroundThumbnail imageId={image.id} className="aspect-[4/3] w-full" />
-                </button>
-                {!referencedImageIds.has(image.id) ? (
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          size="icon-micro"
-                          variant="outline"
-                          className={backgroundPickerDeleteButtonClass}
-                          aria-label="Delete unused image"
-                          onClick={() => void deleteBackgroundImage(image.id)}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      }
-                    />
-                    <TooltipPopup side="top">Delete unused image</TooltipPopup>
-                  </Tooltip>
-                ) : null}
-              </div>
-            ))}
+            {images?.map((image) => {
+              const position = selectedImageIds.indexOf(image.id);
+              const selected = position !== -1;
+              return (
+                <div key={image.id} className="group relative">
+                  <button
+                    type="button"
+                    aria-label={`Use image ${image.width}×${image.height}`}
+                    aria-pressed={selected}
+                    onClick={() => onToggle(image.id)}
+                    className={backgroundPickerTileClass(selected)}
+                  >
+                    <BackgroundThumbnail imageId={image.id} className="aspect-[4/3] w-full" />
+                    {selected && selectedImageIds.length > 1 ? (
+                      <span className="absolute left-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                        {position + 1}
+                      </span>
+                    ) : null}
+                  </button>
+                  {!referencedImageIds.has(image.id) ? (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            size="icon-micro"
+                            variant="outline"
+                            className={backgroundPickerDeleteButtonClass}
+                            aria-label="Delete unused image"
+                            onClick={() => void deleteBackgroundImage(image.id)}
+                          >
+                            <Trash2Icon />
+                          </Button>
+                        }
+                      />
+                      <TooltipPopup side="top">Delete unused image</TooltipPopup>
+                    </Tooltip>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
+          <p className="px-2 pb-1 text-[11px] text-muted-foreground">
+            Pick several images to rotate through them.
+          </p>
         </MenuPopup>
       </Menu>
     </div>

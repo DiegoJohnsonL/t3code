@@ -442,9 +442,36 @@ export function defaultCustomBackgroundFilter(
   return filter ? filter.defaults : DEFAULT_CUSTOM_BACKGROUND_FILTER;
 }
 
+export const MIN_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1;
+export const MAX_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1440;
+export const DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES = 10;
+export const CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS = [
+  1, 2, 5, 10, 15, 30, 60, 120, 360, 1440,
+] as const;
+export const CustomBackgroundRotationMinutes = Schema.Int.check(
+  Schema.isBetween({
+    minimum: MIN_CUSTOM_BACKGROUND_ROTATION_MINUTES,
+    maximum: MAX_CUSTOM_BACKGROUND_ROTATION_MINUTES,
+  }),
+);
+
+/**
+ * One image is a rotation of one. With several, the client advances through
+ * them in order every `rotationMinutes`, keyed off wall-clock time so every
+ * pane and reload agrees on which image is up.
+ */
+export const CustomBackgroundImageSource = Schema.Struct({
+  kind: Schema.Literal("image"),
+  imageIds: Schema.Array(CustomBackgroundImageId).check(Schema.isMinLength(1)),
+  rotationMinutes: CustomBackgroundRotationMinutes.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES)),
+  ),
+});
+export type CustomBackgroundImageSource = typeof CustomBackgroundImageSource.Type;
+
 export const CustomBackgroundSource = Schema.Union([
   Schema.Struct({ kind: Schema.Literal("none") }),
-  Schema.Struct({ kind: Schema.Literal("image"), imageId: CustomBackgroundImageId }),
+  CustomBackgroundImageSource,
 ]);
 export type CustomBackgroundSource = typeof CustomBackgroundSource.Type;
 

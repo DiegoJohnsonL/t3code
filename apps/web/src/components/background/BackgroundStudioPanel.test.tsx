@@ -143,7 +143,7 @@ it("preserves both persisted and pending edits when encoding finishes", async ()
     fade: 35,
     dim: 60,
     fadeHeight: 60,
-    source: { kind: "image", imageId: uploadedId },
+    source: { kind: "image", imageIds: [uploadedId], rotationMinutes: 10 },
   });
 });
 
@@ -162,18 +162,19 @@ it("keeps pending changes and selection on another background", async () => {
   await act(async () => finishUpload());
   expect(state.settings?.activeCustomBackgroundId).toBe(other.id);
   expect(state.settings?.customBackgrounds).toEqual([
-    { ...original, source: { kind: "image", imageId: uploadedId } },
+    { ...original, source: { kind: "image", imageIds: [uploadedId], rotationMinutes: 10 } },
     { ...other, fade: 20 },
   ]);
 });
 
 it("keeps a newer image choice made while encoding", async () => {
   const chosenId = "c".repeat(64);
-  act(() => renderer.root.findByType(BackgroundImagePicker).props.onSelect(chosenId));
+  act(() => renderer.root.findByType(BackgroundImagePicker).props.onToggle(chosenId));
   await act(async () => finishUpload());
   expect(state.settings?.customBackgrounds[0]?.source).toEqual({
     kind: "image",
-    imageId: chosenId,
+    imageIds: [chosenId],
+    rotationMinutes: 10,
   });
 });
 

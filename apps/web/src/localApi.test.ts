@@ -160,7 +160,7 @@ describe("LocalApi", () => {
         {
           id: "bg-1",
           name: "Sunset",
-          source: { kind: "image" as const, imageId: "a".repeat(64) },
+          source: { kind: "image" as const, imageIds: ["a".repeat(64)], rotationMinutes: 10 },
           filter: { kind: "none" as const },
           fade: 100,
           dim: 60,

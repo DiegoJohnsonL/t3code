@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense } from "react";
+import { lazy, memo, Suspense, useRef } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -7,8 +7,11 @@ import {
   type CustomBackgroundRouteKind,
   backgroundIsRenderable,
   backgroundUsesStoredImage,
+  currentBackgroundImageId,
   resolveDisplayedBackground,
+  upcomingBackgroundImageId,
 } from "~/customBackground/records";
+import { useRotationClock } from "~/customBackground/useRotationClock";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 
@@ -39,19 +42,27 @@ export const CustomBackground = memo(function CustomBackground({
     inConversations,
   });
   const filtersAvailable = isWebGlAvailable();
-  const imageId =
+  const source =
     record !== null && backgroundUsesStoredImage(record, filtersAvailable)
-      ? record.source.imageId
-      : null;
+      ? record.source
+      : ({ kind: "none" } as const);
+  const now = useRotationClock(source);
+  const imageId = currentBackgroundImageId(source, now);
   const image = useBackgroundImageUrl(imageId);
+  useBackgroundImageUrl(upcomingBackgroundImageId(source, now));
+  // Hold the previous picture while the next one decodes so a rotation never
+  // flashes the bare theme between images.
+  const lastImage = useRef<string | null>(null);
+  if (typeof image === "string") lastImage.current = image;
+  const shownImage = typeof image === "string" ? image : image === null ? lastImage.current : null;
   if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
-  if (imageId !== null && typeof image !== "string") return null;
+  if (imageId !== null && shownImage === null) return null;
   return (
     <div data-chat-backdrop="source" className="pointer-events-none absolute inset-0 -z-10">
       <Suspense fallback={null}>
         <BackgroundRenderer
           filter={record.filter}
-          image={typeof image === "string" ? image : null}
+          image={shownImage}
           fade={{ fade: record.fade, dim: record.dim, fadeHeight: record.fadeHeight }}
           filtersAvailable={filtersAvailable}
         />

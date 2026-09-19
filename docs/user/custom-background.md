@@ -50,8 +50,12 @@ black at the bottom, keep bottom fade at 100% and raise fade height.
 ## Images
 
 Images are resized, converted to WebP, and stored on this client only. Uploading the same
-file twice reuses the stored copy. **Change image…** lists every stored image, lets you
-upload another, and deletes the ones no background uses. Images stay on this client when you
+file twice reuses the stored copy. The image picker lists every stored image, lets you
+upload another, and deletes the ones no background uses.
+
+Select more than one image to rotate through them. The order you pick them is the order
+they play, and **Change every** sets how long each stays up. Rotation follows the clock,
+so every window and reload shows the same image at the same time. Images stay on this client when you
 connect to remote environments; other browsers, devices, and T3 Code Mobile keep their own
 appearance.
 

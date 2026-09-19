@@ -2,6 +2,8 @@ import {
   CUSTOM_BACKGROUND_IMAGE_FILTERS,
   CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
   CUSTOM_BACKGROUND_NAME_MAX_LENGTH,
+  CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS,
+  type CustomBackgroundImageSource,
   IMAGE_DITHERING_PRESETS,
   type ImageDitheringPreset,
   type CustomBackgroundFilterKind,
@@ -29,7 +31,10 @@ import { storeBackgroundImage } from "~/customBackground/imageStore";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
   type CustomBackgroundLibrary,
+  appendBackgroundImage,
   createGenerativeBackground,
+  sourcesEqual,
+  toggleBackgroundImage,
   filtersEqual,
   nextActiveAfterRemove,
   nextNewBackgroundName,
@@ -179,6 +184,48 @@ function DitheringPresetRow({
   );
 }
 
+function formatRotationMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 1440) return `${minutes / 60} h`;
+  return "1 day";
+}
+
+function RotationIntervalField({
+  source,
+  onChange,
+}: {
+  source: CustomBackgroundImageSource;
+  onChange: (source: CustomBackgroundImageSource) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Change every</span>
+      <Select
+        value={String(source.rotationMinutes)}
+        onValueChange={(value) => {
+          const minutes = Number(value);
+          if (Number.isInteger(minutes)) onChange({ ...source, rotationMinutes: minutes });
+        }}
+      >
+        <SelectTrigger
+          size="sm"
+          className="min-h-0 h-7.5 min-w-0 flex-1 sm:h-6.5 sm:min-h-0"
+          aria-label="Rotation interval"
+        >
+          <SelectValue>{formatRotationMinutes(source.rotationMinutes)}</SelectValue>
+        </SelectTrigger>
+        <SelectPopup align="end" alignItemWithTrigger={false}>
+          {CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS.map((minutes) => (
+            <SelectItem key={minutes} hideIndicator value={String(minutes)}>
+              {formatRotationMinutes(minutes)}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+    </div>
+  );
+}
+
 function libraryPreview(record: CustomBackgroundRecord | null): {
   name: string;
   filter: string;
@@ -194,7 +241,7 @@ function LibraryThumb({
   record: CustomBackgroundRecord | null;
   className: string;
 }) {
-  const imageId = record?.source.kind === "image" ? record.source.imageId : null;
+  const imageId = record?.source.kind === "image" ? (record.source.imageIds[0] ?? null) : null;
   const generative = record ? isGenerativeCustomBackgroundFilter(record.filter.kind) : false;
   if (record === null) {
     return (
@@ -460,7 +507,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
   const referencedImageIds = useMemo(() => {
     const ids = new Set<string>();
     for (const entry of library) {
-      if (entry.source.kind === "image") ids.add(entry.source.imageId);
+      if (entry.source.kind === "image") for (const id of entry.source.imageIds) ids.add(id);
     }
     return ids;
   }, [library]);
@@ -605,43 +652,49 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   {!isGenerativeCustomBackgroundFilter(record.filter.kind) || !filtersAvailable ? (
-                    <BackgroundImagePicker
-                      selectedImageId={
-                        record.source.kind === "image" ? record.source.imageId : null
-                      }
-                      referencedImageIds={referencedImageIds}
-                      busy={upload.busy}
-                      onSelect={(imageId) =>
-                        commitRecord({
-                          ...record,
-                          source: {
-                            kind: "image",
-                            imageId,
-                          },
-                        })
-                      }
-                      onUpload={(file) => {
-                        void uploadImage(file).then((imageId) => {
-                          if (imageId) {
-                            flushPending();
-                            const current = getClientSettings().customBackgrounds;
-                            // Update only the image on a surviving record. Edits made
-                            // during encoding, including edits to another selection, win.
-                            persistLibrary(
-                              current.map((entry) =>
-                                entry.id === record.id &&
-                                entry.source.kind === record.source.kind &&
-                                (entry.source.kind !== "image" ||
-                                  (record.source.kind === "image" &&
-                                    entry.source.imageId === record.source.imageId))
-                                  ? { ...entry, source: { kind: "image", imageId } }
-                                  : entry,
-                              ),
-                            );
-                          }
-                        });
-                      }}
-                    />
+                    <>
+                      <BackgroundImagePicker
+                        selectedImageIds={
+                          record.source.kind === "image" ? record.source.imageIds : []
+                        }
+                        referencedImageIds={referencedImageIds}
+                        busy={upload.busy}
+                        onToggle={(imageId) =>
+                          commitRecord({
+                            ...record,
+                            source: toggleBackgroundImage(record.source, imageId),
+                          })
+                        }
+                        onUpload={(file) => {
+                          void uploadImage(file).then((imageId) => {
+                            if (imageId) {
+                              flushPending();
+                              const current = getClientSettings().customBackgrounds;
+                              // Add the image only to a surviving record whose images
+                              // did not change meanwhile. Edits made during encoding,
+                              // including edits to another selection, win.
+                              persistLibrary(
+                                current.map((entry) =>
+                                  entry.id === record.id &&
+                                  sourcesEqual(entry.source, record.source)
+                                    ? {
+                                        ...entry,
+                                        source: appendBackgroundImage(entry.source, imageId),
+                                      }
+                                    : entry,
+                                ),
+                              );
+                            }
+                          });
+                        }}
+                      />
+                      {record.source.kind === "image" && record.source.imageIds.length > 1 ? (
+                        <RotationIntervalField
+                          source={record.source}
+                          onChange={(source) => commitRecord({ ...record, source })}
+                        />
+                      ) : null}
+                    </>
                   ) : null}
 
                   <h3 className="text-[13px] font-medium">Filter</h3>

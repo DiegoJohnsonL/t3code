@@ -958,7 +958,7 @@ describe("ClientSettings custom backgrounds", () => {
   const record = {
     id: "bg-1",
     name: "Sunset",
-    source: { kind: "image", imageId: "a".repeat(64) },
+    source: { kind: "image", imageIds: ["a".repeat(64)], rotationMinutes: 10 },
     filter: { kind: "none" },
     fade: 70,
     dim: 60,
@@ -1014,7 +1014,9 @@ describe("ClientSettings custom backgrounds", () => {
   it("rejects a record whose image id is not a hash", () => {
     expect(() =>
       decodeClientSettingsPatch({
-        customBackgrounds: [{ ...record, source: { kind: "image", imageId: "sunset.jpg" } }],
+        customBackgrounds: [
+          { ...record, source: { kind: "image", imageIds: ["sunset.jpg"], rotationMinutes: 10 } },
+        ],
       }),
     ).toThrow();
   });

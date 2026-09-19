@@ -3,15 +3,20 @@ import { describe, expect, it } from "vite-plus/test";
 import { type CustomBackgroundRecord, defaultCustomBackgroundFilter } from "@t3tools/contracts";
 
 import {
+  appendBackgroundImage,
   backgroundDrawMode,
   backgroundIsRenderable,
   backgroundUsesStoredImage,
   createGenerativeBackground,
+  currentBackgroundImageId,
   filtersEqual,
   nextActiveAfterRemove,
+  nextBackgroundRotationAt,
+  nextNewBackgroundName,
   removeBackground,
   resolveDisplayedBackground,
-  nextNewBackgroundName,
+  toggleBackgroundImage,
+  upcomingBackgroundImageId,
   upsertBackground,
   withFilterKind,
 } from "./records";
@@ -21,7 +26,7 @@ const createdAt = "2026-09-08T00:00:00.000Z";
 const sunset: CustomBackgroundRecord = {
   id: "bg-1",
   name: "Sunset",
-  source: { kind: "image", imageId },
+  source: { kind: "image", imageIds: [imageId], rotationMinutes: 10 },
   filter: defaultCustomBackgroundFilter("image-dithering"),
   fade: 100,
   dim: 60,
@@ -207,5 +212,53 @@ describe("background visibility during first submission", () => {
         }),
       ).toBe(visible || inConversations ? sunset : null);
     }
+  });
+});
+
+describe("image rotation", () => {
+  const first = "1".repeat(64);
+  const second = "2".repeat(64);
+  const third = "3".repeat(64);
+  const rotating = {
+    kind: "image",
+    imageIds: [first, second, third],
+    rotationMinutes: 10,
+  } as const;
+  const minute = 60_000;
+
+  it("walks the images in order on the wall clock", () => {
+    expect(currentBackgroundImageId(rotating, 0)).toBe(first);
+    expect(currentBackgroundImageId(rotating, 10 * minute)).toBe(second);
+    expect(currentBackgroundImageId(rotating, 29 * minute)).toBe(third);
+    expect(currentBackgroundImageId(rotating, 30 * minute)).toBe(first);
+    expect(currentBackgroundImageId({ kind: "none" }, 0)).toBeNull();
+  });
+
+  it("knows the next image and when it lands", () => {
+    expect(upcomingBackgroundImageId(rotating, 25 * minute)).toBe(first);
+    expect(nextBackgroundRotationAt(rotating, 25 * minute)).toBe(30 * minute);
+    const single = { ...rotating, imageIds: [first] };
+    expect(upcomingBackgroundImageId(single, 0)).toBeNull();
+    expect(nextBackgroundRotationAt(single, 0)).toBeNull();
+  });
+
+  it("toggles images in and out and drops the source when empty", () => {
+    expect(toggleBackgroundImage({ kind: "none" }, first)).toEqual({
+      kind: "image",
+      imageIds: [first],
+      rotationMinutes: 10,
+    });
+    expect(toggleBackgroundImage(rotating, second)).toEqual({
+      ...rotating,
+      imageIds: [first, third],
+    });
+    expect(toggleBackgroundImage({ ...rotating, imageIds: [first] }, first)).toEqual({
+      kind: "none",
+    });
+    expect(appendBackgroundImage(rotating, second)).toBe(rotating);
+    expect(appendBackgroundImage({ ...rotating, imageIds: [first] }, second).imageIds).toEqual([
+      first,
+      second,
+    ]);
   });
 });
