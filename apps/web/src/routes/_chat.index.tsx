@@ -1,4 +1,3 @@
-import { NoProjectsHero } from "../components/NoProjectsHero";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { createFileRoute, Link } from "@tanstack/react-router";
