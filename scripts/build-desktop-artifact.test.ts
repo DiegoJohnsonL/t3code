@@ -2141,6 +2141,7 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       assert.equal(resolved.platform, "win");
       assert.equal(resolved.target, "nsis");
       assert.equal(resolved.arch, "arm64");
+      assert.equal(resolved.macPasskeySigning, true);
     }),
   );
 
@@ -2193,6 +2194,7 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
                 T3CODE_DESKTOP_SKIP_BUILD: "true",
                 T3CODE_DESKTOP_KEEP_STAGE: "true",
                 T3CODE_DESKTOP_SIGNED: "true",
+                T3CODE_MACOS_PASSKEY_SIGNING: "false",
                 T3CODE_DESKTOP_VERBOSE: "true",
                 T3CODE_DESKTOP_MOCK_UPDATES: "true",
               },
@@ -2204,6 +2206,7 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       assert.equal(resolved.skipBuild, false);
       assert.equal(resolved.keepStage, false);
       assert.equal(resolved.signed, false);
+      assert.equal(resolved.macPasskeySigning, false);
       assert.equal(resolved.verbose, false);
       assert.equal(resolved.mockUpdates, false);
     }),

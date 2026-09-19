@@ -125,6 +125,10 @@ installed_version() {
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info_plist" 2>/dev/null || true
 }
 
+builtin_updater_is_configured() {
+  [[ -f "$app_path/Contents/Resources/app-update.yml" ]]
+}
+
 app_is_running() {
   osascript -e 'application id "com.t3tools.t3code" is running' 2>/dev/null \
     | grep -qx 'true'
@@ -224,6 +228,11 @@ update_app() (
   local temporary_directory
   local staged_directory
   local staged_app
+
+  if builtin_updater_is_configured; then
+    log "The built-in updater is configured; use Check for updates in T3 Code."
+    return
+  fi
 
   create_signing_identity
   gh_bin="$(resolve_gh)"
