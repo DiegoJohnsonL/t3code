@@ -666,19 +666,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     opacity: 0;
   }
 
-  .custom-background-slide[data-leaving][data-transition="zoom"] {
-    transform: scale(1.06);
-  }
-
-  .custom-background-slide[data-leaving][data-transition="slide"] {
-    transform: translateX(-4%);
-  }
-
   @media (prefers-reduced-motion: no-preference) {
     .custom-background-slide:not([data-transition="cut"]) {
-      transition:
-        opacity 700ms ease-out,
-        transform 700ms ease-out;
+      transition: opacity 1400ms ease-in-out;
     }
   }
 

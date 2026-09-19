@@ -17,8 +17,8 @@ so you can turn it back on. Select **None** in the controller to deselect the ba
 
 ## Backgrounds
 
-A background is one or more pictures, a filter, and a fade. Create one with the **+**
-button. New backgrounds start without an image or filter. Choose images (JPEG, PNG, WebP,
+A playlist is one or more pictures, a filter, and a fade. Create one with **New playlist**.
+New playlists start without an image or filter. Choose images (JPEG, PNG, WebP,
 or HEIC), then edit the name. Delete backgrounds from the background picker; deleting one
 never deletes its images.
 
@@ -38,11 +38,12 @@ selector off. The picture still shows, without its filter.
 
 ## Fade
 
-Three sliders blend your theme's background color over the picture. **Bottom fade** is
-the strength at the bottom edge where the composer sits; 100% goes solid. **Top dim** is
-the strength above the fade, so lower it to see more of the picture. **Fade height** is how
-far up the fade climbs before it settles at the dim level. For a picture that melts into
-black at the bottom, keep bottom fade at 100% and raise fade height.
+Four sliders blend your theme's background color over the picture, so the fade always
+matches the theme you picked. **Bottom fade** is the strength at the bottom edge where the
+composer sits; 100% goes solid. **Solid height** is how far up that full strength holds
+before it starts to ease off. **Fade height** is where the easing ends. **Top dim** is the
+strength above that, so lower it to see more of the picture. For a picture that melts into
+your theme color halfway up, keep bottom fade at 100% and raise solid height.
 
 ## Images
 
@@ -52,8 +53,8 @@ upload another, and deletes the ones no background uses.
 
 Select more than one image to rotate through them. **Change every** sets how long each
 stays up. **Order** plays them as picked or shuffles them; shuffle shows every image once
-before any repeats and never shows the same one twice in a row. **Transition** picks how
-one image gives way to the next. Rotation follows the clock, so every window and reload
+before any repeats and never shows the same one twice in a row. **Transition** is a slow
+crossfade or a plain cut. Rotation follows the clock, so every window and reload
 shows the same image at the same time. The picture button at the bottom of the sidebar
 steps to the next or previous image and opens the controller; the controller has the
 same **Next** and **Previous** buttons for trying transitions out. Images stay on this client when you

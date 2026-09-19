@@ -98,21 +98,23 @@ export function BackgroundImagePicker({
   onToggle,
   onUpload,
   busy,
+  busyLabel,
 }: {
   selectedImageIds: ReadonlyArray<CustomBackgroundImageId>;
   referencedImageIds: ReadonlySet<string>;
   onToggle: (imageId: CustomBackgroundImageId) => void;
   onUpload: (files: ReadonlyArray<File>) => void;
   busy: boolean;
+  busyLabel: string | null;
 }) {
   const previewImageId = selectedImageIds[0] ?? null;
-  const label = busy
-    ? "Preparing image…"
-    : selectedImageIds.length === 0
-      ? "Choose images…"
+  const label =
+    busyLabel ??
+    (selectedImageIds.length === 0
+      ? "Add images…"
       : selectedImageIds.length === 1
-        ? "Change image…"
-        : `${selectedImageIds.length} images in rotation`;
+        ? "1 image"
+        : `${selectedImageIds.length} images`);
   const images = useStoredBackgroundImages();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -157,7 +159,7 @@ export function BackgroundImagePicker({
 
   return (
     <div className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Image</span>
+      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Images</span>
       <input
         ref={inputRef}
         type="file"

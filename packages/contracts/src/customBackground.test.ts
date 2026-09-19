@@ -75,6 +75,18 @@ describe("CustomBackgroundFilter", () => {
       expect(record.filter).toEqual({ kind: "none" });
     }
   });
+
+  it("loads removed transitions as a fade", () => {
+    const record = decodeRecord({
+      id: "bg-1",
+      name: "Old",
+      source: { kind: "image", imageIds: ["a".repeat(64)], transition: "zoom" },
+      filter: { kind: "none" },
+      fade: 50,
+      createdAt: "2026-09-08T00:00:00.000Z",
+    });
+    expect(record.source).toMatchObject({ transition: "fade" });
+  });
 });
 
 describe("CustomBackgroundRecord", () => {

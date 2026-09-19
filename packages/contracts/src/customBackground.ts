@@ -193,7 +193,9 @@ export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
 /** Opacity of the theme background above the fade, where the picture shows most. */
 export const DEFAULT_CUSTOM_BACKGROUND_DIM = 60;
 /** How far up from the bottom edge, in percent of the pane, the fade climbs before it settles at the dim level. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 60;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 70;
+/** Percent of the pane, from the bottom edge, held at the full bottom fade before the ramp begins. */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID = 25;
 export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
@@ -205,7 +207,12 @@ export interface ImageDitheringPreset {
   readonly name: string;
   readonly filter: ImageDitheringFilter;
   /** Only presets that define a look for the overlay set the fade sliders. */
-  readonly fade?: { readonly fade: number; readonly dim: number; readonly fadeHeight: number };
+  readonly fade?: {
+    readonly fade: number;
+    readonly dim: number;
+    readonly fadeHeight: number;
+    readonly fadeSolid: number;
+  };
 }
 
 /**
@@ -223,7 +230,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "faded",
     name: "Faded",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    fade: { fade: 100, dim: 55, fadeHeight: 70 },
+    fade: { fade: 100, dim: 55, fadeHeight: 85, fadeSolid: 40 },
   },
   {
     id: "violet",
@@ -344,9 +351,19 @@ export const CUSTOM_BACKGROUND_ROTATION_ORDERS = ["sequential", "shuffle"] as co
 export const CustomBackgroundRotationOrder = Schema.Literals(CUSTOM_BACKGROUND_ROTATION_ORDERS);
 export type CustomBackgroundRotationOrder = typeof CustomBackgroundRotationOrder.Type;
 
-export const CUSTOM_BACKGROUND_TRANSITIONS = ["cut", "fade", "zoom", "slide"] as const;
-export const CustomBackgroundTransition = Schema.Literals(CUSTOM_BACKGROUND_TRANSITIONS);
-export type CustomBackgroundTransition = typeof CustomBackgroundTransition.Type;
+export const CUSTOM_BACKGROUND_TRANSITIONS = ["cut", "fade"] as const;
+const CustomBackgroundTransitionLiteral = Schema.Literals(CUSTOM_BACKGROUND_TRANSITIONS);
+export type CustomBackgroundTransition = typeof CustomBackgroundTransitionLiteral.Type;
+/** Stored values from transitions that no longer exist load as a fade. */
+export const CustomBackgroundTransition = Schema.String.pipe(
+  Schema.decodeTo(
+    CustomBackgroundTransitionLiteral,
+    SchemaTransformation.transform<CustomBackgroundTransition, string>({
+      decode: (value) => (value === "cut" ? "cut" : "fade"),
+      encode: (value) => value,
+    }),
+  ),
+);
 
 export const CustomBackgroundImageSource = Schema.Struct({
   kind: Schema.Literal("image"),
@@ -412,6 +429,9 @@ export const CustomBackgroundRecord = Schema.Struct({
   ),
   fadeHeight: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT)),
+  ),
+  fadeSolid: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID)),
   ),
   createdAt: Schema.String,
 });

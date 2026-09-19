@@ -37,6 +37,7 @@ const sunset: CustomBackgroundRecord = {
   fade: 100,
   dim: 60,
   fadeHeight: 60,
+  fadeSolid: 25,
   createdAt,
 };
 const mesh = createEmptyBackground({
@@ -48,14 +49,14 @@ const mesh = createEmptyBackground({
 
 describe("nextNewBackgroundName", () => {
   it("numbers from 1 and skips names already in the library", () => {
-    expect(nextNewBackgroundName([])).toBe("New Background 1");
-    expect(nextNewBackgroundName([sunset])).toBe("New Background 1");
+    expect(nextNewBackgroundName([])).toBe("New Playlist 1");
+    expect(nextNewBackgroundName([sunset])).toBe("New Playlist 1");
     expect(
       nextNewBackgroundName([
-        { ...sunset, name: "New Background 1" },
-        { ...mesh, name: "New Background 3" },
+        { ...sunset, name: "New Playlist 1" },
+        { ...mesh, name: "New Playlist 3" },
       ]),
-    ).toBe("New Background 2");
+    ).toBe("New Playlist 2");
   });
 });
 

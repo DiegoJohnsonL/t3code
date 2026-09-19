@@ -175,15 +175,17 @@ export async function storeBackgroundImage(file: File): Promise<StoreBackgroundI
     return { ok: false, reason: "unavailable" };
   }
 
-  const full = await reencodeImage(file, {
-    maxDimension: CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION,
-    maxBytes: CUSTOM_BACKGROUND_IMAGE_MAX_BYTES,
-  });
+  const [full, thumbnail] = await Promise.all([
+    reencodeImage(file, {
+      maxDimension: CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION,
+      maxBytes: CUSTOM_BACKGROUND_IMAGE_MAX_BYTES,
+    }),
+    reencodeImage(file, {
+      maxDimension: THUMBNAIL_MAX_DIMENSION,
+      maxBytes: THUMBNAIL_MAX_BYTES,
+    }),
+  ]);
   if (!full.ok) return full;
-  const thumbnail = await reencodeImage(file, {
-    maxDimension: THUMBNAIL_MAX_DIMENSION,
-    maxBytes: THUMBNAIL_MAX_BYTES,
-  });
   if (!thumbnail.ok) return thumbnail;
 
   const image: StoredBackgroundImage = {

@@ -43,26 +43,28 @@ export interface BackgroundFade {
   fade: number;
   dim: number;
   fadeHeight: number;
+  fadeSolid: number;
 }
 
 const FADE_STOPS = 8;
 
-// Smoothstep between the bottom fade and the dim level so the overlay eases
-// out instead of showing a hard band where the ramp ends.
-export function fadeOverlayGradient({ fade, dim, fadeHeight }: BackgroundFade): string {
+// Hold the bottom fade across the solid band, then smoothstep up to the dim
+// level so the overlay eases out instead of showing a hard band.
+export function fadeOverlayGradient({ fade, dim, fadeHeight, fadeSolid }: BackgroundFade): string {
   const stop = (opacity: number, position: number) =>
-    `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${position}%`;
-  const stops: string[] = [];
+    `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${Math.round(position)}%`;
+  const rampEnd = Math.max(fadeHeight, fadeSolid);
+  const stops = [stop(fade, 0)];
   for (let index = 0; index <= FADE_STOPS; index += 1) {
     const t = index / FADE_STOPS;
     const eased = t * t * (3 - 2 * t);
-    stops.push(stop(fade + (dim - fade) * eased, Math.round(t * fadeHeight)));
+    stops.push(stop(fade + (dim - fade) * eased, fadeSolid + t * (rampEnd - fadeSolid)));
   }
   stops.push(stop(dim, 100));
   return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
-const TRANSITION_MS = 700;
+const TRANSITION_MS = 1400;
 
 interface Slide {
   key: number;
@@ -137,7 +139,9 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
           )}
         </div>
       ))}
-      <div className="absolute inset-0" style={{ background: fadeOverlayGradient(fade) }} />
+      {/* Above the slides: an outgoing slide is lifted over the incoming one and
+          would otherwise escape the dimming for the length of the fade. */}
+      <div className="absolute inset-0 z-[2]" style={{ background: fadeOverlayGradient(fade) }} />
     </div>
   );
 });

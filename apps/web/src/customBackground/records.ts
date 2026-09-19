@@ -8,6 +8,7 @@ import {
   DEFAULT_CUSTOM_BACKGROUND_DIM,
   DEFAULT_CUSTOM_BACKGROUND_FADE,
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+  DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   defaultCustomBackgroundFilter,
 } from "@t3tools/contracts";
@@ -18,7 +19,7 @@ export type CustomBackgroundRouteKind = "draft" | "conversation" | "other";
 export function nextNewBackgroundName(library: CustomBackgroundLibrary): string {
   const taken = new Set(library.map((record) => record.name.toLowerCase()));
   for (let index = 1; ; index += 1) {
-    const candidate = `New Background ${index}`;
+    const candidate = `New Playlist ${index}`;
     if (!taken.has(candidate.toLowerCase())) return candidate;
   }
 }
@@ -37,6 +38,7 @@ export function createEmptyBackground(input: {
     fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
     dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
     fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+    fadeSolid: DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID,
     createdAt: input.createdAt,
   };
 }

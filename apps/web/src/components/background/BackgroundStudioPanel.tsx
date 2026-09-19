@@ -79,15 +79,23 @@ const FILTER_LABELS: Readonly<Record<CustomBackgroundFilterKind, string>> = {
   "fluted-glass": "Fluted glass",
 };
 
+function uploadLabel(upload: { busy: boolean; done: number; total: number }): string | null {
+  if (!upload.busy) return null;
+  if (upload.total < 2) return "Preparing image…";
+  return `Preparing ${Math.min(upload.done + 1, upload.total)} of ${upload.total}…`;
+}
+
 function isFilterKind(value: unknown): value is CustomBackgroundFilterKind {
   return typeof value === "string" && Object.hasOwn(FILTER_LABELS, value);
 }
 
 const PERSIST_DEBOUNCE_MS = 150;
+const UPLOAD_CONCURRENCY = 4;
 
 const FADE_CONTROLS = [
   { key: "fade", label: "Bottom fade" },
   { key: "dim", label: "Top dim" },
+  { key: "fadeSolid", label: "Solid height" },
   { key: "fadeHeight", label: "Fade height" },
 ] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
 
@@ -193,8 +201,6 @@ const ROTATION_ORDER_LABELS: Readonly<Record<CustomBackgroundImageSource["order"
 const TRANSITION_LABELS: Readonly<Record<CustomBackgroundImageSource["transition"], string>> = {
   cut: "Cut",
   fade: "Fade",
-  zoom: "Zoom",
-  slide: "Slide",
 };
 
 function SourceOptionField<Value extends string>({
@@ -499,10 +505,9 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
   const [upload, setUpload] = useState<{
     busy: boolean;
     error: string | null;
-  }>({
-    busy: false,
-    error: null,
-  });
+    done: number;
+    total: number;
+  }>({ busy: false, error: null, done: 0, total: 0 });
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Flush the latest edit on unmount without waiting for a React update.
   const pendingRef = useRef<CustomBackgroundRecord | null>(null);
@@ -561,19 +566,27 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
     persistLibrary(upsertBackground(getClientSettings().customBackgrounds, next), next.id);
   };
 
-  // Files encode one at a time: each decode holds a full bitmap in memory.
+  // A few files encode at once; each decode holds a full bitmap in memory, so
+  // the pool stays small. Results keep the order the files were picked in.
   const uploadImages = async (files: ReadonlyArray<File>) => {
-    setUpload({ busy: true, error: null });
-    const imageIds: Array<CustomBackgroundImageId> = [];
+    setUpload({ busy: true, error: null, done: 0, total: files.length });
+    const stored: Array<CustomBackgroundImageId | null> = files.map(() => null);
     let error: string | null = null;
-    for (const file of files) {
-      const result = await storeBackgroundImage(file);
-      if (!mounted.current) return [];
-      if (result.ok) imageIds.push(result.image.id);
-      else error = describeUploadFailure(result.reason);
-    }
-    setUpload({ busy: false, error });
-    return imageIds;
+    let next = 0;
+    const worker = async () => {
+      while (next < files.length && mounted.current) {
+        const index = next;
+        next += 1;
+        const result = await storeBackgroundImage(files[index]!);
+        if (result.ok) stored[index] = result.image.id;
+        else error = describeUploadFailure(result.reason);
+        if (mounted.current) setUpload((previous) => ({ ...previous, done: previous.done + 1 }));
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, files.length) }, worker));
+    if (!mounted.current) return [];
+    setUpload({ busy: false, error, done: 0, total: 0 });
+    return stored.filter((id) => id !== null);
   };
 
   const createBackground = () => {
@@ -714,14 +727,14 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
               </label>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[13px] font-medium text-foreground">Background</span>
+              <span className="text-[13px] font-medium text-foreground">Playlist</span>
               <Button
                 size="xs"
                 variant="outline"
-                aria-label="Add background"
+                aria-label="Add playlist"
                 onClick={createBackground}
               >
-                <PlusIcon /> New background
+                <PlusIcon /> New playlist
               </Button>
             </div>
             <LibraryPicker
@@ -755,6 +768,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                       }
                       referencedImageIds={referencedImageIds}
                       busy={upload.busy}
+                      busyLabel={uploadLabel(upload)}
                       onToggle={(imageId) =>
                         commitRecord({
                           ...record,
@@ -903,7 +917,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
               </ScrollArea>
             ) : (
               <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 p-6 text-center text-[13px] text-muted-foreground">
-                Add a background to get started, or pick one to edit.
+                Add a playlist to get started, or pick one to edit.
               </div>
             )}
           </div>
