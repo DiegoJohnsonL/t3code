@@ -1,19 +1,16 @@
 import {
   type BooleanControlSpec,
   type ColorControlSpec,
-  type ColorListControlSpec,
   CustomBackgroundFilter,
   type CustomBackgroundControlSpec,
   type NumberControlSpec,
   customBackgroundFilterControls,
 } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
-import { PlusIcon, XIcon } from "lucide-react";
 import { type CSSProperties, useId, useMemo } from "react";
 
 import { cn } from "~/lib/utils";
 import { ThemeColorPicker } from "../settings/ThemeColorPicker";
-import { Button } from "../ui/button";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 
@@ -130,76 +127,21 @@ function ColorSwatch({
   label,
   value,
   onChange,
-  onRemove,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onRemove?: (() => void) | undefined;
 }) {
   return (
     <div className="flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 py-0.5 pr-2 pl-0.5">
       <ThemeColorPicker label={label} value={value} onChange={onChange} />
       <span className="max-w-24 truncate text-xs text-muted-foreground">{label}</span>
-      {onRemove ? (
-        <Button
-          size="icon-micro"
-          variant="ghost-muted"
-          aria-label={`Remove ${label}`}
-          onClick={onRemove}
-        >
-          <XIcon />
-        </Button>
-      ) : null}
     </div>
   );
 }
 
-function ColorListControl({
-  spec,
-  value,
-  onChange,
-}: {
-  spec: ColorListControlSpec;
-  value: ReadonlyArray<string>;
-  onChange: (value: ReadonlyArray<string>) => void;
-}) {
-  return (
-    <>
-      {value.map((color, index) => (
-        <ColorSwatch
-          // Colors repeat, so the slot is the identity.
-          // eslint-disable-next-line react/no-array-index-key
-          key={index}
-          label={`Color ${index + 1}`}
-          value={color}
-          onChange={(next) => onChange(value.map((entry, at) => (at === index ? next : entry)))}
-          onRemove={
-            value.length > spec.min
-              ? () => onChange(value.filter((_, at) => at !== index))
-              : undefined
-          }
-        />
-      ))}
-      {value.length < spec.max ? (
-        <Button
-          size="xs"
-          variant="ghost-muted"
-          className="rounded-full"
-          onClick={() => onChange([...value, value[value.length - 1] ?? "#888888"])}
-        >
-          <PlusIcon />
-          Add color
-        </Button>
-      ) : null}
-    </>
-  );
-}
-
-function isColorSpec(
-  spec: CustomBackgroundControlSpec,
-): spec is ColorControlSpec | ColorListControlSpec {
-  return spec.kind === "color" || spec.kind === "colors";
+function isColorSpec(spec: CustomBackgroundControlSpec): spec is ColorControlSpec {
+  return spec.kind === "color";
 }
 
 export function BackgroundControls({
@@ -300,20 +242,6 @@ export function BackgroundControls({
                     key={key}
                     label={spec.label}
                     value={typeof current === "string" ? current : spec.default}
-                    onChange={(value) => set(key, value)}
-                  />
-                );
-              }
-              if (spec.kind === "colors") {
-                return (
-                  <ColorListControl
-                    key={key}
-                    spec={spec}
-                    value={
-                      Array.isArray(current) && current.every((c) => typeof c === "string")
-                        ? current
-                        : spec.default
-                    }
                     onChange={(value) => set(key, value)}
                   />
                 );

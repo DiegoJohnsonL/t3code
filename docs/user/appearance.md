@@ -30,8 +30,8 @@ without replaying its transitions.
 
 ## Custom background
 
-On web and desktop, open **Settings → Appearance → Custom background** to put a picture or
-gradient behind chats. Images stay on that browser or desktop app. See
+On web and desktop, open **Settings → Appearance → Custom background** to put pictures
+behind chats. Images stay on that browser or desktop app. See
 [Custom background](./custom-background.md).
 
 ## Custom themes

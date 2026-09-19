@@ -18,7 +18,7 @@ export function CustomBackgroundSettings() {
     <SettingsSection id="appearance-background" title="Background">
       <SettingsRow
         {...searchableSetting("custom-background")}
-        description="Customize a picture or gradient directly behind your chats. Saved only on this client."
+        description="Put your own pictures behind your chats, with filters and rotation. Saved only on this client."
         status={
           active
             ? `Selected: “${active.name}”`

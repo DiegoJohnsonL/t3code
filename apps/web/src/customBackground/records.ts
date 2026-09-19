@@ -10,7 +10,6 @@ import {
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   defaultCustomBackgroundFilter,
-  isGenerativeCustomBackgroundFilter,
 } from "@t3tools/contracts";
 
 export type CustomBackgroundLibrary = ReadonlyArray<CustomBackgroundRecord>;
@@ -24,7 +23,7 @@ export function nextNewBackgroundName(library: CustomBackgroundLibrary): string 
   }
 }
 
-export function createGenerativeBackground(input: {
+export function createEmptyBackground(input: {
   id: string;
   name: string;
   filter: CustomBackgroundFilter;
@@ -58,7 +57,6 @@ export function removeBackground(
   return library.filter((record) => record.id !== id);
 }
 
-// Keep the image reference so switching back from a generative filter restores it.
 export function withFilterKind(
   record: CustomBackgroundRecord,
   kind: CustomBackgroundFilterKind,
@@ -71,16 +69,6 @@ export function nextActiveAfterRemove(activeId: string | null, removedId: string
   return activeId === removedId ? null : activeId;
 }
 
-export function backgroundUsesStoredImage(
-  record: CustomBackgroundRecord,
-  filtersAvailable: boolean,
-): record is CustomBackgroundRecord & { source: CustomBackgroundImageSource } {
-  return (
-    record.source.kind === "image" &&
-    (!filtersAvailable || !isGenerativeCustomBackgroundFilter(record.filter.kind))
-  );
-}
-
 export function backgroundDrawMode({
   filter,
   hasImage,
@@ -90,9 +78,8 @@ export function backgroundDrawMode({
   hasImage: boolean;
   filtersAvailable: boolean;
 }): "image" | "shader" | "none" {
-  if (filter.kind === "none" || !filtersAvailable) return hasImage ? "image" : "none";
-  if (isGenerativeCustomBackgroundFilter(filter.kind)) return "shader";
-  return hasImage ? "shader" : "none";
+  if (!hasImage) return "none";
+  return filter.kind === "none" || !filtersAvailable ? "image" : "shader";
 }
 
 export function backgroundIsRenderable(

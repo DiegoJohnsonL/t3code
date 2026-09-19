@@ -177,7 +177,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: "Custom background",
     to: "/settings/appearance",
     searchTerms: [
-      "image wallpaper dithering photo shader filter gradient customize toggle show hide",
+      "image wallpaper dithering photo shader filter rotation slideshow customize toggle show hide",
     ],
   },
   {

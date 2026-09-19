@@ -7,7 +7,6 @@ import {
   CustomBackgroundFilter,
   CustomBackgroundRecord,
   defaultCustomBackgroundFilter,
-  isGenerativeCustomBackgroundFilter,
 } from "./customBackground.ts";
 
 const decodeFilter = Schema.decodeUnknownSync(CustomBackgroundFilter);
@@ -53,9 +52,6 @@ describe("CustomBackgroundFilter", () => {
       decodeFilter({ ...defaultCustomBackgroundFilter("fluted-glass"), shape: "circle" }),
     ).toThrow();
     expect(() =>
-      decodeFilter({ ...defaultCustomBackgroundFilter("grain-gradient"), colors: [] }),
-    ).toThrow();
-    expect(() =>
       decodeFilter({ ...defaultCustomBackgroundFilter("image-dithering"), colorBack: "red" }),
     ).toThrow();
   });
@@ -65,21 +61,29 @@ describe("CustomBackgroundFilter", () => {
     expect(() => decodeFilter({ kind: "water" })).toThrow();
   });
 
-  it("separates generative filters from image filters", () => {
-    expect(isGenerativeCustomBackgroundFilter("static-mesh-gradient")).toBe(true);
-    expect(isGenerativeCustomBackgroundFilter("grain-gradient")).toBe(true);
-    expect(isGenerativeCustomBackgroundFilter("image-dithering")).toBe(false);
-    expect(isGenerativeCustomBackgroundFilter("none")).toBe(false);
+  it("loads the removed gradient and lens filters as no filter in saved records", () => {
+    for (const kind of ["lens-distortion", "static-mesh-gradient", "grain-gradient"]) {
+      expect(() => decodeFilter({ kind })).toThrow();
+      const record = decodeRecord({
+        id: "bg-1",
+        name: "Old",
+        source: { kind: "none" },
+        filter: { kind, scale: 1 },
+        fade: 50,
+        createdAt: "2026-09-08T00:00:00.000Z",
+      });
+      expect(record.filter).toEqual({ kind: "none" });
+    }
   });
 });
 
 describe("CustomBackgroundRecord", () => {
-  it("accepts a generative record without an image", () => {
+  it("accepts a record that has no image yet", () => {
     const record = decodeRecord({
       id: "bg-1",
-      name: "Mesh",
+      name: "Empty",
       source: { kind: "none" },
-      filter: defaultCustomBackgroundFilter("static-mesh-gradient"),
+      filter: defaultCustomBackgroundFilter("image-dithering"),
       fade: 50,
       dim: 60,
       fadeHeight: 60,

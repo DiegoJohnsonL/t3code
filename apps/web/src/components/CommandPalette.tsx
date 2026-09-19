@@ -2048,7 +2048,7 @@ function OpenCommandPaletteDialog(props: {
       "image",
       "shader",
       "filter",
-      "gradient",
+      "rotation",
       "studio",
     ],
     title: "Customize background",

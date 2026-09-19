@@ -6,8 +6,7 @@ import {
   appendBackgroundImage,
   backgroundDrawMode,
   backgroundIsRenderable,
-  backgroundUsesStoredImage,
-  createGenerativeBackground,
+  createEmptyBackground,
   currentBackgroundImageId,
   filtersEqual,
   nextActiveAfterRemove,
@@ -40,10 +39,10 @@ const sunset: CustomBackgroundRecord = {
   fadeHeight: 60,
   createdAt,
 };
-const mesh = createGenerativeBackground({
+const mesh = createEmptyBackground({
   id: "bg-2",
   name: "Mesh",
-  filter: defaultCustomBackgroundFilter("static-mesh-gradient"),
+  filter: defaultCustomBackgroundFilter("fluted-glass"),
   createdAt,
 });
 
@@ -78,15 +77,15 @@ describe("library edits", () => {
     expect(glass.filter.kind).toBe("fluted-glass");
     expect(glass.source).toEqual(sunset.source);
     expect(withFilterKind(glass, "fluted-glass")).toBe(glass);
-    const gradient = withFilterKind(glass, "grain-gradient");
-    expect(gradient.source).toEqual(sunset.source);
+    const plain = withFilterKind(glass, "none");
+    expect(plain.source).toEqual(sunset.source);
   });
 });
 
 describe("images", () => {
-  it("only renders records that have what their filter needs", () => {
+  it("only renders records that have an image", () => {
     expect(backgroundIsRenderable(sunset)).toBe(true);
-    expect(backgroundIsRenderable(mesh)).toBe(true);
+    expect(backgroundIsRenderable(mesh)).toBe(false);
     expect(backgroundIsRenderable({ ...sunset, source: { kind: "none" } })).toBe(false);
   });
 
@@ -107,19 +106,15 @@ describe("images", () => {
     ).toBe("none");
     expect(backgroundIsRenderable(sunset, false)).toBe(true);
     expect(backgroundIsRenderable(mesh, false)).toBe(false);
-    expect(backgroundUsesStoredImage(sunset, false)).toBe(true);
-    expect(backgroundUsesStoredImage({ ...mesh, source: sunset.source }, true)).toBe(false);
-    expect(backgroundUsesStoredImage({ ...mesh, source: sunset.source }, false)).toBe(true);
   });
 });
 
 describe("filtersEqual", () => {
-  it("compares parameters including color lists", () => {
-    const a = defaultCustomBackgroundFilter("grain-gradient");
-    expect(filtersEqual(a, defaultCustomBackgroundFilter("grain-gradient"))).toBe(true);
-    if (a.kind !== "grain-gradient") throw new Error("unexpected kind");
-    expect(filtersEqual(a, { ...a, colors: a.colors.toReversed() })).toBe(false);
-    expect(filtersEqual(a, { ...a, noise: a.noise + 0.01 })).toBe(false);
+  it("compares kind and parameters", () => {
+    const a = defaultCustomBackgroundFilter("fluted-glass");
+    expect(filtersEqual(a, defaultCustomBackgroundFilter("fluted-glass"))).toBe(true);
+    if (a.kind !== "fluted-glass") throw new Error("unexpected kind");
+    expect(filtersEqual(a, { ...a, blur: a.blur + 0.01 })).toBe(false);
     expect(filtersEqual(a, defaultCustomBackgroundFilter("image-dithering"))).toBe(false);
   });
 });

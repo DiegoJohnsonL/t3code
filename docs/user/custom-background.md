@@ -17,27 +17,24 @@ so you can turn it back on. Select **None** in the controller to deselect the ba
 
 ## Backgrounds
 
-A background is a picture (or nothing, for gradients), a filter, and a fade. Create one with
-the **+** button. New backgrounds start without an image or filter. Choose an image
-(JPEG, PNG, WebP, or HEIC) or a gradient filter, then edit the name. Delete backgrounds
-from the background picker; deleting one never deletes its image.
+A background is one or more pictures, a filter, and a fade. Create one with the **+**
+button. New backgrounds start without an image or filter. Choose images (JPEG, PNG, WebP,
+or HEIC), then edit the name. Delete backgrounds from the background picker; deleting one
+never deletes its images.
 
 ## Filters
 
-Filters are shaders from Paper. Their controls match the ones in Paper's playgrounds.
-Every filter renders a single still frame; Grain gradient exposes a **Variation** slider
-to pick the frame instead of animating.
+Filters are shaders from Paper that repaint your picture. Their controls match the ones in
+Paper's playgrounds, and every filter renders a single still frame.
 
-- Image filters: Dithering, Fluted glass, Lens distortion. Choose **No filter**
+- **Dithering** and **Fluted glass**. Choose **No filter**
   to show the picture as is. Dithering starts from a **Look** preset. **Original** keeps the
   picture's colors, **Faded** does too and also sets the fade sliders so the bottom melts
   into your theme color, while **Violet**, **Terminal**, and **Mono** repaint it in a
   tinted palette. Every slider stays editable after picking one.
-- Gradient filters: Mesh gradient and Grain gradient paint the whole picture themselves and
-  ignore the image.
 
 Filters need WebGL. In a browser without it the controller says so and turns the filter
-selector off. A picture still shows without a filter; gradient-only backgrounds draw nothing.
+selector off. The picture still shows, without its filter.
 
 ## Fade
 

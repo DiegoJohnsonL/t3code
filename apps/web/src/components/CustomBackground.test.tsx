@@ -32,7 +32,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("renders gradients with a missing retained photo and hides image filters until it returns", async () => {
+it("draws nothing while the photo is missing, whatever the filter", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const record: CustomBackgroundRecord = {
     id: "background",
@@ -55,13 +55,12 @@ it("renders gradients with a missing retained photo and hides image filters unti
     renderer = create(<CustomBackground routeKind="draft" />);
   });
   expect(renderer?.toJSON()).toBeNull();
-  for (const kind of ["static-mesh-gradient", "grain-gradient", "none"] as const) {
+  for (const kind of ["fluted-glass", "none"] as const) {
     state.selected = { ...record, filter: defaultCustomBackgroundFilter(kind) };
     // Remount to read the selected record from the mocked settings boundary.
     await act(async () => {
       renderer?.update(<CustomBackground key={kind} routeKind="draft" />);
     });
-    if (kind === "none") expect(renderer?.toJSON()).toBeNull();
-    else expect(JSON.stringify(renderer?.toJSON())).toContain("Rendered background");
+    expect(renderer?.toJSON()).toBeNull();
   }
 });

@@ -1,10 +1,4 @@
-import {
-  FlutedGlass,
-  GrainGradient,
-  ImageDithering,
-  LensDistortion,
-  StaticMeshGradient,
-} from "@paper-design/shaders-react";
+import { FlutedGlass, ImageDithering } from "@paper-design/shaders-react";
 import type { CustomBackgroundFilter, CustomBackgroundTransition } from "@t3tools/contracts";
 import { memo, useEffect, useState } from "react";
 
@@ -37,19 +31,6 @@ function ShaderLayer({ filter, image }: { filter: CustomBackgroundFilter; image:
       if (!image) return null;
       const { kind: _kind, ...params } = filter;
       return <FlutedGlass image={image} {...params} {...SHADER_PROPS} />;
-    }
-    case "lens-distortion": {
-      if (!image) return null;
-      const { kind: _kind, ...params } = filter;
-      return <LensDistortion image={image} {...params} {...SHADER_PROPS} />;
-    }
-    case "static-mesh-gradient": {
-      const { kind: _kind, colors, ...params } = filter;
-      return <StaticMeshGradient colors={[...colors]} {...params} {...SHADER_PROPS} />;
-    }
-    case "grain-gradient": {
-      const { kind: _kind, colors, variation, ...params } = filter;
-      return <GrainGradient colors={[...colors]} frame={variation} {...params} {...SHADER_PROPS} />;
     }
     default: {
       const _exhaustive: never = filter;
@@ -118,7 +99,7 @@ function useSlides(image: string | null, transition: CustomBackgroundTransition)
 
 export interface BackgroundRendererProps {
   filter: CustomBackgroundFilter;
-  /** Object URL of the source image; null for generative filters or while loading. */
+  /** Object URL of the source image; null while it loads. */
   image: string | null;
   transition: CustomBackgroundTransition;
   fade: BackgroundFade;

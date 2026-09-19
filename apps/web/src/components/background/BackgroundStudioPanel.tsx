@@ -1,6 +1,5 @@
 import {
-  CUSTOM_BACKGROUND_IMAGE_FILTERS,
-  CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
+  CUSTOM_BACKGROUND_FILTERS,
   CUSTOM_BACKGROUND_NAME_MAX_LENGTH,
   CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS,
   CUSTOM_BACKGROUND_ROTATION_ORDERS,
@@ -15,7 +14,6 @@ import {
   MAX_CUSTOM_BACKGROUND_FADE,
   MIN_CUSTOM_BACKGROUND_FADE,
   defaultCustomBackgroundFilter,
-  isGenerativeCustomBackgroundFilter,
 } from "@t3tools/contracts";
 import {
   BanIcon,
@@ -26,7 +24,6 @@ import {
   XIcon,
   ChevronsUpDownIcon,
   PlusIcon,
-  SparklesIcon,
   Trash2Icon,
   Undo2Icon,
 } from "lucide-react";
@@ -39,7 +36,7 @@ import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
   type CustomBackgroundLibrary,
   appendBackgroundImage,
-  createGenerativeBackground,
+  createEmptyBackground,
   sourcesEqual,
   toggleBackgroundImage,
   filtersEqual,
@@ -80,9 +77,6 @@ const FILTER_LABELS: Readonly<Record<CustomBackgroundFilterKind, string>> = {
   none: "No filter",
   "image-dithering": "Dithering",
   "fluted-glass": "Fluted glass",
-  "lens-distortion": "Lens distortion",
-  "static-mesh-gradient": "Mesh gradient",
-  "grain-gradient": "Grain gradient",
 };
 
 function isFilterKind(value: unknown): value is CustomBackgroundFilterKind {
@@ -252,8 +246,15 @@ function RotationFields({
   source: CustomBackgroundImageSource;
   onChange: (source: CustomBackgroundImageSource) => void;
 }) {
+  const rotating = source.imageIds.length > 1;
   return (
     <>
+      <h3 className="text-[13px] font-medium">Rotation</h3>
+      {rotating ? null : (
+        <p className="text-xs text-muted-foreground">
+          Pick two or more images to rotate through them. These settings apply once you do.
+        </p>
+      )}
       <RotationIntervalField source={source} onChange={onChange} />
       <SourceOptionField
         label="Order"
@@ -269,7 +270,7 @@ function RotationFields({
         labels={TRANSITION_LABELS}
         onChange={(transition) => onChange({ ...source, transition })}
       />
-      <RotationStepRow />
+      {rotating ? <RotationStepRow /> : null}
     </>
   );
 }
@@ -348,7 +349,6 @@ function LibraryThumb({
   className: string;
 }) {
   const imageId = record?.source.kind === "image" ? (record.source.imageIds[0] ?? null) : null;
-  const generative = record ? isGenerativeCustomBackgroundFilter(record.filter.kind) : false;
   if (record === null) {
     return (
       <span
@@ -358,15 +358,6 @@ function LibraryThumb({
         )}
       >
         <BanIcon className="size-4" />
-      </span>
-    );
-  }
-  if (generative) {
-    return (
-      <span
-        className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}
-      >
-        <SparklesIcon className="size-4" />
       </span>
     );
   }
@@ -587,7 +578,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
 
   const createBackground = () => {
     addRecord(
-      createGenerativeBackground({
+      createEmptyBackground({
         id: randomUUID(),
         name: nextNewBackgroundName(getClientSettings().customBackgrounds),
         filter: defaultCustomBackgroundFilter("none"),
@@ -757,54 +748,51 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                       }
                     />
                   </div>
-                  {!isGenerativeCustomBackgroundFilter(record.filter.kind) || !filtersAvailable ? (
-                    <>
-                      <BackgroundImagePicker
-                        selectedImageIds={
-                          record.source.kind === "image" ? record.source.imageIds : []
-                        }
-                        referencedImageIds={referencedImageIds}
-                        busy={upload.busy}
-                        onToggle={(imageId) =>
-                          commitRecord({
-                            ...record,
-                            source: toggleBackgroundImage(record.source, imageId),
-                          })
-                        }
-                        onUpload={(files) => {
-                          void uploadImages(files).then((imageIds) => {
-                            if (imageIds.length > 0) {
-                              flushPending();
-                              const current = getClientSettings().customBackgrounds;
-                              // Add the image only to a surviving record whose images
-                              // did not change meanwhile. Edits made during encoding,
-                              // including edits to another selection, win.
-                              persistLibrary(
-                                current.map((entry) =>
-                                  entry.id === record.id &&
-                                  sourcesEqual(entry.source, record.source)
-                                    ? {
-                                        ...entry,
-                                        source: imageIds.reduce<CustomBackgroundSource>(
-                                          appendBackgroundImage,
-                                          entry.source,
-                                        ),
-                                      }
-                                    : entry,
-                                ),
-                              );
-                            }
-                          });
-                        }}
+                  <>
+                    <BackgroundImagePicker
+                      selectedImageIds={
+                        record.source.kind === "image" ? record.source.imageIds : []
+                      }
+                      referencedImageIds={referencedImageIds}
+                      busy={upload.busy}
+                      onToggle={(imageId) =>
+                        commitRecord({
+                          ...record,
+                          source: toggleBackgroundImage(record.source, imageId),
+                        })
+                      }
+                      onUpload={(files) => {
+                        void uploadImages(files).then((imageIds) => {
+                          if (imageIds.length > 0) {
+                            flushPending();
+                            const current = getClientSettings().customBackgrounds;
+                            // Add the image only to a surviving record whose images
+                            // did not change meanwhile. Edits made during encoding,
+                            // including edits to another selection, win.
+                            persistLibrary(
+                              current.map((entry) =>
+                                entry.id === record.id && sourcesEqual(entry.source, record.source)
+                                  ? {
+                                      ...entry,
+                                      source: imageIds.reduce<CustomBackgroundSource>(
+                                        appendBackgroundImage,
+                                        entry.source,
+                                      ),
+                                    }
+                                  : entry,
+                              ),
+                            );
+                          }
+                        });
+                      }}
+                    />
+                    {record.source.kind === "image" ? (
+                      <RotationFields
+                        source={record.source}
+                        onChange={(source) => commitRecord({ ...record, source })}
                       />
-                      {record.source.kind === "image" && record.source.imageIds.length > 1 ? (
-                        <RotationFields
-                          source={record.source}
-                          onChange={(source) => commitRecord({ ...record, source })}
-                        />
-                      ) : null}
-                    </>
-                  ) : null}
+                    ) : null}
+                  </>
 
                   <h3 className="text-[13px] font-medium">Filter</h3>
                   {!filtersAvailable ? (
@@ -835,12 +823,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                           <SelectItem hideIndicator value="none">
                             {FILTER_LABELS.none}
                           </SelectItem>
-                          {CUSTOM_BACKGROUND_IMAGE_FILTERS.map(({ kind }) => (
-                            <SelectItem key={kind} hideIndicator value={kind}>
-                              {FILTER_LABELS[kind]}
-                            </SelectItem>
-                          ))}
-                          {CUSTOM_BACKGROUND_GENERATIVE_FILTERS.map(({ kind }) => (
+                          {CUSTOM_BACKGROUND_FILTERS.map(({ kind }) => (
                             <SelectItem key={kind} hideIndicator value={kind}>
                               {FILTER_LABELS[kind]}
                             </SelectItem>

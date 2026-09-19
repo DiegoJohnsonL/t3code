@@ -6,7 +6,6 @@ import { useBackgroundImageUrl } from "~/customBackground/imageStore";
 import {
   type CustomBackgroundRouteKind,
   backgroundIsRenderable,
-  backgroundUsesStoredImage,
   currentBackgroundImageId,
   resolveDisplayedBackground,
   upcomingBackgroundImageId,
@@ -43,10 +42,7 @@ export const CustomBackground = memo(function CustomBackground({
     inConversations,
   });
   const filtersAvailable = isWebGlAvailable();
-  const source =
-    record !== null && backgroundUsesStoredImage(record, filtersAvailable)
-      ? record.source
-      : ({ kind: "none" } as const);
+  const source = record?.source ?? ({ kind: "none" } as const);
   const now = useRotationClock(source);
   const offset = useRotationOffsetStore((store) => store.offset);
   const imageId = currentBackgroundImageId(source, now, offset);

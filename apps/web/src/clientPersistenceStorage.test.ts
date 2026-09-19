@@ -1,7 +1,7 @@
 import { DEFAULT_CLIENT_SETTINGS, defaultCustomBackgroundFilter } from "@t3tools/contracts";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { createGenerativeBackground } from "./customBackground/records";
+import { createEmptyBackground } from "./customBackground/records";
 
 function createLocalStorageStub(): Storage {
   const store = new Map<string, string>();
@@ -80,10 +80,10 @@ describe("clientPersistenceStorage", () => {
   ])("keeps background visibility after reload: %j", async ({ enabled, inConversations }) => {
     getTestWindow();
     const { writeBrowserClientSettings } = await import("./clientPersistenceStorage");
-    const record = createGenerativeBackground({
+    const record = createEmptyBackground({
       id: "saved-background",
       name: "Mesh",
-      filter: defaultCustomBackgroundFilter("static-mesh-gradient"),
+      filter: defaultCustomBackgroundFilter("image-dithering"),
       createdAt: "2026-09-08T00:00:00.000Z",
     });
     const settings = {

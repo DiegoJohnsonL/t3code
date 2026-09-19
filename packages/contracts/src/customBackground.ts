@@ -51,20 +51,11 @@ export interface ColorControlSpec {
   readonly default: CustomBackgroundColor;
 }
 
-export interface ColorListControlSpec {
-  readonly kind: "colors";
-  readonly label: string;
-  readonly min: number;
-  readonly max: number;
-  readonly default: ReadonlyArray<CustomBackgroundColor>;
-}
-
 export type CustomBackgroundControlSpec =
   | NumberControlSpec
   | SelectControlSpec
   | BooleanControlSpec
-  | ColorControlSpec
-  | ColorListControlSpec;
+  | ColorControlSpec;
 
 function number(
   label: string,
@@ -98,30 +89,12 @@ function color(label: string, defaultValue: string): ColorControlSpec {
   return { kind: "color", label, default: defaultValue };
 }
 
-function colors(
-  label: string,
-  range: { min: number; max: number },
-  defaultValue: ReadonlyArray<string>,
-): ColorListControlSpec {
-  return { kind: "colors", label, ...range, default: defaultValue };
-}
-
 const UNIT = { min: 0, max: 1, step: 0.01 } as const;
 const SIGNED_UNIT = { min: -1, max: 1, step: 0.02 } as const;
 const IMAGE_SCALE = { min: 0.1, max: 4, step: 0.04 } as const;
-const PATTERN_SCALE = { min: 0.01, max: 4, step: 0.04 } as const;
-const ROTATION = { min: 0, max: 360, step: 4 } as const;
-/**
- * Shaders that read time render one frame at this offset (milliseconds) and
- * never animate, so scrubbing it picks a still.
- */
-const VARIATION = { min: 0, max: 30_000, step: 250 } as const;
 
 const fit = select("Fit", ["contain", "cover"], "cover");
 const imageScale = number("Scale", IMAGE_SCALE, 1);
-const grainMixer = number("Grain mixer", UNIT, 0);
-const grainOverlay = number("Grain overlay", UNIT, 0);
-const variation = number("Variation", VARIATION, 0);
 
 type ControlSchema<Spec> =
   Spec extends SelectControlSpec<infer Option>
@@ -132,9 +105,7 @@ type ControlSchema<Spec> =
         ? Schema.Boolean
         : Spec extends ColorControlSpec
           ? typeof CustomBackgroundColor
-          : Spec extends ColorListControlSpec
-            ? Schema.$Array<typeof CustomBackgroundColor>
-            : never;
+          : never;
 
 type ControlFields<Controls extends Record<string, CustomBackgroundControlSpec>> = {
   readonly [Key in keyof Controls]: ControlSchema<Controls[Key]>;
@@ -154,11 +125,6 @@ function controlSchema(spec: CustomBackgroundControlSpec): Schema.Top {
       return Schema.Boolean;
     case "color":
       return CustomBackgroundColor;
-    case "colors":
-      return Schema.Array(CustomBackgroundColor).check(
-        Schema.isMinLength(spec.min),
-        Schema.isMaxLength(spec.max),
-      );
     default: {
       const _exhaustive: never = spec;
       return _exhaustive;
@@ -301,109 +267,33 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
 ];
 
 export const FLUTED_GLASS_FILTER = defineFilter("fluted-glass", {
-  size: number("Size", { min: 0, max: 1, step: 0.001 }, 0.7),
-  shape: select(
-    "Shape",
-    ["lines", "linesIrregular", "wave", "zigzag", "pattern"],
-    "linesIrregular",
-  ),
-  angle: number("Angle", { min: 0, max: 180, step: 2 }, 30),
-  distortion: number("Distortion", UNIT, 1),
+  size: number("Size", { min: 0, max: 1, step: 0.001 }, 0.5),
+  shape: select("Shape", ["lines", "linesIrregular", "wave", "zigzag", "pattern"], "lines"),
+  angle: number("Angle", { min: 0, max: 180, step: 2 }, 0),
+  distortion: number("Distortion", UNIT, 0.5),
   distortionShape: select(
     "Distortion shape",
     ["prism", "lens", "contour", "cascade", "flat"],
-    "flat",
+    "prism",
   ),
   shift: number("Shift", SIGNED_UNIT, 0),
-  stretch: number("Stretch", UNIT, 1),
-  highlights: number("Highlights", UNIT, 0),
-  shadows: number("Shadows", UNIT, 0),
-  edges: number("Edges", UNIT, 0.5),
-  blur: number("Blur", UNIT, 1),
+  stretch: number("Stretch", UNIT, 0),
+  highlights: number("Highlights", UNIT, 0.1),
+  shadows: number("Shadows", UNIT, 0.25),
+  edges: number("Edges", UNIT, 0.25),
+  blur: number("Blur", UNIT, 0),
   margin: number("Margin", UNIT, 0),
-  grainMixer: number("Grain mixer", UNIT, 0.1),
-  grainOverlay: number("Grain overlay", UNIT, 0.1),
+  grainMixer: number("Grain mixer", UNIT, 0),
+  grainOverlay: number("Grain overlay", UNIT, 0),
   colorBack: color("Background", "#00000000"),
   colorHighlight: color("Highlight", "#ffffff"),
   colorShadow: color("Shadow", "#000000"),
   fit,
-  scale: number("Scale", IMAGE_SCALE, 4),
-});
-
-export const LENS_DISTORTION_FILTER = defineFilter("lens-distortion", {
-  count: integer("Count", { min: 2, max: 50 }, 17),
-  angle: number("Angle", ROTATION, 12),
-  spread: number("Spread", UNIT, 0.08),
-  lensCircle: number("Lens circle", UNIT, 0),
-  lensBulge: number("Lens bulge", SIGNED_UNIT, -1),
-  swirl: number("Swirl", SIGNED_UNIT, 0),
-  bias: number("Bias", SIGNED_UNIT, 1),
-  perspective: number("Perspective", UNIT, 0.18),
-  dispersion: number("Dispersion", UNIT, 0.81),
-  dispersionColor: number("Dispersion color", UNIT, 0.45),
-  dispersionShift: number("Dispersion shift", SIGNED_UNIT, 0.18),
-  focusCenter: number("Focus center", UNIT, 0.8),
-  focusEdges: number("Focus edges", UNIT, 1),
-  noise: number("Noise", UNIT, 0),
-  noiseFrequency: number("Noise frequency", UNIT, 0.25),
-  noiseOffset: number("Noise offset", UNIT, 0),
-  grainMixer,
-  grainOverlay,
-  imageX: number("Image X", SIGNED_UNIT, 0),
-  imageY: number("Image Y", SIGNED_UNIT, 0),
-  fit: select("Fit", ["contain", "cover"], "contain"),
   scale: imageScale,
 });
 
-export const STATIC_MESH_GRADIENT_FILTER = defineFilter("static-mesh-gradient", {
-  colors: colors("Colors", { min: 1, max: 10 }, ["#000000", "#000000", "#122d4e", "#2f6a6a"]),
-  positions: integer("Positions", { min: 0, max: 100 }, 2),
-  waveX: number("Wave X", UNIT, 1),
-  waveXShift: number("Wave X shift", UNIT, 0.6),
-  waveY: number("Wave Y", UNIT, 1),
-  waveYShift: number("Wave Y shift", UNIT, 0.21),
-  mixing: number("Mixing", UNIT, 0.93),
-  grainMixer,
-  grainOverlay,
-  offsetX: number("Offset X", SIGNED_UNIT, 0),
-  offsetY: number("Offset Y", SIGNED_UNIT, 0),
-  rotation: number("Rotation", ROTATION, 270),
-  scale: number("Scale", PATTERN_SCALE, 1),
-});
-
-export const GRAIN_GRADIENT_FILTER = defineFilter("grain-gradient", {
-  colorBack: color("Background", "#000000"),
-  colors: colors("Colors", { min: 1, max: 7 }, ["#22edee", "#fd0f9a", "#22d3ee", "#000000"]),
-  shape: select(
-    "Shape",
-    ["wave", "dots", "truchet", "corners", "ripple", "blob", "sphere"],
-    "wave",
-  ),
-  softness: number("Softness", UNIT, 0.7),
-  intensity: number("Intensity", UNIT, 0.5),
-  noise: number("Noise", UNIT, 0.2),
-  variation,
-  offsetX: number("Offset X", SIGNED_UNIT, 0),
-  offsetY: number("Offset Y", SIGNED_UNIT, 0),
-  rotation: number("Rotation", ROTATION, 0),
-  scale: number("Scale", PATTERN_SCALE, 1),
-});
-
-export const CUSTOM_BACKGROUND_IMAGE_FILTERS = [
-  IMAGE_DITHERING_FILTER,
-  FLUTED_GLASS_FILTER,
-  LENS_DISTORTION_FILTER,
-] as const;
-
-export const CUSTOM_BACKGROUND_GENERATIVE_FILTERS = [
-  STATIC_MESH_GRADIENT_FILTER,
-  GRAIN_GRADIENT_FILTER,
-] as const;
-
-export const CUSTOM_BACKGROUND_FILTERS = [
-  ...CUSTOM_BACKGROUND_IMAGE_FILTERS,
-  ...CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
-] as const;
+/** Every filter repaints the picture; a background is always an image. */
+export const CUSTOM_BACKGROUND_FILTERS = [IMAGE_DITHERING_FILTER, FLUTED_GLASS_FILTER] as const;
 
 export const NoCustomBackgroundFilter = Schema.Struct({ kind: Schema.Literal("none") });
 
@@ -413,19 +303,9 @@ export const CustomBackgroundFilter = Schema.Union([
 ]);
 export type CustomBackgroundFilter = typeof CustomBackgroundFilter.Type;
 export type CustomBackgroundFilterKind = CustomBackgroundFilter["kind"];
-export type CustomBackgroundImageFilterKind =
-  (typeof CUSTOM_BACKGROUND_IMAGE_FILTERS)[number]["kind"];
-export type CustomBackgroundGenerativeFilterKind =
-  (typeof CUSTOM_BACKGROUND_GENERATIVE_FILTERS)[number]["kind"];
 
 export const DEFAULT_CUSTOM_BACKGROUND_FILTER: CustomBackgroundFilter =
   IMAGE_DITHERING_FILTER.defaults;
-
-export function isGenerativeCustomBackgroundFilter(
-  kind: CustomBackgroundFilterKind,
-): kind is CustomBackgroundGenerativeFilterKind {
-  return CUSTOM_BACKGROUND_GENERATIVE_FILTERS.some((filter) => filter.kind === kind);
-}
 
 export function customBackgroundFilterControls(
   kind: Exclude<CustomBackgroundFilterKind, "none">,
@@ -491,6 +371,9 @@ export const CustomBackgroundSource = Schema.Union([
 export type CustomBackgroundSource = typeof CustomBackgroundSource.Type;
 
 const RetiredCustomBackgroundFilterKind = Schema.Literals([
+  "lens-distortion",
+  "static-mesh-gradient",
+  "grain-gradient",
   "paper-texture",
   "water",
   "halftone-dots",
