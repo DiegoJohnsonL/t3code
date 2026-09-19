@@ -58,19 +58,34 @@ function ShaderLayer({ filter, image }: { filter: CustomBackgroundFilter; image:
   }
 }
 
-function fadeOverlayStyle(fade: number): React.CSSProperties {
-  const stop = (share: number) =>
-    `color-mix(in srgb, var(--background) ${Math.round(fade * share)}%, transparent)`;
-  return {
-    background: `linear-gradient(to top, ${stop(1)}, ${stop(0.65)} 50%, ${stop(0.8)})`,
-  };
+export interface BackgroundFade {
+  fade: number;
+  dim: number;
+  fadeHeight: number;
+}
+
+const FADE_STOPS = 8;
+
+// Smoothstep between the bottom fade and the dim level so the overlay eases
+// out instead of showing a hard band where the ramp ends.
+export function fadeOverlayGradient({ fade, dim, fadeHeight }: BackgroundFade): string {
+  const stop = (opacity: number, position: number) =>
+    `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${position}%`;
+  const stops: string[] = [];
+  for (let index = 0; index <= FADE_STOPS; index += 1) {
+    const t = index / FADE_STOPS;
+    const eased = t * t * (3 - 2 * t);
+    stops.push(stop(fade + (dim - fade) * eased, Math.round(t * fadeHeight)));
+  }
+  stops.push(stop(dim, 100));
+  return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
 export interface BackgroundRendererProps {
   filter: CustomBackgroundFilter;
   /** Object URL of the source image; null for generative filters or while loading. */
   image: string | null;
-  fade: number;
+  fade: BackgroundFade;
   /** When false, skip Paper entirely and draw the photo if one is loaded. */
   filtersAvailable: boolean;
 }
@@ -94,7 +109,7 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
       ) : (
         <ShaderLayer filter={filter} image={image} />
       )}
-      <div className="absolute inset-0" style={fadeOverlayStyle(fade)} />
+      <div className="absolute inset-0" style={{ background: fadeOverlayGradient(fade) }} />
     </div>
   );
 });

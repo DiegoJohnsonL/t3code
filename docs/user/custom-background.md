@@ -40,8 +40,11 @@ selector off. A picture still shows without a filter; gradient-only backgrounds 
 
 ## Fade
 
-**Fade** blends your theme's background color over the picture, strongest at the bottom
-where the composer sits. 100% is the shipped look; lower it to see more of the picture.
+Three sliders blend your theme's background color over the picture. **Bottom fade** is
+the strength at the bottom edge where the composer sits; 100% goes solid. **Top dim** is
+the strength above the fade, so lower it to see more of the picture. **Fade height** is how
+far up the fade climbs before it settles at the dim level. For a picture that melts into
+black at the bottom, keep bottom fade at 100% and raise fade height.
 
 ## Images
 

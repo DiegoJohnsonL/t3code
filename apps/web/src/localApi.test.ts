@@ -163,6 +163,8 @@ describe("LocalApi", () => {
           source: { kind: "image" as const, imageId: "a".repeat(64) },
           filter: { kind: "none" as const },
           fade: 100,
+          dim: 60,
+          fadeHeight: 60,
           createdAt: "2026-09-08T00:00:00.000Z",
         },
       ],

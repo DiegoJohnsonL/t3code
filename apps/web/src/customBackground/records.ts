@@ -3,7 +3,9 @@ import {
   type CustomBackgroundFilterKind,
   type CustomBackgroundImageId,
   type CustomBackgroundRecord,
+  DEFAULT_CUSTOM_BACKGROUND_DIM,
   DEFAULT_CUSTOM_BACKGROUND_FADE,
+  DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
   defaultCustomBackgroundFilter,
   isGenerativeCustomBackgroundFilter,
 } from "@t3tools/contracts";
@@ -31,6 +33,8 @@ export function createGenerativeBackground(input: {
     source: { kind: "none" },
     filter: input.filter,
     fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
+    dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
+    fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
     createdAt: input.createdAt,
   };
 }

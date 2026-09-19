@@ -24,6 +24,8 @@ const sunset: CustomBackgroundRecord = {
   source: { kind: "image", imageId },
   filter: defaultCustomBackgroundFilter("image-dithering"),
   fade: 100,
+  dim: 60,
+  fadeHeight: 60,
   createdAt,
 };
 const mesh = createGenerativeBackground({

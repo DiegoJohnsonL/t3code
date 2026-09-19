@@ -52,7 +52,7 @@ export const CustomBackground = memo(function CustomBackground({
         <BackgroundRenderer
           filter={record.filter}
           image={typeof image === "string" ? image : null}
-          fade={record.fade}
+          fade={{ fade: record.fade, dim: record.dim, fadeHeight: record.fadeHeight }}
           filtersAvailable={filtersAvailable}
         />
       </Suspense>

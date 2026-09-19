@@ -1,3 +1,4 @@
+import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 import { TrimmedNonEmptyString } from "./baseSchemas.ts";
@@ -429,11 +430,12 @@ export type CustomBackgroundSource = typeof CustomBackgroundSource.Type;
 
 export const MIN_CUSTOM_BACKGROUND_FADE = 0;
 export const MAX_CUSTOM_BACKGROUND_FADE = 100;
-/**
- * Percentage scaling the theme-colored overlay: 100 is opaque at the bottom
- * edge and lighter toward the top, 0 shows the raw picture.
- */
+/** Opacity of the theme background at the bottom edge; 100 hides the picture there. */
 export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
+/** Opacity of the theme background above the fade, where the picture shows most. */
+export const DEFAULT_CUSTOM_BACKGROUND_DIM = 60;
+/** How far up from the bottom edge, in percent of the pane, the fade climbs before it settles at the dim level. */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 60;
 export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
@@ -472,6 +474,12 @@ export const CustomBackgroundRecord = Schema.Struct({
   source: CustomBackgroundSource,
   filter: CustomBackgroundRecordFilter,
   fade: CustomBackgroundFade,
+  dim: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_DIM)),
+  ),
+  fadeHeight: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT)),
+  ),
   createdAt: Schema.String,
 });
 export type CustomBackgroundRecord = typeof CustomBackgroundRecord.Type;

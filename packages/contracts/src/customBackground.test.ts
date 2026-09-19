@@ -78,6 +78,8 @@ describe("CustomBackgroundRecord", () => {
       source: { kind: "none" },
       filter: defaultCustomBackgroundFilter("static-mesh-gradient"),
       fade: 50,
+      dim: 60,
+      fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     });
     expect(record.source.kind).toBe("none");
@@ -90,6 +92,8 @@ describe("CustomBackgroundRecord", () => {
       source: { kind: "none" },
       filter: { kind: "none" },
       fade: 50,
+      dim: 60,
+      fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     };
     expect(() => decodeRecord({ ...base, name: "   " })).toThrow();
@@ -104,6 +108,8 @@ describe("CustomBackgroundRecord", () => {
       source: { kind: "image", imageId: "a".repeat(64) },
       filter: { kind: "water", size: 1 },
       fade: 50,
+      dim: 60,
+      fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     });
     expect(record.filter).toEqual({ kind: "none" });

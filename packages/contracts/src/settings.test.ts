@@ -961,6 +961,8 @@ describe("ClientSettings custom backgrounds", () => {
     source: { kind: "image", imageId: "a".repeat(64) },
     filter: { kind: "none" },
     fade: 70,
+    dim: 60,
+    fadeHeight: 60,
     createdAt: "2026-09-08T00:00:00.000Z",
   };
 

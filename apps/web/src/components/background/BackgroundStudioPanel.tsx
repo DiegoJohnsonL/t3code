@@ -78,6 +78,12 @@ function isFilterKind(value: unknown): value is CustomBackgroundFilterKind {
 
 const PERSIST_DEBOUNCE_MS = 150;
 
+const FADE_CONTROLS = [
+  { key: "fade", label: "Bottom fade" },
+  { key: "dim", label: "Top dim" },
+  { key: "fadeHeight", label: "Fade height" },
+] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
+
 function describeUploadFailure(reason: string): string {
   switch (reason) {
     case "too-large":
@@ -704,20 +710,23 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                     </p>
                   ) : null}
 
-                  <RangeControl
-                    label="Fade"
-                    min={MIN_CUSTOM_BACKGROUND_FADE}
-                    max={MAX_CUSTOM_BACKGROUND_FADE}
-                    step={5}
-                    value={record.fade}
-                    format={(value) => `${Math.round(value)}%`}
-                    onChange={(fade) =>
-                      commitRecord({
-                        ...record,
-                        fade: Math.round(fade),
-                      })
-                    }
-                  />
+                  {FADE_CONTROLS.map(({ key, label }) => (
+                    <RangeControl
+                      key={key}
+                      label={label}
+                      min={MIN_CUSTOM_BACKGROUND_FADE}
+                      max={MAX_CUSTOM_BACKGROUND_FADE}
+                      step={5}
+                      value={record[key]}
+                      format={(value) => `${Math.round(value)}%`}
+                      onChange={(value) =>
+                        commitRecord({
+                          ...record,
+                          [key]: Math.round(value),
+                        })
+                      }
+                    />
+                  ))}
 
                   {filtersAvailable ? (
                     <DitheringPresetRow

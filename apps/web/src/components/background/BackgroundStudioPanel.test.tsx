@@ -87,6 +87,8 @@ const original: CustomBackgroundRecord = {
   name: "First",
   createdAt: "2026-09-11",
   fade: 100,
+  dim: 60,
+  fadeHeight: 60,
   source: { kind: "none" },
   filter: defaultCustomBackgroundFilter("none"),
 };
@@ -133,12 +135,14 @@ it("preserves both persisted and pending edits when encoding finishes", async ()
   });
   act(() => renderer.root.findByProps({ "aria-label": "Background name" }).props.onBlur());
   act(() => vi.advanceTimersByTime(150));
-  act(() => renderer.root.findByType(RangeControl).props.onChange(35));
+  act(() => renderer.root.findAllByType(RangeControl)[0]!.props.onChange(35));
   await act(async () => finishUpload());
   expect(state.settings?.customBackgrounds[0]).toEqual({
     ...original,
     name: "Renamed",
     fade: 35,
+    dim: 60,
+    fadeHeight: 60,
     source: { kind: "image", imageId: uploadedId },
   });
 });
@@ -154,7 +158,7 @@ it("does not resurrect a background deleted during encoding", async () => {
 
 it("keeps pending changes and selection on another background", async () => {
   act(() => renderer.root.findByProps({ "aria-label": "Second, No filter" }).props.onClick());
-  act(() => renderer.root.findByType(RangeControl).props.onChange(20));
+  act(() => renderer.root.findAllByType(RangeControl)[0]!.props.onChange(20));
   await act(async () => finishUpload());
   expect(state.settings?.activeCustomBackgroundId).toBe(other.id);
   expect(state.settings?.customBackgrounds).toEqual([
