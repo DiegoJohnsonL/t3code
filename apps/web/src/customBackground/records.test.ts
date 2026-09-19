@@ -12,6 +12,7 @@ import {
   filtersEqual,
   nextActiveAfterRemove,
   nextBackgroundRotationAt,
+  shuffledOrder,
   nextNewBackgroundName,
   removeBackground,
   resolveDisplayedBackground,
@@ -26,7 +27,13 @@ const createdAt = "2026-09-08T00:00:00.000Z";
 const sunset: CustomBackgroundRecord = {
   id: "bg-1",
   name: "Sunset",
-  source: { kind: "image", imageIds: [imageId], rotationMinutes: 10 },
+  source: {
+    kind: "image",
+    imageIds: [imageId],
+    rotationMinutes: 10,
+    order: "sequential",
+    transition: "fade",
+  },
   filter: defaultCustomBackgroundFilter("image-dithering"),
   fade: 100,
   dim: 60,
@@ -223,6 +230,8 @@ describe("image rotation", () => {
     kind: "image",
     imageIds: [first, second, third],
     rotationMinutes: 10,
+    order: "sequential",
+    transition: "fade",
   } as const;
   const minute = 60_000;
 
@@ -242,11 +251,36 @@ describe("image rotation", () => {
     expect(nextBackgroundRotationAt(single, 0)).toBeNull();
   });
 
+  it("shifts the slot by the manual offset", () => {
+    expect(currentBackgroundImageId(rotating, 0, 1)).toBe(second);
+    expect(currentBackgroundImageId(rotating, 0, -1)).toBe(third);
+    expect(upcomingBackgroundImageId(rotating, 0, 1)).toBe(third);
+  });
+
+  it("shuffles every round as a permutation that never repeats across the boundary", () => {
+    const count = 5;
+    let previousLast: number | null = null;
+    for (let round = 0; round < 200; round += 1) {
+      const order = shuffledOrder(count, round);
+      expect([...order].sort()).toEqual([0, 1, 2, 3, 4]);
+      expect(order).toEqual(shuffledOrder(count, round));
+      if (previousLast !== null) expect(order[0]).not.toBe(previousLast);
+      previousLast = order[count - 1]!;
+    }
+    const shuffled = { ...rotating, order: "shuffle" } as const;
+    const seen = new Set(
+      [0, 1, 2].map((slot) => currentBackgroundImageId(shuffled, slot * 10 * minute)),
+    );
+    expect(seen.size).toBe(3);
+  });
+
   it("toggles images in and out and drops the source when empty", () => {
     expect(toggleBackgroundImage({ kind: "none" }, first)).toEqual({
       kind: "image",
       imageIds: [first],
       rotationMinutes: 10,
+      order: "sequential",
+      transition: "fade",
     });
     expect(toggleBackgroundImage(rotating, second)).toEqual({
       ...rotating,

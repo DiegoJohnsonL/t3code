@@ -3,6 +3,8 @@ import {
   CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
   CUSTOM_BACKGROUND_NAME_MAX_LENGTH,
   CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS,
+  CUSTOM_BACKGROUND_ROTATION_ORDERS,
+  CUSTOM_BACKGROUND_TRANSITIONS,
   type CustomBackgroundImageSource,
   IMAGE_DITHERING_PRESETS,
   type ImageDitheringPreset,
@@ -16,6 +18,8 @@ import {
 import {
   BanIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
   XIcon,
   ChevronsUpDownIcon,
@@ -28,6 +32,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
 import { storeBackgroundImage } from "~/customBackground/imageStore";
+import { stepBackgroundImage } from "~/customBackground/rotationOffsetStore";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
   type CustomBackgroundLibrary,
@@ -179,6 +184,105 @@ function DitheringPresetRow({
             </Button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+const ROTATION_ORDER_LABELS: Readonly<Record<CustomBackgroundImageSource["order"], string>> = {
+  sequential: "In order",
+  shuffle: "Shuffle",
+};
+
+const TRANSITION_LABELS: Readonly<Record<CustomBackgroundImageSource["transition"], string>> = {
+  cut: "Cut",
+  fade: "Fade",
+  zoom: "Zoom",
+  slide: "Slide",
+};
+
+function SourceOptionField<Value extends string>({
+  label,
+  value,
+  options,
+  labels,
+  onChange,
+}: {
+  label: string;
+  value: Value;
+  options: ReadonlyArray<Value>;
+  labels: Readonly<Record<Value, string>>;
+  onChange: (value: Value) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">{label}</span>
+      <Select
+        value={value}
+        onValueChange={(next) => {
+          const match = options.find((option) => option === next);
+          if (match !== undefined) onChange(match);
+        }}
+      >
+        <SelectTrigger
+          size="sm"
+          className="min-h-0 h-7.5 min-w-0 flex-1 sm:h-6.5 sm:min-h-0"
+          aria-label={label}
+        >
+          <SelectValue>{labels[value]}</SelectValue>
+        </SelectTrigger>
+        <SelectPopup align="end" alignItemWithTrigger={false}>
+          {options.map((option) => (
+            <SelectItem key={option} hideIndicator value={option}>
+              {labels[option]}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+    </div>
+  );
+}
+
+function RotationFields({
+  source,
+  onChange,
+}: {
+  source: CustomBackgroundImageSource;
+  onChange: (source: CustomBackgroundImageSource) => void;
+}) {
+  return (
+    <>
+      <RotationIntervalField source={source} onChange={onChange} />
+      <SourceOptionField
+        label="Order"
+        value={source.order}
+        options={CUSTOM_BACKGROUND_ROTATION_ORDERS}
+        labels={ROTATION_ORDER_LABELS}
+        onChange={(order) => onChange({ ...source, order })}
+      />
+      <SourceOptionField
+        label="Transition"
+        value={source.transition}
+        options={CUSTOM_BACKGROUND_TRANSITIONS}
+        labels={TRANSITION_LABELS}
+        onChange={(transition) => onChange({ ...source, transition })}
+      />
+      <RotationStepRow />
+    </>
+  );
+}
+
+function RotationStepRow() {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Preview</span>
+      <div className="flex gap-1.5">
+        <Button size="xs" variant="outline" onClick={() => stepBackgroundImage(-1)}>
+          <ChevronLeftIcon /> Previous
+        </Button>
+        <Button size="xs" variant="outline" onClick={() => stepBackgroundImage(1)}>
+          Next <ChevronRightIcon />
+        </Button>
       </div>
     </div>
   );
@@ -689,7 +793,7 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                         }}
                       />
                       {record.source.kind === "image" && record.source.imageIds.length > 1 ? (
-                        <RotationIntervalField
+                        <RotationFields
                           source={record.source}
                           onChange={(source) => commitRecord({ ...record, source })}
                         />

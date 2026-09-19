@@ -5,8 +5,8 @@ import {
   LensDistortion,
   StaticMeshGradient,
 } from "@paper-design/shaders-react";
-import type { CustomBackgroundFilter } from "@t3tools/contracts";
-import { memo } from "react";
+import type { CustomBackgroundFilter, CustomBackgroundTransition } from "@t3tools/contracts";
+import { memo, useEffect, useState } from "react";
 
 import { BACKGROUND_WEBGL_CONTEXT_ATTRIBUTES } from "~/customBackground/webgl";
 import { backgroundDrawMode } from "~/customBackground/records";
@@ -81,10 +81,46 @@ export function fadeOverlayGradient({ fade, dim, fadeHeight }: BackgroundFade): 
   return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
+const TRANSITION_MS = 700;
+
+interface Slide {
+  key: number;
+  image: string | null;
+  leaving: boolean;
+}
+
+/**
+ * The outgoing picture stays on top and animates out over the incoming one,
+ * so a shader canvas that is still decoding its texture never shows through.
+ */
+function useSlides(image: string | null, transition: CustomBackgroundTransition): Slide[] {
+  const [slides, setSlides] = useState<Slide[]>(() => [{ key: 0, image, leaving: false }]);
+  const current = slides.find((slide) => !slide.leaving);
+  if (current && current.image !== image) {
+    const key = current.key + 1;
+    setSlides(
+      transition === "cut"
+        ? [{ key, image, leaving: false }]
+        : [...slides.map((slide) => ({ ...slide, leaving: true })), { key, image, leaving: false }],
+    );
+  }
+  const leavingCount = slides.length - 1;
+  useEffect(() => {
+    if (leavingCount === 0) return;
+    const timer = setTimeout(
+      () => setSlides((previous) => previous.filter((slide) => !slide.leaving)),
+      TRANSITION_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [leavingCount, slides]);
+  return slides;
+}
+
 export interface BackgroundRendererProps {
   filter: CustomBackgroundFilter;
   /** Object URL of the source image; null for generative filters or while loading. */
   image: string | null;
+  transition: CustomBackgroundTransition;
   fade: BackgroundFade;
   /** When false, skip Paper entirely and draw the photo if one is loaded. */
   filtersAvailable: boolean;
@@ -93,6 +129,7 @@ export interface BackgroundRendererProps {
 export const BackgroundRenderer = memo(function BackgroundRenderer({
   filter,
   image,
+  transition,
   fade,
   filtersAvailable,
 }: BackgroundRendererProps) {
@@ -101,14 +138,24 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
     hasImage: typeof image === "string",
     filtersAvailable,
   });
+  const slides = useSlides(image, transition);
   if (mode === "none") return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {mode === "image" && typeof image === "string" ? (
-        <img src={image} alt="" className="absolute size-full object-cover" />
-      ) : (
-        <ShaderLayer filter={filter} image={image} />
-      )}
+      {slides.map((slide) => (
+        <div
+          key={slide.key}
+          className="custom-background-slide absolute inset-0"
+          data-transition={transition}
+          data-leaving={slide.leaving || undefined}
+        >
+          {mode === "image" && typeof slide.image === "string" ? (
+            <img src={slide.image} alt="" className="absolute size-full object-cover" />
+          ) : (
+            <ShaderLayer filter={filter} image={slide.image} />
+          )}
+        </div>
+      ))}
       <div className="absolute inset-0" style={{ background: fadeOverlayGradient(fade) }} />
     </div>
   );

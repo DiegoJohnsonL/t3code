@@ -659,6 +659,29 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     }
   }
 
+  /* Outgoing picture sits above the incoming one and animates out; one
+     shot per switch, nothing repaints between rotations. */
+  .custom-background-slide[data-leaving] {
+    z-index: 1;
+    opacity: 0;
+  }
+
+  .custom-background-slide[data-leaving][data-transition="zoom"] {
+    transform: scale(1.06);
+  }
+
+  .custom-background-slide[data-leaving][data-transition="slide"] {
+    transform: translateX(-4%);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .custom-background-slide:not([data-transition="cut"]) {
+      transition:
+        opacity 700ms ease-out,
+        transform 700ms ease-out;
+    }
+  }
+
   .custom-background-layer {
     pointer-events: none;
     position: absolute;

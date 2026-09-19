@@ -53,9 +53,13 @@ Images are resized, converted to WebP, and stored on this client only. Uploading
 file twice reuses the stored copy. The image picker lists every stored image, lets you
 upload another, and deletes the ones no background uses.
 
-Select more than one image to rotate through them. The order you pick them is the order
-they play, and **Change every** sets how long each stays up. Rotation follows the clock,
-so every window and reload shows the same image at the same time. Images stay on this client when you
+Select more than one image to rotate through them. **Change every** sets how long each
+stays up. **Order** plays them as picked or shuffles them; shuffle shows every image once
+before any repeats and never shows the same one twice in a row. **Transition** picks how
+one image gives way to the next. Rotation follows the clock, so every window and reload
+shows the same image at the same time. The picture button at the bottom of the sidebar
+steps to the next or previous image and opens the controller; the controller has the
+same **Next** and **Previous** buttons for trying transitions out. Images stay on this client when you
 connect to remote environments; other browsers, devices, and T3 Code Mobile keep their own
 appearance.
 

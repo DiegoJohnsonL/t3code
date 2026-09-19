@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useRef } from "react";
+import { lazy, memo, Suspense, useState } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
 import { useClientSettings } from "~/hooks/useSettings";
@@ -12,6 +12,7 @@ import {
   upcomingBackgroundImageId,
 } from "~/customBackground/records";
 import { useRotationClock } from "~/customBackground/useRotationClock";
+import { useRotationOffsetStore } from "~/customBackground/rotationOffsetStore";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 
@@ -47,14 +48,15 @@ export const CustomBackground = memo(function CustomBackground({
       ? record.source
       : ({ kind: "none" } as const);
   const now = useRotationClock(source);
-  const imageId = currentBackgroundImageId(source, now);
+  const offset = useRotationOffsetStore((store) => store.offset);
+  const imageId = currentBackgroundImageId(source, now, offset);
   const image = useBackgroundImageUrl(imageId);
-  useBackgroundImageUrl(upcomingBackgroundImageId(source, now));
+  useBackgroundImageUrl(upcomingBackgroundImageId(source, now, offset));
   // Hold the previous picture while the next one decodes so a rotation never
   // flashes the bare theme between images.
-  const lastImage = useRef<string | null>(null);
-  if (typeof image === "string") lastImage.current = image;
-  const shownImage = typeof image === "string" ? image : image === null ? lastImage.current : null;
+  const [lastImage, setLastImage] = useState<string | null>(null);
+  if (typeof image === "string" && image !== lastImage) setLastImage(image);
+  const shownImage = typeof image === "string" ? image : image === null ? lastImage : null;
   if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
   if (imageId !== null && shownImage === null) return null;
   return (
@@ -63,6 +65,7 @@ export const CustomBackground = memo(function CustomBackground({
         <BackgroundRenderer
           filter={record.filter}
           image={shownImage}
+          transition={source.kind === "image" ? source.transition : "cut"}
           fade={{ fade: record.fade, dim: record.dim, fadeHeight: record.fadeHeight }}
           filtersAvailable={filtersAvailable}
         />

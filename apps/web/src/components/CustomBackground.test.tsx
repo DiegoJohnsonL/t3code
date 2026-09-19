@@ -41,7 +41,13 @@ it("renders gradients with a missing retained photo and hides image filters unti
     fade: 100,
     dim: 60,
     fadeHeight: 60,
-    source: { kind: "image", imageIds: ["a".repeat(64)], rotationMinutes: 10 },
+    source: {
+      kind: "image",
+      imageIds: ["a".repeat(64)],
+      rotationMinutes: 10,
+      order: "sequential",
+      transition: "fade",
+    },
     filter: defaultCustomBackgroundFilter("image-dithering"),
   };
   state.selected = record;

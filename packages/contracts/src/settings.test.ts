@@ -958,7 +958,13 @@ describe("ClientSettings custom backgrounds", () => {
   const record = {
     id: "bg-1",
     name: "Sunset",
-    source: { kind: "image", imageIds: ["a".repeat(64)], rotationMinutes: 10 },
+    source: {
+      kind: "image",
+      imageIds: ["a".repeat(64)],
+      rotationMinutes: 10,
+      order: "sequential",
+      transition: "fade",
+    },
     filter: { kind: "none" },
     fade: 70,
     dim: 60,
@@ -1015,7 +1021,16 @@ describe("ClientSettings custom backgrounds", () => {
     expect(() =>
       decodeClientSettingsPatch({
         customBackgrounds: [
-          { ...record, source: { kind: "image", imageIds: ["sunset.jpg"], rotationMinutes: 10 } },
+          {
+            ...record,
+            source: {
+              kind: "image",
+              imageIds: ["sunset.jpg"],
+              rotationMinutes: 10,
+              order: "sequential",
+              transition: "fade",
+            },
+          },
         ],
       }),
     ).toThrow();

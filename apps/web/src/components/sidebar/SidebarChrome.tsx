@@ -1,4 +1,12 @@
-import { ArrowLeftIcon, ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ChartNoAxesColumnIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ImageIcon,
+  SettingsIcon,
+  SlidersHorizontalIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { memo, useCallback } from "react";
 import { Link, useCanGoBack, useLocation, useNavigate } from "@tanstack/react-router";
@@ -24,7 +32,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "../ui/sidebar";
+import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
+import { stepBackgroundImage } from "~/customBackground/rotationOffsetStore";
+import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
 import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUpdatePill";
@@ -128,6 +140,45 @@ function SidebarUtilityItem({
   );
 }
 
+function SidebarBackgroundMenu({ onNavigate }: { onNavigate: () => void }) {
+  const active = useActiveBackground();
+  const openBackgroundStudio = useBackgroundStudioStore((store) => store.openBackgroundStudio);
+  const rotating = active?.source.kind === "image" && active.source.imageIds.length > 1;
+  return (
+    <SidebarMenuItem className="shrink-0">
+      <Menu>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <MenuTrigger render={<SidebarMenuButton aria-label="Background" size="icon" />}>
+                <ImageIcon />
+              </MenuTrigger>
+            }
+          />
+          <TooltipPopup side="top">Background</TooltipPopup>
+        </Tooltip>
+        <MenuPopup side="top" align="start">
+          <MenuItem disabled={!rotating} onClick={() => stepBackgroundImage(1)}>
+            <ChevronRightIcon /> Next image
+          </MenuItem>
+          <MenuItem disabled={!rotating} onClick={() => stepBackgroundImage(-1)}>
+            <ChevronLeftIcon /> Previous image
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            onClick={() => {
+              onNavigate();
+              openBackgroundStudio();
+            }}
+          >
+            <SlidersHorizontalIcon /> Customize background
+          </MenuItem>
+        </MenuPopup>
+      </Menu>
+    </SidebarMenuItem>
+  );
+}
+
 export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
@@ -211,6 +262,7 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
             label="Usage"
             onClick={handleUsageClick}
           />
+          <SidebarBackgroundMenu onNavigate={closeMobileSidebar} />
         </>
       )}
       <SidebarUpdatePill />

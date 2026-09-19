@@ -143,7 +143,13 @@ it("preserves both persisted and pending edits when encoding finishes", async ()
     fade: 35,
     dim: 60,
     fadeHeight: 60,
-    source: { kind: "image", imageIds: [uploadedId], rotationMinutes: 10 },
+    source: {
+      kind: "image",
+      imageIds: [uploadedId],
+      rotationMinutes: 10,
+      order: "sequential",
+      transition: "fade",
+    },
   });
 });
 
@@ -162,7 +168,16 @@ it("keeps pending changes and selection on another background", async () => {
   await act(async () => finishUpload());
   expect(state.settings?.activeCustomBackgroundId).toBe(other.id);
   expect(state.settings?.customBackgrounds).toEqual([
-    { ...original, source: { kind: "image", imageIds: [uploadedId], rotationMinutes: 10 } },
+    {
+      ...original,
+      source: {
+        kind: "image",
+        imageIds: [uploadedId],
+        rotationMinutes: 10,
+        order: "sequential",
+        transition: "fade",
+      },
+    },
     { ...other, fade: 20 },
   ]);
 });
@@ -175,6 +190,8 @@ it("keeps a newer image choice made while encoding", async () => {
     kind: "image",
     imageIds: [chosenId],
     rotationMinutes: 10,
+    order: "sequential",
+    transition: "fade",
   });
 });
 

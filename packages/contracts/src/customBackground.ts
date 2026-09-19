@@ -460,11 +460,26 @@ export const CustomBackgroundRotationMinutes = Schema.Int.check(
  * them in order every `rotationMinutes`, keyed off wall-clock time so every
  * pane and reload agrees on which image is up.
  */
+export const CUSTOM_BACKGROUND_ROTATION_ORDERS = ["sequential", "shuffle"] as const;
+export const CustomBackgroundRotationOrder = Schema.Literals(CUSTOM_BACKGROUND_ROTATION_ORDERS);
+export type CustomBackgroundRotationOrder = typeof CustomBackgroundRotationOrder.Type;
+
+export const CUSTOM_BACKGROUND_TRANSITIONS = ["cut", "fade", "zoom", "slide"] as const;
+export const CustomBackgroundTransition = Schema.Literals(CUSTOM_BACKGROUND_TRANSITIONS);
+export type CustomBackgroundTransition = typeof CustomBackgroundTransition.Type;
+
 export const CustomBackgroundImageSource = Schema.Struct({
   kind: Schema.Literal("image"),
   imageIds: Schema.Array(CustomBackgroundImageId).check(Schema.isMinLength(1)),
   rotationMinutes: CustomBackgroundRotationMinutes.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES)),
+  ),
+  /** Shuffle plays every image once per round in a seeded order that never repeats across a round boundary. */
+  order: CustomBackgroundRotationOrder.pipe(
+    Schema.withDecodingDefault(Effect.succeed("sequential" as const)),
+  ),
+  transition: CustomBackgroundTransition.pipe(
+    Schema.withDecodingDefault(Effect.succeed("fade" as const)),
   ),
 });
 export type CustomBackgroundImageSource = typeof CustomBackgroundImageSource.Type;

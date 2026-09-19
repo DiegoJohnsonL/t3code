@@ -108,7 +108,13 @@ describe("CustomBackgroundRecord", () => {
     const record = decodeRecord({
       id: "bg-1",
       name: "Sunset",
-      source: { kind: "image", imageIds: ["a".repeat(64)], rotationMinutes: 10 },
+      source: {
+        kind: "image",
+        imageIds: ["a".repeat(64)],
+        rotationMinutes: 10,
+        order: "sequential",
+        transition: "fade",
+      },
       filter: { kind: "water", size: 1 },
       fade: 50,
       dim: 60,
@@ -120,6 +126,8 @@ describe("CustomBackgroundRecord", () => {
       kind: "image",
       imageIds: ["a".repeat(64)],
       rotationMinutes: 10,
+      order: "sequential",
+      transition: "fade",
     });
     expect(encodeRecord(record).filter).toEqual({ kind: "none" });
   });
