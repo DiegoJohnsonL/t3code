@@ -25,7 +25,11 @@ import {
   RuntimeMode,
 } from "./orchestration.ts";
 import { BrowserProfile, BrowserProfileId, DEFAULT_BROWSER_PROFILE_ID } from "./browserProfile.ts";
-import { CustomBackgroundId, CustomBackgroundRecords } from "./customBackground.ts";
+import {
+  CustomBackgroundId,
+  CustomBackgroundRecords,
+  StoredCustomBackgroundRecords,
+} from "./customBackground.ts";
 import {
   DEFAULT_PREVIEW_APPEARANCE,
   DEFAULT_PREVIEW_ZOOM_FACTOR,
@@ -302,7 +306,7 @@ export const ClientSettingsSchema = Schema.Struct({
    * The client's background library. Image bytes live in the client's own
    * image store; records only reference them. See `customBackground.ts`.
    */
-  customBackgrounds: CustomBackgroundRecords.pipe(
+  customBackgrounds: StoredCustomBackgroundRecords.pipe(
     Schema.withDecodingDefault(Effect.succeed<CustomBackgroundRecords>([])),
   ),
   /** Hides the background without discarding the selected entry or its settings. */

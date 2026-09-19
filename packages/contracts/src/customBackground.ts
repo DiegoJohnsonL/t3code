@@ -536,3 +536,25 @@ export type CustomBackgroundRecord = typeof CustomBackgroundRecord.Type;
 
 export const CustomBackgroundRecords = Schema.Array(CustomBackgroundRecord);
 export type CustomBackgroundRecords = typeof CustomBackgroundRecords.Type;
+
+const decodeRecordOption = Schema.decodeUnknownOption(CustomBackgroundRecord);
+const encodeRecord = Schema.encodeSync(CustomBackgroundRecord);
+
+/**
+ * The library is user content stored on the client. One entry that no longer
+ * decodes, say after its shape changed, must not block every other setting
+ * from loading, so decoding drops it instead of failing.
+ */
+export const StoredCustomBackgroundRecords = Schema.Array(Schema.Unknown).pipe(
+  Schema.decodeTo(
+    CustomBackgroundRecords,
+    SchemaTransformation.transform<typeof CustomBackgroundRecords.Encoded, ReadonlyArray<unknown>>({
+      decode: (items) =>
+        items.flatMap((item) => {
+          const record = decodeRecordOption(item);
+          return record._tag === "Some" ? [encodeRecord(record.value)] : [];
+        }),
+      encode: (records) => records,
+    }),
+  ),
+);

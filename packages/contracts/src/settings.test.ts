@@ -1017,6 +1017,18 @@ describe("ClientSettings custom backgrounds", () => {
     ).toBeNull();
   });
 
+  it("drops stored records that no longer decode instead of failing every setting", () => {
+    const settings = decodeClientSettings({
+      customBackgrounds: [
+        record,
+        { ...record, id: "bg-old", source: { kind: "image", imageId: "a".repeat(64) } },
+      ],
+      activeCustomBackgroundId: "bg-old",
+    });
+    expect(settings.customBackgrounds).toEqual([record]);
+    expect(settings.activeCustomBackgroundId).toBe("bg-old");
+  });
+
   it("rejects a record whose image id is not a hash", () => {
     expect(() =>
       decodeClientSettingsPatch({
