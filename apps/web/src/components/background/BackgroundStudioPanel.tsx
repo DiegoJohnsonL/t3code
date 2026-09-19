@@ -3,6 +3,7 @@ import {
   CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
   CUSTOM_BACKGROUND_NAME_MAX_LENGTH,
   IMAGE_DITHERING_PRESETS,
+  type ImageDitheringPreset,
   type CustomBackgroundFilterKind,
   type CustomBackgroundRecord,
   MAX_CUSTOM_BACKGROUND_FADE,
@@ -133,7 +134,7 @@ function DitheringPresetRow({
   onPick,
 }: {
   record: CustomBackgroundRecord;
-  onPick: (filter: CustomBackgroundRecord["filter"]) => void;
+  onPick: (preset: ImageDitheringPreset) => void;
 }) {
   if (record.filter.kind !== "image-dithering") return null;
   const current = record.filter;
@@ -146,14 +147,18 @@ function DitheringPresetRow({
         aria-label="Dithering look"
       >
         {IMAGE_DITHERING_PRESETS.map((preset) => {
-          const active = filtersEqual(current, preset.filter);
+          const active =
+            filtersEqual(current, preset.filter) &&
+            record.fade === preset.fade &&
+            record.dim === preset.dim &&
+            record.fadeHeight === preset.fadeHeight;
           return (
             <Button
               key={preset.id}
               size="xs"
               variant={active ? "secondary" : "outline"}
               aria-pressed={active}
-              onClick={() => onPick(preset.filter)}
+              onClick={() => onPick(preset)}
             >
               <span
                 aria-hidden
@@ -731,7 +736,15 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                   {filtersAvailable ? (
                     <DitheringPresetRow
                       record={record}
-                      onPick={(filter) => commitRecord({ ...record, filter })}
+                      onPick={(preset) =>
+                        commitRecord({
+                          ...record,
+                          filter: preset.filter,
+                          fade: preset.fade,
+                          dim: preset.dim,
+                          fadeHeight: preset.fadeHeight,
+                        })
+                      }
                     />
                   ) : null}
 

@@ -220,13 +220,34 @@ export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
   scale: imageScale,
 });
 
+export const MIN_CUSTOM_BACKGROUND_FADE = 0;
+export const MAX_CUSTOM_BACKGROUND_FADE = 100;
+/** Opacity of the theme background at the bottom edge; 100 hides the picture there. */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
+/** Opacity of the theme background above the fade, where the picture shows most. */
+export const DEFAULT_CUSTOM_BACKGROUND_DIM = 60;
+/** How far up from the bottom edge, in percent of the pane, the fade climbs before it settles at the dim level. */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 60;
+export const CustomBackgroundFade = Schema.Int.check(
+  Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
+);
+
 export type ImageDitheringFilter = typeof IMAGE_DITHERING_FILTER.schema.Type;
 
 export interface ImageDitheringPreset {
   readonly id: string;
   readonly name: string;
   readonly filter: ImageDitheringFilter;
+  readonly fade: number;
+  readonly dim: number;
+  readonly fadeHeight: number;
 }
+
+const DEFAULT_PRESET_FADE = {
+  fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
+  dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
+  fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+} as const;
 
 /**
  * Starting points for the dithering filter. "Original" keeps the picture's
@@ -238,10 +259,20 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "original",
     name: "Original",
     filter: IMAGE_DITHERING_FILTER.defaults,
+    ...DEFAULT_PRESET_FADE,
+  },
+  {
+    id: "faded",
+    name: "Faded",
+    filter: IMAGE_DITHERING_FILTER.defaults,
+    fade: 100,
+    dim: 55,
+    fadeHeight: 70,
   },
   {
     id: "violet",
     name: "Violet",
+    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "8x8",
@@ -256,6 +287,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
   {
     id: "terminal",
     name: "Terminal",
+    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "4x4",
@@ -267,6 +299,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
   {
     id: "mono",
     name: "Mono",
+    ...DEFAULT_PRESET_FADE,
     filter: {
       ...IMAGE_DITHERING_FILTER.defaults,
       type: "8x8",
@@ -427,18 +460,6 @@ export const CustomBackgroundSource = Schema.Union([
   Schema.Struct({ kind: Schema.Literal("image"), imageId: CustomBackgroundImageId }),
 ]);
 export type CustomBackgroundSource = typeof CustomBackgroundSource.Type;
-
-export const MIN_CUSTOM_BACKGROUND_FADE = 0;
-export const MAX_CUSTOM_BACKGROUND_FADE = 100;
-/** Opacity of the theme background at the bottom edge; 100 hides the picture there. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
-/** Opacity of the theme background above the fade, where the picture shows most. */
-export const DEFAULT_CUSTOM_BACKGROUND_DIM = 60;
-/** How far up from the bottom edge, in percent of the pane, the fade climbs before it settles at the dim level. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 60;
-export const CustomBackgroundFade = Schema.Int.check(
-  Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
-);
 
 const RetiredCustomBackgroundFilterKind = Schema.Literals([
   "paper-texture",
