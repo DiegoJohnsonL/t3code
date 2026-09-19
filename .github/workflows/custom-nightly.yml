@@ -167,10 +167,11 @@ jobs:
             -nokeys \
             -clcerts \
             -out "$certificate_path"
-          security add-trusted-cert \
+          sudo security add-trusted-cert \
+            -d \
             -r trustRoot \
             -p codeSign \
-            -k "$HOME/Library/Keychains/login.keychain-db" \
+            -k /Library/Keychains/System.keychain \
             "$certificate_path"
           security verify-cert -c "$certificate_path" -p codeSign
 
