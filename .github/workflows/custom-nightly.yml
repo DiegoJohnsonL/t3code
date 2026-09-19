@@ -147,6 +147,33 @@ jobs:
         run: |
           sed -n '/^T3CODE_CLERK_PUBLISHABLE_KEY=/p; /^T3CODE_CLERK_JWT_TEMPLATE=/p; /^T3CODE_CLERK_CLI_OAUTH_CLIENT_ID=/p; /^T3CODE_RELAY_URL=/p' .env.example >> "$GITHUB_ENV"
 
+      - name: Trust custom signing certificate
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.CUSTOM_MACOS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CUSTOM_MACOS_CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CSC_LINK" || -z "$CSC_KEY_PASSWORD" ]]; then
+            echo "Custom macOS signing secrets are missing." >&2
+            exit 1
+          fi
+          identity_path="$RUNNER_TEMP/custom-signing-identity.p12"
+          certificate_path="$RUNNER_TEMP/custom-signing-certificate.pem"
+          printf '%s' "$CSC_LINK" | /usr/bin/base64 -D > "$identity_path"
+          /usr/bin/openssl pkcs12 \
+            -in "$identity_path" \
+            -passin "pass:$CSC_KEY_PASSWORD" \
+            -nokeys \
+            -clcerts \
+            -out "$certificate_path"
+          security add-trusted-cert \
+            -r trustRoot \
+            -p codeSign \
+            -k "$HOME/Library/Keychains/login.keychain-db" \
+            "$certificate_path"
+          security verify-cert -c "$certificate_path" -p codeSign
+
       - name: Build signed desktop artifacts
         shell: bash
         env:
@@ -192,6 +219,21 @@ jobs:
           archive_name="$(basename "${archives[0]}")"
           cd release
           shasum -a 256 "$archive_name" > "$archive_name.sha256"
+
+          verification_dir="$RUNNER_TEMP/signed-update"
+          mkdir -p "$verification_dir"
+          ditto -x -k "$archive_name" "$verification_dir"
+          app_bundle="$(find "$verification_dir" -maxdepth 2 -type d -name '*.app' -print -quit)"
+          if [[ -z "$app_bundle" ]]; then
+            echo "The signed update archive contains no application bundle." >&2
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "$app_bundle"
+          codesign -d --verbose=4 "$app_bundle" 2>&1 \
+            | grep -F 'Authority=T3 Code Local Development'
+          update_config="$app_bundle/Contents/Resources/app-update.yml"
+          grep -F 'owner: DiegoJohnsonL' "$update_config"
+          grep -F 'repo: t3code' "$update_config"
 
       - name: Publish custom nightly
         shell: bash
