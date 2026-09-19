@@ -207,9 +207,9 @@ function defineFilter<
 }
 
 export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
-  type: select("Type", ["random", "2x2", "4x4", "8x8"], "2x2"),
-  size: number("Size", { min: 0.5, max: 20, step: 0.2 }, 2),
-  colorSteps: integer("Color steps", { min: 1, max: 7 }, 3),
+  type: select("Type", ["random", "2x2", "4x4", "8x8"], "4x4"),
+  size: number("Size", { min: 0.5, max: 20, step: 0.2 }, 3.4),
+  colorSteps: integer("Color steps", { min: 1, max: 7 }, 5),
   originalColors: boolean("Original colors", true),
   inverted: boolean("Inverted", false),
   colorBack: color("Background", "#000c38"),
@@ -218,6 +218,66 @@ export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
   fit,
   scale: imageScale,
 });
+
+export type ImageDitheringFilter = typeof IMAGE_DITHERING_FILTER.schema.Type;
+
+export interface ImageDitheringPreset {
+  readonly id: string;
+  readonly name: string;
+  readonly filter: ImageDitheringFilter;
+}
+
+/**
+ * Starting points for the dithering filter. "Original" keeps the picture's
+ * colors; the others quantize it to a tinted palette, the look popularized by
+ * dot-matrix wallpapers, and every slider stays editable afterwards.
+ */
+export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
+  {
+    id: "original",
+    name: "Original",
+    filter: IMAGE_DITHERING_FILTER.defaults,
+  },
+  {
+    id: "violet",
+    name: "Violet",
+    filter: {
+      ...IMAGE_DITHERING_FILTER.defaults,
+      type: "8x8",
+      size: 3.4,
+      colorSteps: 3,
+      originalColors: false,
+      colorBack: "#0a0914",
+      colorFront: "#6d5ce0",
+      colorHighlight: "#b8a9ff",
+    },
+  },
+  {
+    id: "terminal",
+    name: "Terminal",
+    filter: {
+      ...IMAGE_DITHERING_FILTER.defaults,
+      type: "4x4",
+      size: 2.6,
+      colorSteps: 3,
+      originalColors: false,
+    },
+  },
+  {
+    id: "mono",
+    name: "Mono",
+    filter: {
+      ...IMAGE_DITHERING_FILTER.defaults,
+      type: "8x8",
+      size: 3,
+      colorSteps: 3,
+      originalColors: false,
+      colorBack: "#0a0a0a",
+      colorFront: "#8a8a8a",
+      colorHighlight: "#f2f2f2",
+    },
+  },
+];
 
 export const FLUTED_GLASS_FILTER = defineFilter("fluted-glass", {
   size: number("Size", { min: 0, max: 1, step: 0.001 }, 0.7),

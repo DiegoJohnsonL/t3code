@@ -2,6 +2,7 @@ import {
   CUSTOM_BACKGROUND_IMAGE_FILTERS,
   CUSTOM_BACKGROUND_GENERATIVE_FILTERS,
   CUSTOM_BACKGROUND_NAME_MAX_LENGTH,
+  IMAGE_DITHERING_PRESETS,
   type CustomBackgroundFilterKind,
   type CustomBackgroundRecord,
   MAX_CUSTOM_BACKGROUND_FADE,
@@ -118,6 +119,51 @@ function NameField({ name, onCommit }: { name: string; onCommit: (name: string) 
         }
       }}
     />
+  );
+}
+
+function DitheringPresetRow({
+  record,
+  onPick,
+}: {
+  record: CustomBackgroundRecord;
+  onPick: (filter: CustomBackgroundRecord["filter"]) => void;
+}) {
+  if (record.filter.kind !== "image-dithering") return null;
+  const current = record.filter;
+  return (
+    <div className="flex items-start gap-3">
+      <span className="w-28 shrink-0 pt-1 text-[13px] text-muted-foreground">Look</span>
+      <div
+        className="flex min-w-0 flex-1 flex-wrap gap-1.5"
+        role="group"
+        aria-label="Dithering look"
+      >
+        {IMAGE_DITHERING_PRESETS.map((preset) => {
+          const active = filtersEqual(current, preset.filter);
+          return (
+            <Button
+              key={preset.id}
+              size="xs"
+              variant={active ? "secondary" : "outline"}
+              aria-pressed={active}
+              onClick={() => onPick(preset.filter)}
+            >
+              <span
+                aria-hidden
+                className="size-2.5 rounded-full border border-border/60"
+                style={{
+                  background: preset.filter.originalColors
+                    ? "conic-gradient(#f87171, #facc15, #4ade80, #60a5fa, #c084fc, #f87171)"
+                    : `linear-gradient(135deg, ${preset.filter.colorHighlight}, ${preset.filter.colorFront} 55%, ${preset.filter.colorBack})`,
+                }}
+              />
+              {preset.name}
+            </Button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -672,6 +718,13 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                       })
                     }
                   />
+
+                  {filtersAvailable ? (
+                    <DitheringPresetRow
+                      record={record}
+                      onPick={(filter) => commitRecord({ ...record, filter })}
+                    />
+                  ) : null}
 
                   {filtersAvailable ? (
                     <BackgroundControls

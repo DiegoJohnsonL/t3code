@@ -29,7 +29,9 @@ Every filter renders a single still frame; Grain gradient exposes a **Variation*
 to pick the frame instead of animating.
 
 - Image filters: Dithering, Fluted glass, Lens distortion. Choose **No filter**
-  to show the picture as is.
+  to show the picture as is. Dithering starts from a **Look** preset: **Original** keeps the
+  picture's colors, while **Violet**, **Terminal**, and **Mono** repaint it in a tinted
+  palette. Every slider stays editable after picking one.
 - Gradient filters: Mesh gradient and Grain gradient paint the whole picture themselves and
   ignore the image.
 

@@ -3,6 +3,7 @@ import * as Schema from "effect/Schema";
 
 import {
   CUSTOM_BACKGROUND_FILTERS,
+  IMAGE_DITHERING_PRESETS,
   CustomBackgroundFilter,
   CustomBackgroundRecord,
   defaultCustomBackgroundFilter,
@@ -22,6 +23,21 @@ describe("CustomBackgroundFilter", () => {
       );
     },
   );
+
+  it.each(IMAGE_DITHERING_PRESETS.map((preset) => preset.id))(
+    "accepts the %s dithering preset",
+    (id) => {
+      const preset = IMAGE_DITHERING_PRESETS.find((candidate) => candidate.id === id);
+      expect(preset).toBeDefined();
+      expect(decodeFilter(preset!.filter)).toEqual(preset!.filter);
+    },
+  );
+
+  it("gives every dithering preset a distinct id", () => {
+    expect(new Set(IMAGE_DITHERING_PRESETS.map((preset) => preset.id)).size).toBe(
+      IMAGE_DITHERING_PRESETS.length,
+    );
+  });
 
   it("rejects values outside the playground range", () => {
     expect(() =>
