@@ -89,8 +89,6 @@ function color(label: string, defaultValue: string): ColorControlSpec {
   return { kind: "color", label, default: defaultValue };
 }
 
-const UNIT = { min: 0, max: 1, step: 0.01 } as const;
-const SIGNED_UNIT = { min: -1, max: 1, step: 0.02 } as const;
 const IMAGE_SCALE = { min: 0.1, max: 4, step: 0.04 } as const;
 
 const fit = select("Fit", ["contain", "cover"], "cover");
@@ -188,14 +186,14 @@ export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
 
 export const MIN_CUSTOM_BACKGROUND_FADE = 0;
 export const MAX_CUSTOM_BACKGROUND_FADE = 100;
-/** Opacity of the theme background at the bottom edge; 100 hides the picture there. */
+/**
+ * Strength of the theme-colored overlay, 0 to 100. The bottom edge takes the
+ * full value and the top of the pane a fixed share of it; the renderer derives
+ * the curve so every playlist keeps the same shape.
+ */
 export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
-/** Opacity of the theme background above the fade, where the picture shows most. */
-export const DEFAULT_CUSTOM_BACKGROUND_DIM = 60;
-/** How far up from the bottom edge, in percent of the pane, the fade climbs before it settles at the dim level. */
+/** How far up the pane, in percent, the overlay climbs before it settles. */
 export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 70;
-/** Percent of the pane, from the bottom edge, held at the full bottom fade before the ramp begins. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID = 25;
 export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
@@ -207,12 +205,7 @@ export interface ImageDitheringPreset {
   readonly name: string;
   readonly filter: ImageDitheringFilter;
   /** Only presets that define a look for the overlay set the fade sliders. */
-  readonly fade?: {
-    readonly fade: number;
-    readonly dim: number;
-    readonly fadeHeight: number;
-    readonly fadeSolid: number;
-  };
+  readonly fade?: { readonly fade: number; readonly fadeHeight: number };
 }
 
 /**
@@ -230,7 +223,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "faded",
     name: "Faded",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    fade: { fade: 100, dim: 55, fadeHeight: 85, fadeSolid: 40 },
+    fade: { fade: 100, fadeHeight: 85 },
   },
   {
     id: "violet",
@@ -273,34 +266,8 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
   },
 ];
 
-export const FLUTED_GLASS_FILTER = defineFilter("fluted-glass", {
-  size: number("Size", { min: 0, max: 1, step: 0.001 }, 0.5),
-  shape: select("Shape", ["lines", "linesIrregular", "wave", "zigzag", "pattern"], "lines"),
-  angle: number("Angle", { min: 0, max: 180, step: 2 }, 0),
-  distortion: number("Distortion", UNIT, 0.5),
-  distortionShape: select(
-    "Distortion shape",
-    ["prism", "lens", "contour", "cascade", "flat"],
-    "prism",
-  ),
-  shift: number("Shift", SIGNED_UNIT, 0),
-  stretch: number("Stretch", UNIT, 0),
-  highlights: number("Highlights", UNIT, 0.1),
-  shadows: number("Shadows", UNIT, 0.25),
-  edges: number("Edges", UNIT, 0.25),
-  blur: number("Blur", UNIT, 0),
-  margin: number("Margin", UNIT, 0),
-  grainMixer: number("Grain mixer", UNIT, 0),
-  grainOverlay: number("Grain overlay", UNIT, 0),
-  colorBack: color("Background", "#00000000"),
-  colorHighlight: color("Highlight", "#ffffff"),
-  colorShadow: color("Shadow", "#000000"),
-  fit,
-  scale: imageScale,
-});
-
 /** Every filter repaints the picture; a background is always an image. */
-export const CUSTOM_BACKGROUND_FILTERS = [IMAGE_DITHERING_FILTER, FLUTED_GLASS_FILTER] as const;
+export const CUSTOM_BACKGROUND_FILTERS = [IMAGE_DITHERING_FILTER] as const;
 
 export const NoCustomBackgroundFilter = Schema.Struct({ kind: Schema.Literal("none") });
 
@@ -388,6 +355,7 @@ export const CustomBackgroundSource = Schema.Union([
 export type CustomBackgroundSource = typeof CustomBackgroundSource.Type;
 
 const RetiredCustomBackgroundFilterKind = Schema.Literals([
+  "fluted-glass",
   "lens-distortion",
   "static-mesh-gradient",
   "grain-gradient",
@@ -424,14 +392,8 @@ export const CustomBackgroundRecord = Schema.Struct({
   source: CustomBackgroundSource,
   filter: CustomBackgroundRecordFilter,
   fade: CustomBackgroundFade,
-  dim: CustomBackgroundFade.pipe(
-    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_DIM)),
-  ),
   fadeHeight: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT)),
-  ),
-  fadeSolid: CustomBackgroundFade.pipe(
-    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID)),
   ),
   createdAt: Schema.String,
 });

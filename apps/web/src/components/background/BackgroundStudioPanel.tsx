@@ -76,7 +76,6 @@ import {
 const FILTER_LABELS: Readonly<Record<CustomBackgroundFilterKind, string>> = {
   none: "No filter",
   "image-dithering": "Dithering",
-  "fluted-glass": "Fluted glass",
 };
 
 function uploadLabel(upload: { busy: boolean; done: number; total: number }): string | null {
@@ -93,9 +92,7 @@ const PERSIST_DEBOUNCE_MS = 150;
 const UPLOAD_CONCURRENCY = 4;
 
 const FADE_CONTROLS = [
-  { key: "fade", label: "Bottom fade" },
-  { key: "dim", label: "Top dim" },
-  { key: "fadeSolid", label: "Solid height" },
+  { key: "fade", label: "Fade" },
   { key: "fadeHeight", label: "Fade height" },
 ] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
 
@@ -164,9 +161,7 @@ function DitheringPresetRow({
           const active =
             filtersEqual(current, preset.filter) &&
             (preset.fade === undefined ||
-              (record.fade === preset.fade.fade &&
-                record.dim === preset.fade.dim &&
-                record.fadeHeight === preset.fade.fadeHeight));
+              (record.fade === preset.fade.fade && record.fadeHeight === preset.fade.fadeHeight));
           return (
             <Button
               key={preset.id}

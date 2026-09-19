@@ -27,8 +27,8 @@ never deletes its images.
 Filters are shaders from Paper that repaint your picture. Their controls match the ones in
 Paper's playgrounds, and every filter renders a single still frame.
 
-- **Dithering** and **Fluted glass**. Choose **No filter**
-  to show the picture as is. Dithering starts from a **Look** preset. **Original** keeps the
+- **Dithering**, or **No filter** to show the picture as is. Dithering starts from a **Look**
+  preset. **Original** keeps the
   picture's colors, **Faded** does too and also sets the fade sliders so the bottom melts
   into your theme color, while **Violet**, **Terminal**, and **Mono** repaint it in a
   tinted palette. Every slider stays editable after picking one.
@@ -38,12 +38,12 @@ selector off. The picture still shows, without its filter.
 
 ## Fade
 
-Four sliders blend your theme's background color over the picture, so the fade always
-matches the theme you picked. **Bottom fade** is the strength at the bottom edge where the
-composer sits; 100% goes solid. **Solid height** is how far up that full strength holds
-before it starts to ease off. **Fade height** is where the easing ends. **Top dim** is the
-strength above that, so lower it to see more of the picture. For a picture that melts into
-your theme color halfway up, keep bottom fade at 100% and raise solid height.
+Two sliders blend your theme's background color over the picture, so the fade always
+matches the theme you picked. **Fade** is the strength: at 100% the bottom edge goes solid,
+and the top of the pane keeps about half of whatever you set. **Fade height** is how far up
+the pane the color reaches; the lower part of that stretch stays solid and the rest eases
+off. For a picture that melts into your theme color halfway up, keep fade at 100% and
+raise fade height.
 
 ## Images
 

@@ -49,9 +49,6 @@ describe("CustomBackgroundFilter", () => {
       decodeFilter({ ...defaultCustomBackgroundFilter("image-dithering"), colorSteps: 2.5 }),
     ).toThrow();
     expect(() =>
-      decodeFilter({ ...defaultCustomBackgroundFilter("fluted-glass"), shape: "circle" }),
-    ).toThrow();
-    expect(() =>
       decodeFilter({ ...defaultCustomBackgroundFilter("image-dithering"), colorBack: "red" }),
     ).toThrow();
   });
@@ -62,7 +59,12 @@ describe("CustomBackgroundFilter", () => {
   });
 
   it("loads the removed gradient and lens filters as no filter in saved records", () => {
-    for (const kind of ["lens-distortion", "static-mesh-gradient", "grain-gradient"]) {
+    for (const kind of [
+      "fluted-glass",
+      "lens-distortion",
+      "static-mesh-gradient",
+      "grain-gradient",
+    ]) {
       expect(() => decodeFilter({ kind })).toThrow();
       const record = decodeRecord({
         id: "bg-1",
@@ -97,7 +99,6 @@ describe("CustomBackgroundRecord", () => {
       source: { kind: "none" },
       filter: defaultCustomBackgroundFilter("image-dithering"),
       fade: 50,
-      dim: 60,
       fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     });
@@ -111,7 +112,6 @@ describe("CustomBackgroundRecord", () => {
       source: { kind: "none" },
       filter: { kind: "none" },
       fade: 50,
-      dim: 60,
       fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     };
@@ -133,7 +133,6 @@ describe("CustomBackgroundRecord", () => {
       },
       filter: { kind: "water", size: 1 },
       fade: 50,
-      dim: 60,
       fadeHeight: 60,
       createdAt: "2026-09-08T00:00:00.000Z",
     });

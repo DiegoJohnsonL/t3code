@@ -5,10 +5,8 @@ import {
   type CustomBackgroundFilterKind,
   type CustomBackgroundImageId,
   type CustomBackgroundRecord,
-  DEFAULT_CUSTOM_BACKGROUND_DIM,
   DEFAULT_CUSTOM_BACKGROUND_FADE,
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-  DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   defaultCustomBackgroundFilter,
 } from "@t3tools/contracts";
@@ -36,9 +34,7 @@ export function createEmptyBackground(input: {
     source: { kind: "none" },
     filter: input.filter,
     fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
-    dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
     fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-    fadeSolid: DEFAULT_CUSTOM_BACKGROUND_FADE_SOLID,
     createdAt: input.createdAt,
   };
 }

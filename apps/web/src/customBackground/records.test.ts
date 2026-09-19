@@ -35,15 +35,13 @@ const sunset: CustomBackgroundRecord = {
   },
   filter: defaultCustomBackgroundFilter("image-dithering"),
   fade: 100,
-  dim: 60,
   fadeHeight: 60,
-  fadeSolid: 25,
   createdAt,
 };
 const mesh = createEmptyBackground({
   id: "bg-2",
   name: "Mesh",
-  filter: defaultCustomBackgroundFilter("fluted-glass"),
+  filter: defaultCustomBackgroundFilter("image-dithering"),
   createdAt,
 });
 
@@ -74,11 +72,11 @@ describe("library edits", () => {
   });
 
   it("resets parameters when the filter kind changes and keeps the image", () => {
-    const glass = withFilterKind(sunset, "fluted-glass");
-    expect(glass.filter.kind).toBe("fluted-glass");
-    expect(glass.source).toEqual(sunset.source);
-    expect(withFilterKind(glass, "fluted-glass")).toBe(glass);
-    const plain = withFilterKind(glass, "none");
+    const plain = withFilterKind(sunset, "none");
+    expect(plain.filter.kind).toBe("none");
+    expect(withFilterKind(plain, "none")).toBe(plain);
+    const dithered = withFilterKind(plain, "image-dithering");
+    expect(dithered.filter).toEqual(defaultCustomBackgroundFilter("image-dithering"));
     expect(plain.source).toEqual(sunset.source);
   });
 });
@@ -112,11 +110,11 @@ describe("images", () => {
 
 describe("filtersEqual", () => {
   it("compares kind and parameters", () => {
-    const a = defaultCustomBackgroundFilter("fluted-glass");
-    expect(filtersEqual(a, defaultCustomBackgroundFilter("fluted-glass"))).toBe(true);
-    if (a.kind !== "fluted-glass") throw new Error("unexpected kind");
-    expect(filtersEqual(a, { ...a, blur: a.blur + 0.01 })).toBe(false);
-    expect(filtersEqual(a, defaultCustomBackgroundFilter("image-dithering"))).toBe(false);
+    const a = defaultCustomBackgroundFilter("image-dithering");
+    expect(filtersEqual(a, defaultCustomBackgroundFilter("image-dithering"))).toBe(true);
+    if (a.kind !== "image-dithering") throw new Error("unexpected kind");
+    expect(filtersEqual(a, { ...a, size: a.size + 0.2 })).toBe(false);
+    expect(filtersEqual(a, { kind: "none" })).toBe(false);
   });
 });
 

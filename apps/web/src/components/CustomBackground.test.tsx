@@ -39,9 +39,7 @@ it("draws nothing while the photo is missing, whatever the filter", async () => 
     name: "Photo",
     createdAt: "2026-09-11",
     fade: 100,
-    dim: 60,
     fadeHeight: 60,
-    fadeSolid: 25,
     source: {
       kind: "image",
       imageIds: ["a".repeat(64)],
@@ -56,7 +54,7 @@ it("draws nothing while the photo is missing, whatever the filter", async () => 
     renderer = create(<CustomBackground routeKind="draft" />);
   });
   expect(renderer?.toJSON()).toBeNull();
-  for (const kind of ["fluted-glass", "none"] as const) {
+  for (const kind of ["image-dithering", "none"] as const) {
     state.selected = { ...record, filter: defaultCustomBackgroundFilter(kind) };
     // Remount to read the selected record from the mocked settings boundary.
     await act(async () => {

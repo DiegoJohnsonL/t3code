@@ -1,4 +1,4 @@
-import { FlutedGlass, ImageDithering } from "@paper-design/shaders-react";
+import { ImageDithering } from "@paper-design/shaders-react";
 import type { CustomBackgroundFilter, CustomBackgroundTransition } from "@t3tools/contracts";
 import { memo, useEffect, useState } from "react";
 
@@ -27,11 +27,6 @@ function ShaderLayer({ filter, image }: { filter: CustomBackgroundFilter; image:
       const { kind: _kind, ...params } = filter;
       return <ImageDithering image={image} {...params} {...SHADER_PROPS} />;
     }
-    case "fluted-glass": {
-      if (!image) return null;
-      const { kind: _kind, ...params } = filter;
-      return <FlutedGlass image={image} {...params} {...SHADER_PROPS} />;
-    }
     default: {
       const _exhaustive: never = filter;
       return _exhaustive;
@@ -40,27 +35,31 @@ function ShaderLayer({ filter, image }: { filter: CustomBackgroundFilter; image:
 }
 
 export interface BackgroundFade {
+  /** Overlay strength at the bottom edge, 0 to 100. */
   fade: number;
-  dim: number;
+  /** Percent of the pane the overlay climbs before it settles. */
   fadeHeight: number;
-  fadeSolid: number;
 }
 
 const FADE_STOPS = 8;
+// The top of the pane keeps this share of the bottom strength, and the bottom
+// share of the height holds full strength before the ramp begins. Both fixed,
+// so two sliders always produce the same silhouette.
+const TOP_SHARE = 0.55;
+const SOLID_SHARE = 0.45;
 
-// Hold the bottom fade across the solid band, then smoothstep up to the dim
-// level so the overlay eases out instead of showing a hard band.
-export function fadeOverlayGradient({ fade, dim, fadeHeight, fadeSolid }: BackgroundFade): string {
+export function fadeOverlayGradient({ fade, fadeHeight }: BackgroundFade): string {
   const stop = (opacity: number, position: number) =>
     `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${Math.round(position)}%`;
-  const rampEnd = Math.max(fadeHeight, fadeSolid);
+  const top = fade * TOP_SHARE;
+  const solid = fadeHeight * SOLID_SHARE;
   const stops = [stop(fade, 0)];
   for (let index = 0; index <= FADE_STOPS; index += 1) {
     const t = index / FADE_STOPS;
     const eased = t * t * (3 - 2 * t);
-    stops.push(stop(fade + (dim - fade) * eased, fadeSolid + t * (rampEnd - fadeSolid)));
+    stops.push(stop(fade + (top - fade) * eased, solid + t * (fadeHeight - solid)));
   }
-  stops.push(stop(dim, 100));
+  stops.push(stop(top, 100));
   return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
