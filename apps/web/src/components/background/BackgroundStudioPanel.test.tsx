@@ -118,7 +118,7 @@ beforeEach(async () => {
   act(() =>
     renderer.root
       .findByType(BackgroundImagePicker)
-      .props.onUpload(new File(["photo"], "photo.png")),
+      .props.onUpload([new File(["photo"], "photo.png")]),
   );
 });
 afterEach(async () => {

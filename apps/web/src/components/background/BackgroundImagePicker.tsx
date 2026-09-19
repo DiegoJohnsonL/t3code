@@ -102,7 +102,7 @@ export function BackgroundImagePicker({
   selectedImageIds: ReadonlyArray<CustomBackgroundImageId>;
   referencedImageIds: ReadonlySet<string>;
   onToggle: (imageId: CustomBackgroundImageId) => void;
-  onUpload: (file: File) => void;
+  onUpload: (files: ReadonlyArray<File>) => void;
   busy: boolean;
 }) {
   const previewImageId = selectedImageIds[0] ?? null;
@@ -118,10 +118,10 @@ export function BackgroundImagePicker({
   const [open, setOpen] = useState(false);
   const [dragTarget, setDragTarget] = useState<"input" | "upload" | null>(null);
 
-  function uploadFile(file: File) {
-    if (busy) return;
+  function uploadFiles(files: FileList) {
+    if (busy || files.length === 0) return;
     setOpen(false);
-    onUpload(file);
+    onUpload(Array.from(files));
   }
 
   function handleDragOver(event: DragEvent<HTMLButtonElement>) {
@@ -146,8 +146,7 @@ export function BackgroundImagePicker({
     event.preventDefault();
     event.stopPropagation();
     setDragTarget(null);
-    const file = event.dataTransfer.files[0];
-    if (file) uploadFile(file);
+    uploadFiles(event.dataTransfer.files);
   }
 
   const dropHandlers = {
@@ -162,16 +161,15 @@ export function BackgroundImagePicker({
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept={BACKGROUND_FILE_ACCEPT}
         className="sr-only"
         tabIndex={-1}
         aria-label="Background image file"
         onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
+          const files = event.currentTarget.files;
+          if (files) uploadFiles(files);
           event.currentTarget.value = "";
-          if (file) {
-            uploadFile(file);
-          }
         }}
       />
       <Menu open={open} onOpenChange={setOpen}>
@@ -203,7 +201,7 @@ export function BackgroundImagePicker({
               className="col-span-full flex min-h-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground outline-none hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 data-[dragging=true]:border-primary data-[dragging=true]:bg-primary/10"
             >
               <UploadIcon className="size-4" />
-              <span>Upload or drop an image</span>
+              <span>Upload or drop images</span>
               <span className="text-[11px]">{BACKGROUND_FILE_TYPES_LABEL}</span>
             </button>
             {images?.map((image) => {

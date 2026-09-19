@@ -5,7 +5,9 @@ import {
   CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS,
   CUSTOM_BACKGROUND_ROTATION_ORDERS,
   CUSTOM_BACKGROUND_TRANSITIONS,
+  type CustomBackgroundImageId,
   type CustomBackgroundImageSource,
+  type CustomBackgroundSource,
   IMAGE_DITHERING_PRESETS,
   type ImageDitheringPreset,
   type CustomBackgroundFilterKind,
@@ -568,19 +570,19 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
     persistLibrary(upsertBackground(getClientSettings().customBackgrounds, next), next.id);
   };
 
-  const uploadImage = async (file: File): Promise<string | null> => {
+  // Files encode one at a time: each decode holds a full bitmap in memory.
+  const uploadImages = async (files: ReadonlyArray<File>) => {
     setUpload({ busy: true, error: null });
-    const result = await storeBackgroundImage(file);
-    if (!mounted.current) return null;
-    if (!result.ok) {
-      setUpload({
-        busy: false,
-        error: describeUploadFailure(result.reason),
-      });
-      return null;
+    const imageIds: Array<CustomBackgroundImageId> = [];
+    let error: string | null = null;
+    for (const file of files) {
+      const result = await storeBackgroundImage(file);
+      if (!mounted.current) return [];
+      if (result.ok) imageIds.push(result.image.id);
+      else error = describeUploadFailure(result.reason);
     }
-    setUpload({ busy: false, error: null });
-    return result.image.id;
+    setUpload({ busy: false, error });
+    return imageIds;
   };
 
   const createBackground = () => {
@@ -769,9 +771,9 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                             source: toggleBackgroundImage(record.source, imageId),
                           })
                         }
-                        onUpload={(file) => {
-                          void uploadImage(file).then((imageId) => {
-                            if (imageId) {
+                        onUpload={(files) => {
+                          void uploadImages(files).then((imageIds) => {
+                            if (imageIds.length > 0) {
                               flushPending();
                               const current = getClientSettings().customBackgrounds;
                               // Add the image only to a surviving record whose images
@@ -783,7 +785,10 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
                                   sourcesEqual(entry.source, record.source)
                                     ? {
                                         ...entry,
-                                        source: appendBackgroundImage(entry.source, imageId),
+                                        source: imageIds.reduce<CustomBackgroundSource>(
+                                          appendBackgroundImage,
+                                          entry.source,
+                                        ),
                                       }
                                     : entry,
                                 ),
