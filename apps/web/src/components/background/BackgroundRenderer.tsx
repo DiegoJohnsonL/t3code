@@ -104,6 +104,8 @@ export interface BackgroundRendererProps {
   image: string | null;
   transition: CustomBackgroundTransition;
   fade: BackgroundFade;
+  /** Picture opacity, 0 to 100; the theme background shows through the rest. */
+  opacity: number;
   /** When false, skip Paper entirely and draw the photo if one is loaded. */
   filtersAvailable: boolean;
 }
@@ -113,6 +115,7 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
   image,
   transition,
   fade,
+  opacity,
   filtersAvailable,
 }: BackgroundRendererProps) {
   const mode = backgroundDrawMode({
@@ -124,20 +127,22 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
   if (mode === "none") return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {slides.map((slide) => (
-        <div
-          key={slide.key}
-          className="custom-background-slide absolute inset-0"
-          data-transition={transition}
-          data-leaving={slide.leaving || undefined}
-        >
-          {mode === "image" && typeof slide.image === "string" ? (
-            <img src={slide.image} alt="" className="absolute size-full object-cover" />
-          ) : (
-            <ShaderLayer filter={filter} image={slide.image} />
-          )}
-        </div>
-      ))}
+      <div className="absolute inset-0" style={{ opacity: opacity / 100 }}>
+        {slides.map((slide) => (
+          <div
+            key={slide.key}
+            className="custom-background-slide absolute inset-0"
+            data-transition={transition}
+            data-leaving={slide.leaving || undefined}
+          >
+            {mode === "image" && typeof slide.image === "string" ? (
+              <img src={slide.image} alt="" className="absolute size-full object-cover" />
+            ) : (
+              <ShaderLayer filter={filter} image={slide.image} />
+            )}
+          </div>
+        ))}
+      </div>
       {/* Above the slides: an outgoing slide is lifted over the incoming one and
           would otherwise escape the dimming for the length of the fade. */}
       <div className="absolute inset-0 z-[2]" style={{ background: fadeOverlayGradient(fade) }} />

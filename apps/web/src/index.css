@@ -638,6 +638,13 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     display: block;
   }
 
+  /* The hero composer floats mid-pane where the wallpaper is brightest, so its
+     glass needs more fill than the bottom-anchored composer over the fade. */
+  [data-chat-background-pane][data-chat-draft-hero]:has(> [data-chat-backdrop="source"])
+    [data-chat-composer-stack] {
+    --glass-opacity: 94%;
+  }
+
   [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
     z-index: 10;
   }

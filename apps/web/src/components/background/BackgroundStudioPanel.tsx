@@ -94,6 +94,7 @@ const UPLOAD_CONCURRENCY = 4;
 const FADE_CONTROLS = [
   { key: "fade", label: "Fade" },
   { key: "fadeHeight", label: "Fade height" },
+  { key: "opacity", label: "Image opacity" },
 ] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
 
 function describeUploadFailure(reason: string): string {

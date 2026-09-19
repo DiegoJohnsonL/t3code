@@ -38,7 +38,9 @@ selector off. The picture still shows, without its filter.
 
 ## Fade
 
-Two sliders blend your theme's background color over the picture, so the fade always
+**Image opacity** sets how much of the picture shows over your theme's background at all;
+lower it when text needs more contrast. Two more sliders blend your theme's background
+color over the picture, so the fade always
 matches the theme you picked. **Fade** is the strength: at 100% the bottom edge goes solid,
 and the top of the pane keeps about half of whatever you set. **Fade height** is how far up
 the pane the color reaches; the lower part of that stretch stays solid and the rest eases

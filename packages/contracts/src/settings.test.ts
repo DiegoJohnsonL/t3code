@@ -968,6 +968,7 @@ describe("ClientSettings custom backgrounds", () => {
     filter: { kind: "none" },
     fade: 70,
     fadeHeight: 60,
+    opacity: 100,
     createdAt: "2026-09-08T00:00:00.000Z",
   };
 
