@@ -610,6 +610,9 @@ importers:
       '@legendapp/list':
         specifier: 'catalog:'
         version: 3.3.5(patch_hash=680cc6a5c5b4a4032e467e7b3fde22f89a84c0ee2e6eac6fda737d6277cc0806)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@material/material-color-utilities':
+        specifier: 0.3.0
+        version: 0.3.0
       '@noble/hashes':
         specifier: 'catalog:'
         version: 1.8.0

@@ -480,6 +480,7 @@ export function BackgroundStudioPanel() {
   const library = useClientSettings((settings) => settings.customBackgrounds);
   const activeId = useClientSettings((settings) => settings.activeCustomBackgroundId);
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
   const updateSettings = useUpdateClientSettings();
 
   const selectedId = activeId;
@@ -619,6 +620,15 @@ export function BackgroundStudioPanel() {
             <Switch
               checked={enabled}
               onCheckedChange={(checked) => updateSettings({ customBackgroundEnabled: checked })}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            Theme from image colors
+            <Switch
+              checked={dynamicTheme}
+              onCheckedChange={(checked) =>
+                updateSettings({ customBackgroundDynamicTheme: checked })
+              }
             />
           </label>
         </div>

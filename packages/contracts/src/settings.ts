@@ -315,6 +315,10 @@ export const ClientSettingsSchema = Schema.Struct({
   activeCustomBackgroundId: Schema.NullOr(CustomBackgroundId).pipe(
     Schema.withDecodingDefault(Effect.succeed(null)),
   ),
+  /** Repaints the interface from the colors of whichever picture is showing. */
+  customBackgroundDynamicTheme: Schema.Boolean.pipe(
+    Schema.withDecodingDefault(Effect.succeed(false)),
+  ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
   ),
@@ -1546,6 +1550,7 @@ export const ClientSettingsPatch = Schema.Struct({
   customBackgrounds: Schema.optionalKey(CustomBackgroundRecords),
   customBackgroundEnabled: Schema.optionalKey(Schema.Boolean),
   activeCustomBackgroundId: Schema.optionalKey(Schema.NullOr(CustomBackgroundId)),
+  customBackgroundDynamicTheme: Schema.optionalKey(Schema.Boolean),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

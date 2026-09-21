@@ -1,0 +1,54 @@
+import { QuantizerCelebi, Score } from "@material/material-color-utilities";
+
+import { createCanvas } from "~/lib/imageCompression";
+
+/**
+ * Android quantizes a downscaled wallpaper rather than the real one, and the
+ * ranking only needs a representative pixel population. 112px keeps a whole
+ * playlist's extraction well inside a frame.
+ */
+const SAMPLE_DIMENSION = 112;
+/** Material's own bucket count for wallpaper extraction. */
+const QUANTIZE_BUCKETS = 128;
+
+function opaquePixels(data: Uint8ClampedArray): number[] {
+  const pixels: number[] = [];
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (data[offset + 3] !== 255) continue;
+    pixels.push(
+      ((255 << 24) | (data[offset]! << 16) | (data[offset + 1]! << 8) | data[offset + 2]!) >>> 0,
+    );
+  }
+  return pixels;
+}
+
+/**
+ * The ARGB seed Material builds a scheme from, seen through the same quantize
+ * and score pass Android runs on a wallpaper. Returns null when the picture
+ * cannot be decoded or scores nothing, which leaves the selected theme alone.
+ */
+export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
+  if (typeof createImageBitmap !== "function") return null;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(blob);
+  } catch {
+    return null;
+  }
+
+  try {
+    const scale = Math.min(1, SAMPLE_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const target = createCanvas(width, height);
+    if (!target) return null;
+    target.context.drawImage(bitmap, 0, 0, width, height);
+    const pixels = opaquePixels(target.context.getImageData(0, 0, width, height).data);
+    if (pixels.length === 0) return null;
+    return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE_BUCKETS))[0] ?? null;
+  } catch {
+    return null;
+  } finally {
+    bitmap.close();
+  }
+}

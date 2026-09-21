@@ -201,12 +201,12 @@ function canRecompress(): boolean {
   );
 }
 
-interface Canvas2D {
+export interface Canvas2D {
   canvas: OffscreenCanvas | HTMLCanvasElement;
   context: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 }
 
-function createCanvas(width: number, height: number): Canvas2D | null {
+export function createCanvas(width: number, height: number): Canvas2D | null {
   if (typeof OffscreenCanvas === "function") {
     const canvas = new OffscreenCanvas(width, height);
     const context = canvas.getContext("2d");

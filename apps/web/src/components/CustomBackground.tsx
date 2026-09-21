@@ -17,6 +17,7 @@ import {
 import { useRotationClock } from "~/customBackground/useRotationClock";
 import { useRotationOffsetStore } from "~/customBackground/rotationOffsetStore";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
+import { useDynamicBackgroundTheme } from "~/customBackground/useDynamicBackgroundTheme";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 
 // The shader library only loads once a client actually has a background
@@ -34,6 +35,7 @@ export const CustomBackground = memo(function CustomBackground({
 }) {
   const selected = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
   const editing = useBackgroundStudioOpen();
   const preview = useBackgroundStudioStore((store) => store.preview);
   const record = resolveDisplayedBackground({
@@ -57,6 +59,7 @@ export const CustomBackground = memo(function CustomBackground({
       : "full";
   const image = useBackgroundImageUrl(imageId, variant);
   useBackgroundImageUrl(upcomingBackgroundImageId(source, now, offset), variant);
+  useDynamicBackgroundTheme(dynamicTheme ? imageId : null);
   // Hold the previous picture while the next one decodes so a rotation never
   // flashes the bare theme between images.
   const [lastImage, setLastImage] = useState<string | null>(null);

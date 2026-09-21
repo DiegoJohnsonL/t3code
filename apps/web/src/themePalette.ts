@@ -1492,6 +1492,27 @@ export function getThemeColorVariable(role: ThemeColorRole): string {
 /** Marks the document as wearing an unsaved draft rather than a stored theme. */
 export const THEME_PREVIEW_ID = "__preview";
 
+/** Marks the document as wearing colors pulled from the background picture. */
+export const DYNAMIC_THEME_ID = "__background";
+
+let dynamicThemeColors: ThemeColors | null = null;
+
+/**
+ * Colors derived from whichever background picture is showing. They stand in
+ * for the selected theme's palette until cleared, so the next `applyThemePalette`
+ * repaints from the picture instead of the library entry. Callers own the
+ * repaint: set the colors, then refresh the theme.
+ */
+export function setDynamicThemeColors(colors: ThemeColors | null): void {
+  dynamicThemeColors = colors;
+}
+
+function writeThemeColors(root: HTMLElement, colors: ThemeColors): void {
+  for (const [role, value] of Object.entries(colors) as Array<[ThemeColorRole, string]>) {
+    root.style.setProperty(APP_THEME_VARIABLES[role], value);
+  }
+}
+
 /**
  * Paint a draft palette onto the live app without installing it, so the editor
  * can be judged against the real interface instead of a miniature. Callers
@@ -1523,12 +1544,18 @@ export function applyThemePalette(theme: ThemePreference, appearance?: ThemeAppe
   const palette = getThemeDefinition(theme);
 
   if (palette) {
-    root.dataset.themeId = palette.id;
+    root.dataset.themeId = dynamicThemeColors ? DYNAMIC_THEME_ID : palette.id;
     const mode = appearance ?? legacyThemeMode(theme) ?? palette.appearance;
-    const colors = getThemeColorsForMode(palette, mode) ?? palette.colors;
-    for (const [role, value] of Object.entries(colors) as Array<[ThemeColorRole, string]>) {
-      root.style.setProperty(APP_THEME_VARIABLES[role], value);
-    }
+    writeThemeColors(
+      root,
+      dynamicThemeColors ?? getThemeColorsForMode(palette, mode) ?? palette.colors,
+    );
+    return;
+  }
+
+  if (dynamicThemeColors) {
+    root.dataset.themeId = DYNAMIC_THEME_ID;
+    writeThemeColors(root, dynamicThemeColors);
     return;
   }
 

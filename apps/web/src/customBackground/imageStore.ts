@@ -4,8 +4,10 @@ import { useSyncExternalStore } from "react";
 
 import { type ImageCompressionFailureReason, reencodeImage } from "~/lib/imageCompression";
 
+import { sourceColorFromImage } from "./sourceColor";
+
 const DATABASE_NAME = "t3code:custom-backgrounds";
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 const IMAGES_STORE = "images";
 
 /** 4K covers the widest display anyone runs this on without upscaling the picture. */
@@ -52,6 +54,8 @@ export interface StoredBackgroundImage {
   readonly width: number;
   readonly height: number;
   readonly byteLength: number;
+  /** Material seed color scored from the picture; null when it scored nothing. */
+  readonly sourceColor: number | null;
   readonly createdAt: string;
 }
 
@@ -131,6 +135,7 @@ function isStoredBackgroundImage(value: unknown): value is StoredBackgroundImage
     typeof candidate.width === "number" &&
     typeof candidate.height === "number" &&
     typeof candidate.byteLength === "number" &&
+    (candidate.sourceColor === null || typeof candidate.sourceColor === "number") &&
     typeof candidate.createdAt === "string"
   );
 }
@@ -167,6 +172,7 @@ export async function deleteBackgroundImage(id: CustomBackgroundImageId): Promis
   transaction.objectStore(IMAGES_STORE).delete(id);
   await transactionDone(transaction);
   for (const variant of URL_VARIANTS) releaseUrl(id, variant);
+  sourceColorStates.delete(id);
   emitUrlChange();
   emitStoreChange();
 }
@@ -214,6 +220,7 @@ export async function storeBackgroundImage(file: File): Promise<StoreBackgroundI
     width: full.width,
     height: full.height,
     byteLength: full.blob.size,
+    sourceColor: await sourceColorFromImage(thumbnail.blob),
     createdAt: new Date().toISOString(),
   };
   try {
@@ -266,6 +273,7 @@ function refreshImageUrls(image: StoredBackgroundImage): void {
     if (!state || state.status === "ready") continue;
     urlStates.set(key, { status: "ready", url: URL.createObjectURL(image[variant]) });
   }
+  sourceColorStates.set(image.id, { status: "ready", sourceColor: image.sourceColor });
   emitUrlChange();
 }
 
@@ -311,6 +319,41 @@ export function useBackgroundImageUrl(
       if (id === null) return false;
       const state = ensureUrl(id, variant);
       return state.status === "ready" ? state.url : state.status === "missing" ? false : null;
+    },
+    () => null,
+  );
+}
+
+type SourceColorState = { status: "loading" } | { status: "ready"; sourceColor: number | null };
+
+const sourceColorStates = new Map<CustomBackgroundImageId, SourceColorState>();
+
+function ensureSourceColor(id: CustomBackgroundImageId): SourceColorState {
+  const cached = sourceColorStates.get(id);
+  if (cached) return cached;
+  const loading: SourceColorState = { status: "loading" };
+  sourceColorStates.set(id, loading);
+  const settle = (sourceColor: number | null) => {
+    // A delete that raced the read already cleared the slot; leave it.
+    if (sourceColorStates.get(id) === loading) {
+      sourceColorStates.set(id, { status: "ready", sourceColor });
+    }
+  };
+  void readImage(id)
+    .then((image) => settle(image?.sourceColor ?? null))
+    .catch(() => settle(null))
+    .finally(emitUrlChange);
+  return loading;
+}
+
+/** The image's Material seed color; null while it loads or when it scored none. */
+export function useBackgroundImageSourceColor(id: CustomBackgroundImageId | null): number | null {
+  return useSyncExternalStore(
+    subscribeUrls,
+    () => {
+      if (id === null) return null;
+      const state = ensureSourceColor(id);
+      return state.status === "ready" ? state.sourceColor : null;
     },
     () => null,
   );
