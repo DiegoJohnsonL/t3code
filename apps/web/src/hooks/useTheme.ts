@@ -651,12 +651,15 @@ export function useTheme() {
     return true;
   }, []);
 
-  const refreshTheme = useCallback(({ preservePreview = false } = {}) => {
-    if (typeof window === "undefined") return;
-    lastAppliedTheme = null;
-    applyTheme(getStored(), { suppressTransitions: true, preservePreview });
-    emitChange();
-  }, []);
+  const refreshTheme = useCallback(
+    ({ preservePreview = false, suppressTransitions = true } = {}) => {
+      if (typeof window === "undefined") return;
+      lastAppliedTheme = null;
+      applyTheme(getStored(), { suppressTransitions, preservePreview });
+      emitChange();
+    },
+    [],
+  );
 
   // Keep DOM in sync on mount/change
   useEffect(() => {

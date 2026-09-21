@@ -2,7 +2,12 @@ import {
   useBackgroundStudioOpen,
   useBackgroundStudioStore,
 } from "~/customBackground/backgroundStudioStore";
-import { currentBackgroundImageId, resolveActiveBackground } from "~/customBackground/records";
+import { useBackgroundImageSourceColor } from "~/customBackground/imageStore";
+import {
+  currentBackgroundImageId,
+  resolveActiveBackground,
+  upcomingBackgroundImageId,
+} from "~/customBackground/records";
 import { useRotationClock } from "~/customBackground/useRotationClock";
 import { useRotationOffsetStore } from "~/customBackground/rotationOffsetStore";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
@@ -31,5 +36,8 @@ export function BackgroundThemeSync() {
   const now = useRotationClock(source);
   const offset = useRotationOffsetStore((store) => store.offset);
   useDynamicBackgroundTheme(currentBackgroundImageId(source, now, offset));
+  // Warm the next picture's colors so the theme switches in the same frame as
+  // the picture, which CustomBackground preloads the same way.
+  useBackgroundImageSourceColor(upcomingBackgroundImageId(source, now, offset));
   return null;
 }

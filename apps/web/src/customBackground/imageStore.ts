@@ -346,14 +346,16 @@ function ensureSourceColor(id: CustomBackgroundImageId): SourceColorState {
   return loading;
 }
 
-/** The image's Material seed color; null while it loads or when it scored none. */
-export function useBackgroundImageSourceColor(id: CustomBackgroundImageId | null): number | null {
+/** The image's Material seed color; `null` while it loads, `false` when it scored none. */
+export function useBackgroundImageSourceColor(
+  id: CustomBackgroundImageId | null,
+): number | null | false {
   return useSyncExternalStore(
     subscribeUrls,
     () => {
-      if (id === null) return null;
+      if (id === null) return false;
       const state = ensureSourceColor(id);
-      return state.status === "ready" ? state.sourceColor : null;
+      return state.status === "ready" ? (state.sourceColor ?? false) : null;
     },
     () => null,
   );

@@ -22,7 +22,7 @@ vi.mock("~/customBackground/backgroundStudioStore", () => ({
 }));
 vi.mock("~/customBackground/imageStore", () => ({
   useBackgroundImageUrl: () => false,
-  useBackgroundImageSourceColor: () => null,
+  useBackgroundImageSourceColor: () => false,
 }));
 vi.mock("~/customBackground/webgl", () => ({ isWebGlAvailable: () => true }));
 vi.mock("./background/BackgroundRenderer", () => ({

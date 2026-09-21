@@ -666,6 +666,18 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     }
   }
 
+  /* The image-colors theme crossfades the whole page alongside the picture
+     fade above. The snapshots must not swallow clicks while they blend. */
+  ::view-transition {
+    pointer-events: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1400ms;
+    animation-timing-function: ease-in-out;
+  }
+
   .custom-background-layer {
     pointer-events: none;
     position: absolute;
