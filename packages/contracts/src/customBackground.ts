@@ -191,13 +191,13 @@ export const MAX_CUSTOM_BACKGROUND_FADE = 100;
  * down to the dim level over the fade height; the renderer owns the curve so
  * every playlist keeps the same shape.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE = 100;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE = 83;
 /** How far up the pane, in percent, the overlay climbs before it settles. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 70;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 76;
 /** Flat overlay strength across the whole picture, above the bottom fade. */
-export const DEFAULT_CUSTOM_BACKGROUND_DIM = 35;
+export const DEFAULT_CUSTOM_BACKGROUND_DIM = 38;
 /** Opacity of the picture itself over the theme background, 0 to 100. Lower it for more text contrast. */
-export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 100;
+export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 75;
 export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
