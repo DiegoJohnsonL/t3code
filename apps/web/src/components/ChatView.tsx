@@ -1,5 +1,4 @@
 import { CustomBackground } from "./CustomBackground";
-import { ChatTopbarBlur } from "./chat/ChatTopbarBlur";
 import { useLoadBalancedEnvironment } from "../hooks/useLoadBalancedEnvironment";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import type { UsageLimitSourceSnapshots } from "@t3tools/contracts";
@@ -9808,7 +9807,6 @@ export default function ChatView(props: ChatViewProps) {
         )}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
       >
-        <ChatTopbarBlur />
         {/* Top bar */}
         <WorkspacePageHeader
           data-chat-header

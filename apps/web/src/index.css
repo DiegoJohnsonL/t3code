@@ -630,14 +630,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 }
 
 @layer components {
-  .custom-background-topbar-blur {
-    display: none;
-  }
-
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) .custom-background-topbar-blur {
-    display: block;
-  }
-
   /* The hero composer floats mid-pane where the wallpaper is brightest, so its
      glass needs more fill than the bottom-anchored composer over the fade. */
   [data-chat-background-pane][data-chat-draft-hero]:has(> [data-chat-backdrop="source"])
@@ -647,11 +639,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 
   [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
     z-index: 10;
-  }
-
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) .topbar-scroll-fade {
-    -webkit-mask-image: none !important;
-    mask-image: none !important;
   }
 
   /* Wallpaper is painted at viewport width and shifted left by this amount so
@@ -1366,9 +1353,9 @@ html[data-theme-id] [data-chat-header] {
   color: var(--contrast-toolbar-foreground);
 }
 
-/* Over a wallpaper the header is glass: ChatTopbarBlur frosts the picture and a
-   toolbar fill would bury it. Unlayered and more specific, so it wins over the
-   palette rule above for every theme, the image-colors theme included. */
+/* Over a wallpaper the header stays clear so the picture runs to the top edge;
+   the timeline's scroll fade keeps text from meeting the header. Unlayered and
+   more specific, so it wins over the palette rule above for every theme. */
 [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
   background-color: transparent;
 }
