@@ -1366,6 +1366,13 @@ html[data-theme-id] [data-chat-header] {
   color: var(--contrast-toolbar-foreground);
 }
 
+/* Over a wallpaper the header is glass: ChatTopbarBlur frosts the picture and a
+   toolbar fill would bury it. Unlayered and more specific, so it wins over the
+   palette rule above for every theme, the image-colors theme included. */
+[data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
+  background-color: transparent;
+}
+
 html[data-theme-id] [data-chat-header] [data-slot="button"],
 html[data-theme-id] [data-chat-header] [data-slot="menu-trigger"],
 html[data-theme-id] [data-chat-header] [data-toolbar-control] {
