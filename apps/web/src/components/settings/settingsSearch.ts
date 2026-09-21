@@ -198,6 +198,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     targetId: "appearance",
   },
   {
+    id: "background-dynamic-theme",
+    title: "Theme from image colors",
+    to: "/settings/appearance",
+    searchTerms: ["material you dynamic color wallpaper palette accent tint background playlist"],
+  },
+  {
     // Prefixed because the slider control already owns the `appearance-contrast` id.
     id: "setting-appearance-contrast",
     title: "Contrast",

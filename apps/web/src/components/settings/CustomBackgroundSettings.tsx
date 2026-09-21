@@ -10,6 +10,7 @@ import { MonitorCog } from "lucide-react";
 export function CustomBackgroundSettings() {
   const active = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
   const libraryCount = useClientSettings((settings) => settings.customBackgrounds.length);
   const updateSettings = useUpdateClientSettings();
 
@@ -46,6 +47,19 @@ export function CustomBackgroundSettings() {
               aria-label="Enable custom background"
             />
           </div>
+        }
+      />
+      <SettingsRow
+        {...searchableSetting("background-dynamic-theme")}
+        description="Repaint the app from the colors of whichever picture is showing. Each image in a playlist brings its own palette."
+        control={
+          <Switch
+            checked={dynamicTheme}
+            onCheckedChange={(checked) =>
+              updateSettings({ customBackgroundDynamicTheme: Boolean(checked) })
+            }
+            aria-label="Theme from image colors"
+          />
         }
       />
     </SettingsSection>
