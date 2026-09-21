@@ -3,9 +3,14 @@ import { create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 
 vi.mock("~/lib/imageCompression", () => ({
-  reencodeImage: vi.fn(async () => ({
+  reencodeImage: vi.fn(async (_file: File, renditions: Record<string, unknown>) => ({
     ok: true,
-    image: { blob: new Blob(["encoded"], { type: "image/webp" }), width: 20, height: 10 },
+    images: Object.fromEntries(
+      Object.keys(renditions).map((name) => [
+        name,
+        { blob: new Blob([name], { type: "image/webp" }), width: 20, height: 10 },
+      ]),
+    ),
   })),
 }));
 
@@ -65,7 +70,7 @@ afterEach(async () => {
 });
 
 it.each(["deleted", "read failure"])(
-  "recovers both mounted image URLs after %s and re-upload",
+  "recovers every mounted image URL after %s and re-upload",
   async (failure) => {
     const database = imageDatabase();
     const store = await import("./imageStore");
@@ -77,9 +82,11 @@ it.each(["deleted", "read failure"])(
     else database.failReads(true);
 
     let full: string | null | false = null;
+    let shader: string | null | false = null;
     let thumbnail: string | null | false = null;
     function Images() {
       full = store.useBackgroundImageUrl(id);
+      shader = store.useBackgroundImageUrl(id, "shader");
       thumbnail = store.useBackgroundImageUrl(id, "thumbnail");
       return null;
     }
@@ -87,6 +94,7 @@ it.each(["deleted", "read failure"])(
       renderer = create(<Images />);
     });
     expect(full).toBe(false);
+    expect(shader).toBe(false);
     expect(thumbnail).toBe(false);
     database.failReads(false);
 
@@ -95,8 +103,10 @@ it.each(["deleted", "read failure"])(
       expect(restored.ok && restored.existed).toBe(failure === "read failure");
     });
     expect(full).toEqual(expect.stringMatching(/^blob:/));
+    expect(shader).toEqual(expect.stringMatching(/^blob:/));
     expect(thumbnail).toEqual(expect.stringMatching(/^blob:/));
-    expect(await (await fetch(String(full))).text()).toBe("encoded");
-    expect(await (await fetch(String(thumbnail))).text()).toBe("encoded");
+    expect(await (await fetch(String(full))).text()).toBe("full");
+    expect(await (await fetch(String(shader))).text()).toBe("shader");
+    expect(await (await fetch(String(thumbnail))).text()).toBe("thumbnail");
   },
 );

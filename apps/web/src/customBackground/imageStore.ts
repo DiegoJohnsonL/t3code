@@ -5,13 +5,36 @@ import { useSyncExternalStore } from "react";
 import { type ImageCompressionFailureReason, reencodeImage } from "~/lib/imageCompression";
 
 const DATABASE_NAME = "t3code:custom-backgrounds";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const IMAGES_STORE = "images";
 
-export const CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION = 2048;
-export const CUSTOM_BACKGROUND_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
+/** 4K covers the widest display anyone runs this on without upscaling the picture. */
+export const CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION = 4096;
+/**
+ * Roomy enough that a 4K WebP never trips the encoder's fallback scales, which
+ * would quietly undo the dimension cap, and tight enough that a lossless
+ * upload re-encodes instead of parking tens of megabytes per image.
+ */
+export const CUSTOM_BACKGROUND_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+/**
+ * Paper uploads a shader's source as a texture at its natural size, and the
+ * dithering canvas never draws more than BackgroundRenderer's MAX_PIXEL_COUNT.
+ * Handing it the 4K copy would hold several times the VRAM to render pixels
+ * the filter throws away, and blows past the texture ceiling on weak GPUs.
+ */
+const SHADER_MAX_DIMENSION = 1920;
+const SHADER_MAX_BYTES = 2 * 1024 * 1024;
 const THUMBNAIL_MAX_DIMENSION = 256;
 const THUMBNAIL_MAX_BYTES = 200 * 1024;
+
+const IMAGE_RENDITIONS = {
+  full: {
+    maxDimension: CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION,
+    maxBytes: CUSTOM_BACKGROUND_IMAGE_MAX_BYTES,
+  },
+  shader: { maxDimension: SHADER_MAX_DIMENSION, maxBytes: SHADER_MAX_BYTES },
+  thumbnail: { maxDimension: THUMBNAIL_MAX_DIMENSION, maxBytes: THUMBNAIL_MAX_BYTES },
+} as const;
 
 export const CUSTOM_BACKGROUND_ACCEPTED_TYPES = [
   "image/jpeg",
@@ -23,7 +46,8 @@ export const CUSTOM_BACKGROUND_ACCEPTED_TYPES = [
 
 export interface StoredBackgroundImage {
   readonly id: CustomBackgroundImageId;
-  readonly blob: Blob;
+  readonly full: Blob;
+  readonly shader: Blob;
   readonly thumbnail: Blob;
   readonly width: number;
   readonly height: number;
@@ -50,9 +74,12 @@ function openDatabase(): Promise<IDBDatabase> {
     }
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
     request.addEventListener("upgradeneeded", () => {
-      if (!request.result.objectStoreNames.contains(IMAGES_STORE)) {
-        request.result.createObjectStore(IMAGES_STORE, { keyPath: "id" });
+      // Renditions are derived from an original this store never kept, so a
+      // shape change starts the library over rather than migrating it.
+      if (request.result.objectStoreNames.contains(IMAGES_STORE)) {
+        request.result.deleteObjectStore(IMAGES_STORE);
       }
+      request.result.createObjectStore(IMAGES_STORE, { keyPath: "id" });
     });
     request.addEventListener("error", () => {
       reject(request.error ?? new Error("Could not open the background image store."));
@@ -98,7 +125,8 @@ function isStoredBackgroundImage(value: unknown): value is StoredBackgroundImage
   const candidate = value as Record<string, unknown>;
   return (
     typeof candidate.id === "string" &&
-    candidate.blob instanceof Blob &&
+    candidate.full instanceof Blob &&
+    candidate.shader instanceof Blob &&
     candidate.thumbnail instanceof Blob &&
     typeof candidate.width === "number" &&
     typeof candidate.height === "number" &&
@@ -138,8 +166,7 @@ export async function deleteBackgroundImage(id: CustomBackgroundImageId): Promis
   const transaction = database.transaction(IMAGES_STORE, "readwrite");
   transaction.objectStore(IMAGES_STORE).delete(id);
   await transactionDone(transaction);
-  releaseUrl(id, "full");
-  releaseUrl(id, "thumbnail");
+  for (const variant of URL_VARIANTS) releaseUrl(id, variant);
   emitUrlChange();
   emitStoreChange();
 }
@@ -175,26 +202,18 @@ export async function storeBackgroundImage(file: File): Promise<StoreBackgroundI
     return { ok: false, reason: "unavailable" };
   }
 
-  const [full, thumbnail] = await Promise.all([
-    reencodeImage(file, {
-      maxDimension: CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION,
-      maxBytes: CUSTOM_BACKGROUND_IMAGE_MAX_BYTES,
-    }),
-    reencodeImage(file, {
-      maxDimension: THUMBNAIL_MAX_DIMENSION,
-      maxBytes: THUMBNAIL_MAX_BYTES,
-    }),
-  ]);
-  if (!full.ok) return full;
-  if (!thumbnail.ok) return thumbnail;
+  const encoded = await reencodeImage(file, IMAGE_RENDITIONS);
+  if (!encoded.ok) return encoded;
 
+  const { full, shader, thumbnail } = encoded.images;
   const image: StoredBackgroundImage = {
     id,
-    blob: full.image.blob,
-    thumbnail: thumbnail.image.blob,
-    width: full.image.width,
-    height: full.image.height,
-    byteLength: full.image.blob.size,
+    full: full.blob,
+    shader: shader.blob,
+    thumbnail: thumbnail.blob,
+    width: full.width,
+    height: full.height,
+    byteLength: full.blob.size,
     createdAt: new Date().toISOString(),
   };
   try {
@@ -208,7 +227,9 @@ export async function storeBackgroundImage(file: File): Promise<StoreBackgroundI
   return { ok: true, image, existed: false };
 }
 
-type UrlVariant = "full" | "thumbnail";
+type UrlVariant = keyof typeof IMAGE_RENDITIONS;
+const URL_VARIANTS = Object.keys(IMAGE_RENDITIONS) as ReadonlyArray<UrlVariant>;
+
 type UrlState = { status: "loading" } | { status: "ready"; url: string } | { status: "missing" };
 
 const urlStates = new Map<string, UrlState>();
@@ -239,14 +260,11 @@ function releaseUrl(id: CustomBackgroundImageId, variant: UrlVariant): void {
 // Repair missing or in-flight lookups after a successful upload, including a
 // deduplicated upload following a transient read failure. Keep healthy URLs stable.
 function refreshImageUrls(image: StoredBackgroundImage): void {
-  for (const variant of ["full", "thumbnail"] as const) {
+  for (const variant of URL_VARIANTS) {
     const key = urlKey(image.id, variant);
     const state = urlStates.get(key);
     if (!state || state.status === "ready") continue;
-    urlStates.set(key, {
-      status: "ready",
-      url: URL.createObjectURL(variant === "full" ? image.blob : image.thumbnail),
-    });
+    urlStates.set(key, { status: "ready", url: URL.createObjectURL(image[variant]) });
   }
   emitUrlChange();
 }
@@ -271,10 +289,7 @@ function ensureUrl(id: CustomBackgroundImageId, variant: UrlVariant): UrlState {
       urlStates.set(
         key,
         image
-          ? {
-              status: "ready",
-              url: URL.createObjectURL(variant === "full" ? image.blob : image.thumbnail),
-            }
+          ? { status: "ready", url: URL.createObjectURL(image[variant]) }
           : { status: "missing" },
       );
     })

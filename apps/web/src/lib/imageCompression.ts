@@ -480,13 +480,18 @@ export async function compressImageToByteLimit(
 
 export interface ReencodedImage {
   blob: Blob;
-  mimeType: string;
   width: number;
   height: number;
 }
 
-export type ReencodeImageResult =
-  | { ok: true; image: ReencodedImage }
+/** The ceilings a single rendition has to satisfy. */
+export interface ImageRendition {
+  readonly maxDimension: number;
+  readonly maxBytes: number;
+}
+
+export type ReencodeImageResult<T> =
+  | { ok: true; images: { readonly [K in keyof T]: ReencodedImage } }
   | { ok: false; reason: ImageCompressionFailureReason };
 
 async function canvasToBlob(
@@ -500,11 +505,74 @@ async function canvasToBlob(
   return new Promise((resolve) => canvas.toBlob(resolve, mimeType, quality));
 }
 
-/** Re-encodes even small uploads to WebP, or JPEG when the browser lacks a WebP encoder. */
-export async function reencodeImage(
+/** Formats an `<img>` can render, so an upload in one of them can be kept verbatim. */
+const RENDERABLE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/** Probed on a 1x1 canvas: older Safari and some embedded webviews cannot encode WebP. */
+async function preferredEncoding(): Promise<"image/webp" | "image/jpeg"> {
+  const probe = createCanvas(1, 1);
+  if (!probe) return "image/jpeg";
+  const blob = await canvasToBlob(probe.canvas, "image/webp", QUALITY_STEPS[0]);
+  return blob?.type === "image/webp" ? "image/webp" : "image/jpeg";
+}
+
+type RenditionResult =
+  | { ok: true; image: ReencodedImage }
+  | { ok: false; reason: ImageCompressionFailureReason };
+
+/**
+ * Scales `bitmap` down to `rendition` and encodes it, walking the quality
+ * ladder and then the fallback scales until the result fits `maxBytes`.
+ * `original` is the upload itself when it is still what got decoded, which
+ * lets a file already inside the rendition keep its exact pixels.
+ */
+async function encodeRendition(
+  bitmap: ImageBitmap,
+  mimeType: "image/webp" | "image/jpeg",
+  rendition: ImageRendition,
+  original: File | null,
+): Promise<RenditionResult> {
+  if (
+    original !== null &&
+    RENDERABLE_IMAGE_TYPES.has(original.type) &&
+    original.size <= rendition.maxBytes &&
+    Math.max(bitmap.width, bitmap.height) <= rendition.maxDimension
+  ) {
+    return { ok: true, image: { blob: original, width: bitmap.width, height: bitmap.height } };
+  }
+
+  const baseDimension = Math.min(rendition.maxDimension, Math.max(bitmap.width, bitmap.height));
+  for (const dimensionScale of [1, ...FALLBACK_SCALE_STEPS]) {
+    const targetDimension = Math.max(1, Math.round(baseDimension * dimensionScale));
+    const scale = targetDimension / Math.max(bitmap.width, bitmap.height);
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const target = createCanvas(width, height);
+    if (!target) return { ok: false, reason: "unreadable" };
+    if (mimeType === "image/jpeg") {
+      target.context.fillStyle = "#ffffff";
+      target.context.fillRect(0, 0, width, height);
+    }
+    target.context.drawImage(bitmap, 0, 0, width, height);
+    for (const quality of QUALITY_STEPS) {
+      const blob = await canvasToBlob(target.canvas, mimeType, quality);
+      if (!blob || blob.type !== mimeType) return { ok: false, reason: "unreadable" };
+      if (blob.size <= rendition.maxBytes) return { ok: true, image: { blob, width, height } };
+    }
+  }
+  return { ok: false, reason: "too-large" };
+}
+
+/**
+ * Builds every named rendition of `file` from a single decode, so a photo is
+ * decoded, and converted out of HEIC, exactly once no matter how many sizes
+ * are asked for. Renditions the upload already satisfies pass through with
+ * their original bytes.
+ */
+export async function reencodeImage<T extends Readonly<Record<string, ImageRendition>>>(
   file: File,
-  options: { maxDimension: number; maxBytes: number },
-): Promise<ReencodeImageResult> {
+  renditions: T,
+): Promise<ReencodeImageResult<T>> {
   if (file.size > MAX_COMPRESSIBLE_SOURCE_BYTES) {
     return { ok: false, reason: "too-large" };
   }
@@ -532,33 +600,15 @@ export async function reencodeImage(
   }
 
   try {
-    const baseDimension = Math.min(options.maxDimension, Math.max(bitmap.width, bitmap.height));
-    let mimeType: "image/webp" | "image/jpeg" | null = null;
-    for (const dimensionScale of [1, ...FALLBACK_SCALE_STEPS]) {
-      const targetDimension = Math.max(1, Math.round(baseDimension * dimensionScale));
-      const scale = targetDimension / Math.max(bitmap.width, bitmap.height);
-      const width = Math.max(1, Math.round(bitmap.width * scale));
-      const height = Math.max(1, Math.round(bitmap.height * scale));
-      const target = createCanvas(width, height);
-      if (!target) return { ok: false, reason: "unreadable" };
-      if (mimeType === null) {
-        const probe = await canvasToBlob(target.canvas, "image/webp", QUALITY_STEPS[0]);
-        mimeType = probe?.type === "image/webp" ? "image/webp" : "image/jpeg";
-      }
-      if (mimeType === "image/jpeg") {
-        target.context.fillStyle = "#ffffff";
-        target.context.fillRect(0, 0, width, height);
-      }
-      target.context.drawImage(bitmap, 0, 0, width, height);
-      for (const quality of QUALITY_STEPS) {
-        const blob = await canvasToBlob(target.canvas, mimeType, quality);
-        if (!blob || blob.type !== mimeType) return { ok: false, reason: "unreadable" };
-        if (blob.size <= options.maxBytes) {
-          return { ok: true, image: { blob, mimeType, width, height } };
-        }
-      }
+    const mimeType = await preferredEncoding();
+    const original = source === file ? file : null;
+    const images: Record<string, ReencodedImage> = {};
+    for (const [name, rendition] of Object.entries(renditions)) {
+      const encoded = await encodeRendition(bitmap, mimeType, rendition, original);
+      if (!encoded.ok) return encoded;
+      images[name] = encoded.image;
     }
-    return { ok: false, reason: "too-large" };
+    return { ok: true, images: images as { [K in keyof T]: ReencodedImage } };
   } catch {
     return { ok: false, reason: "unreadable" };
   } finally {

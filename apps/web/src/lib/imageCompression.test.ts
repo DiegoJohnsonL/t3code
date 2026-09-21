@@ -9,6 +9,7 @@ import {
   MAX_COMPRESSIBLE_SOURCE_BYTES,
   MAX_STASH_IMAGE_DATA_URL_CHARS,
   prepareImageForAttachment,
+  reencodeImage,
 } from "./imageCompression";
 
 import type { SnapShotSource } from "@t3tools/contracts";
@@ -598,5 +599,85 @@ describe("snapshot coordinates after compression", () => {
 
   it("keeps uncompressed sources unchanged", () => {
     expect(resizeSnapShotSource(source)).toBe(source);
+  });
+});
+
+describe("background renditions", () => {
+  const RENDITIONS = {
+    full: { maxDimension: 4096, maxBytes: 8 * 1024 * 1024 },
+    shader: { maxDimension: 1920, maxBytes: 2 * 1024 * 1024 },
+    thumbnail: { maxDimension: 256, maxBytes: 200 * 1024 },
+  } as const;
+
+  /** Records the canvas each encode draws into, so rendition sizing is observable. */
+  function stubRenditionPipeline(bitmapSize: { width: number; height: number }) {
+    const close = vi.fn();
+    const decode = vi.fn(async () => ({ ...bitmapSize, close }));
+    const canvases: number[][] = [];
+    vi.stubGlobal("createImageBitmap", decode);
+    vi.stubGlobal(
+      "OffscreenCanvas",
+      class {
+        constructor(
+          public width: number,
+          public height: number,
+        ) {
+          canvases.push([width, height]);
+        }
+        getContext() {
+          return { fillStyle: "", fillRect: vi.fn(), drawImage: vi.fn() };
+        }
+        async convertToBlob({ type }: { type: string }) {
+          return new Blob([new Uint8Array(1024)], { type });
+        }
+      },
+    );
+    return { decode, canvases, close };
+  }
+
+  it("builds every rendition at its own ceiling from a single decode", async () => {
+    const { decode, canvases, close } = stubRenditionPipeline({ width: 4000, height: 3000 });
+    const file = makeFile(20 * 1024 * 1024, "image/jpeg");
+
+    const result = await reencodeImage(file, RENDITIONS);
+
+    if (!result.ok) throw new Error(`Expected renditions, got ${result.reason}`);
+    expect(result.images.full).toMatchObject({ width: 4000, height: 3000 });
+    expect(result.images.shader).toMatchObject({ width: 1920, height: 1440 });
+    expect(result.images.thumbnail).toMatchObject({ width: 256, height: 192 });
+    expect(decode).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
+    // The leading 1x1 is the WebP support probe.
+    expect(canvases).toEqual([
+      [1, 1],
+      [4000, 3000],
+      [1920, 1440],
+      [256, 192],
+    ]);
+  });
+
+  it("keeps the original bytes for a rendition the upload already satisfies", async () => {
+    stubRenditionPipeline({ width: 2600, height: 1400 });
+    const file = makeFile(400 * 1024, "image/png");
+
+    const result = await reencodeImage(file, RENDITIONS);
+
+    if (!result.ok) throw new Error(`Expected renditions, got ${result.reason}`);
+    expect(result.images.full.blob).toBe(file);
+    expect(result.images.full).toMatchObject({ width: 2600, height: 1400 });
+    expect(result.images.shader.blob).not.toBe(file);
+    expect(result.images.thumbnail.blob).not.toBe(file);
+  });
+
+  it("re-encodes a HEIC photo rather than storing its unrenderable bytes", async () => {
+    stubRenditionPipeline({ width: 1600, height: 900 });
+    mocks.heicTo.mockResolvedValue(new Blob([new Uint8Array(4096)], { type: "image/jpeg" }));
+    const file = makeHeicFile({ width: 1600, height: 900 });
+
+    const result = await reencodeImage(file, RENDITIONS);
+
+    if (!result.ok) throw new Error(`Expected renditions, got ${result.reason}`);
+    expect(mocks.heicTo).toHaveBeenCalledOnce();
+    expect(result.images.full.blob).not.toBe(file);
   });
 });
