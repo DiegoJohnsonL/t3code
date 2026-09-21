@@ -74,8 +74,12 @@ const FILTER_LABELS: Readonly<Record<CustomBackgroundFilterKind, string>> = {
   "image-dithering": "Dithering",
 };
 
-function uploadLabel(upload: { busy: boolean; done: number; total: number }): string | null {
-  if (!upload.busy) return null;
+type UploadState =
+  | { status: "busy"; done: number; total: number }
+  | { status: "settled"; notice: string | null; error: string | null };
+
+function uploadLabel(upload: UploadState): string | null {
+  if (upload.status !== "busy") return null;
   if (upload.total < 2) return "Preparing image…";
   return `Preparing ${Math.min(upload.done + 1, upload.total)} of ${upload.total}…`;
 }
@@ -486,12 +490,11 @@ export function BackgroundStudioPanel() {
   const selectedId = activeId;
   const liveRecord = useBackgroundStudioStore((store) => store.preview);
   const setLiveRecord = useBackgroundStudioStore((store) => store.setPreview);
-  const [upload, setUpload] = useState<{
-    busy: boolean;
-    error: string | null;
-    done: number;
-    total: number;
-  }>({ busy: false, error: null, done: 0, total: 0 });
+  const [upload, setUpload] = useState<UploadState>({
+    status: "settled",
+    notice: null,
+    error: null,
+  });
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Flush the latest edit on unmount without waiting for a React update.
   const pendingRef = useRef<CustomBackgroundRecord | null>(null);
@@ -552,25 +555,47 @@ export function BackgroundStudioPanel() {
 
   // A few files encode at once; each decode holds a full bitmap in memory, so
   // the pool stays small. Results keep the order the files were picked in.
+  // Files already in the store match by content hash and skip decoding, so
+  // adding a folder again only encodes its new images.
   const uploadImages = async (files: ReadonlyArray<File>) => {
-    setUpload({ busy: true, error: null, done: 0, total: files.length });
+    if (files.length === 0) {
+      setUpload({ status: "settled", notice: "No supported images found.", error: null });
+      return [];
+    }
+    setUpload({ status: "busy", done: 0, total: files.length });
     const stored: Array<CustomBackgroundImageId | null> = files.map(() => null);
+    let alreadyImported = 0;
     let error: string | null = null;
     let next = 0;
     const worker = async () => {
       while (next < files.length && mounted.current) {
         const index = next;
         next += 1;
-        const result = await storeBackgroundImage(files[index]!);
-        if (result.ok) stored[index] = result.image.id;
-        else error = describeUploadFailure(result.reason);
-        if (mounted.current) setUpload((previous) => ({ ...previous, done: previous.done + 1 }));
+        const file = files[index]!;
+        const result = await storeBackgroundImage(file);
+        if (result.ok) {
+          stored[index] = result.image.id;
+          if (result.existed) alreadyImported += 1;
+        } else {
+          const reason = describeUploadFailure(result.reason);
+          error = files.length > 1 ? `${file.name}: ${reason}` : reason;
+        }
+        if (mounted.current) {
+          setUpload((previous) =>
+            previous.status === "busy" ? { ...previous, done: previous.done + 1 } : previous,
+          );
+        }
       }
     };
     await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, files.length) }, worker));
     if (!mounted.current) return [];
-    setUpload({ busy: false, error, done: 0, total: 0 });
-    return stored.filter((id) => id !== null);
+    const imageIds = stored.filter((id) => id !== null);
+    const notice =
+      alreadyImported === 0
+        ? null
+        : `${imageIds.length - alreadyImported} new, ${alreadyImported} already imported.`;
+    setUpload({ status: "settled", notice, error });
+    return imageIds;
   };
 
   const createBackground = () => {
@@ -663,7 +688,7 @@ export function BackgroundStudioPanel() {
           <BackgroundImagePicker
             selectedImageIds={record.source.kind === "image" ? record.source.imageIds : []}
             referencedImageIds={referencedImageIds}
-            busy={upload.busy}
+            busy={upload.status === "busy"}
             busyLabel={uploadLabel(upload)}
             onToggle={(imageId) =>
               commitRecord({
@@ -696,6 +721,16 @@ export function BackgroundStudioPanel() {
               });
             }}
           />
+          {upload.status === "settled" && upload.notice ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              {upload.notice}
+            </p>
+          ) : null}
+          {upload.status === "settled" && upload.error ? (
+            <p role="alert" className="text-xs text-destructive">
+              {upload.error}
+            </p>
+          ) : null}
           {record.source.kind === "image" ? (
             <RotationFields
               source={record.source}
@@ -758,12 +793,6 @@ export function BackgroundStudioPanel() {
               </Tooltip>
             ) : null}
           </StudioField>
-
-          {upload.error ? (
-            <p role="alert" className="text-xs text-destructive">
-              {upload.error}
-            </p>
-          ) : null}
 
           {FADE_CONTROLS.map(({ key, label }) => (
             <RangeControl

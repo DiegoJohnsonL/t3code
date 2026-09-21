@@ -1,5 +1,5 @@
 import type { CustomBackgroundImageId } from "@t3tools/contracts";
-import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { FolderPlusIcon, ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 
 import {
@@ -10,6 +10,7 @@ import {
   subscribeBackgroundImages,
   useBackgroundImageUrl,
 } from "~/customBackground/imageStore";
+import { imagesFromDrop, imagesFromFiles } from "~/customBackground/importFiles";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { StudioField } from "./BackgroundControls";
@@ -42,6 +43,16 @@ export function backgroundPickerTileClass(selected: boolean): string {
 }
 
 export const backgroundPickerMenuGridClass = "grid max-h-72 grid-cols-3 overflow-y-auto p-2";
+
+const uploadTileClass =
+  "flex min-h-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border px-2 text-center text-xs text-muted-foreground outline-none hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 data-[dragging=true]:border-primary data-[dragging=true]:bg-primary/10";
+
+type DropTarget = "input" | "files" | "folder";
+
+function dropTargetOf(element: HTMLElement): DropTarget {
+  const target = element.dataset.dropTarget;
+  return target === "input" || target === "folder" ? target : "files";
+}
 
 export const backgroundPickerDeleteButtonClass =
   "absolute right-1 top-1 bg-popover opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
@@ -117,14 +128,20 @@ export function BackgroundImagePicker({
         ? "1 image"
         : `${selectedImageIds.length} images`);
   const images = useStoredBackgroundImages();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const filesInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
-  const [dragTarget, setDragTarget] = useState<"input" | "upload" | null>(null);
+  const [dragTarget, setDragTarget] = useState<DropTarget | null>(null);
 
-  function uploadFiles(files: FileList) {
-    if (busy || files.length === 0) return;
+  function uploadFiles(files: ReadonlyArray<File>) {
+    if (busy) return;
     setOpen(false);
-    onUpload(Array.from(files));
+    onUpload(files);
+  }
+
+  function uploadPicked(input: HTMLInputElement) {
+    if (input.files && input.files.length > 0) uploadFiles(imagesFromFiles(input.files));
+    input.value = "";
   }
 
   function handleDragOver(event: DragEvent<HTMLButtonElement>) {
@@ -132,9 +149,7 @@ export function BackgroundImagePicker({
     event.preventDefault();
     event.stopPropagation();
     event.dataTransfer.dropEffect = busy ? "none" : "copy";
-    if (!busy) {
-      setDragTarget(event.currentTarget.dataset.dropTarget === "input" ? "input" : "upload");
-    }
+    if (!busy) setDragTarget(dropTargetOf(event.currentTarget));
   }
 
   function handleDragLeave(event: DragEvent<HTMLButtonElement>) {
@@ -149,7 +164,9 @@ export function BackgroundImagePicker({
     event.preventDefault();
     event.stopPropagation();
     setDragTarget(null);
-    uploadFiles(event.dataTransfer.files);
+    void imagesFromDrop(event.dataTransfer.items)
+      .catch(() => [])
+      .then(uploadFiles);
   }
 
   const dropHandlers = {
@@ -161,18 +178,25 @@ export function BackgroundImagePicker({
   return (
     <StudioField label="Images">
       <input
-        ref={inputRef}
+        ref={filesInputRef}
         type="file"
         multiple
         accept={BACKGROUND_FILE_ACCEPT}
         className="sr-only"
         tabIndex={-1}
         aria-label="Background image file"
-        onChange={(event) => {
-          const files = event.currentTarget.files;
-          if (files) uploadFiles(files);
-          event.currentTarget.value = "";
+        onChange={(event) => uploadPicked(event.currentTarget)}
+      />
+      <input
+        ref={(input) => {
+          folderInputRef.current = input;
+          if (input) input.webkitdirectory = true;
         }}
+        type="file"
+        className="sr-only"
+        tabIndex={-1}
+        aria-label="Background image folder"
+        onChange={(event) => uploadPicked(event.currentTarget)}
       />
       <Menu open={open} onOpenChange={setOpen}>
         <MenuTrigger
@@ -193,19 +217,34 @@ export function BackgroundImagePicker({
         />
         <MenuPopup align="end" className="w-80">
           <div className={cn(backgroundPickerMenuGridClass, "gap-2")}>
-            <button
-              type="button"
-              disabled={busy}
-              {...dropHandlers}
-              data-drop-target="upload"
-              data-dragging={dragTarget === "upload"}
-              onClick={() => inputRef.current?.click()}
-              className="col-span-full flex min-h-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground outline-none hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 data-[dragging=true]:border-primary data-[dragging=true]:bg-primary/10"
-            >
-              <UploadIcon className="size-4" />
-              <span>Upload or drop images</span>
-              <span className="text-[11px]">{BACKGROUND_FILE_TYPES_LABEL}</span>
-            </button>
+            <div className="col-span-full grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                {...dropHandlers}
+                data-drop-target="files"
+                data-dragging={dragTarget === "files"}
+                onClick={() => filesInputRef.current?.click()}
+                className={uploadTileClass}
+              >
+                <UploadIcon className="size-4" />
+                <span>Upload or drop images</span>
+                <span className="text-[11px]">{BACKGROUND_FILE_TYPES_LABEL}</span>
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                {...dropHandlers}
+                data-drop-target="folder"
+                data-dragging={dragTarget === "folder"}
+                onClick={() => folderInputRef.current?.click()}
+                className={uploadTileClass}
+              >
+                <FolderPlusIcon className="size-4" />
+                <span>Add or drop a folder</span>
+                <span className="text-[11px]">Only new images import</span>
+              </button>
+            </div>
             {images?.map((image) => {
               const position = selectedImageIds.indexOf(image.id);
               const selected = position !== -1;

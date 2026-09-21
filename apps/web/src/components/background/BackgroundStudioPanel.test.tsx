@@ -203,6 +203,25 @@ it("does not change the library after closing during encoding", async () => {
   expect(state.settings?.customBackgrounds).toEqual([original, other]);
 });
 
+it("imports only the new images when a folder is added again", async () => {
+  await act(async () => finishUpload());
+  const newId = "d".repeat(64);
+  state.upload
+    .mockResolvedValueOnce({ ok: true, image: { id: uploadedId }, existed: true })
+    .mockResolvedValueOnce({ ok: true, image: { id: newId }, existed: false });
+  await act(async () =>
+    renderer.root
+      .findByType(BackgroundImagePicker)
+      .props.onUpload([new File(["photo"], "photo.png"), new File(["new"], "new.png")]),
+  );
+  expect(state.settings?.customBackgrounds[0]?.source).toMatchObject({
+    imageIds: [uploadedId, newId],
+  });
+  expect(renderer.root.findByProps({ role: "status" }).children.join("")).toBe(
+    "1 new, 1 already imported.",
+  );
+});
+
 it("disables the filter selector and explains when WebGL is missing", async () => {
   state.filtersAvailable = false;
   await act(async () => {
