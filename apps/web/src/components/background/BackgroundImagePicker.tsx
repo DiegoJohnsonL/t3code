@@ -12,6 +12,7 @@ import {
 } from "~/customBackground/imageStore";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
+import { StudioField } from "./BackgroundControls";
 import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
@@ -158,8 +159,7 @@ export function BackgroundImagePicker({
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Images</span>
+    <StudioField label="Images">
       <input
         ref={inputRef}
         type="file"
@@ -252,6 +252,6 @@ export function BackgroundImagePicker({
           </p>
         </MenuPopup>
       </Menu>
-    </div>
+    </StudioField>
   );
 }

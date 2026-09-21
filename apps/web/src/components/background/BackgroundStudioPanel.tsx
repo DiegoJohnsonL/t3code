@@ -17,11 +17,8 @@ import {
 } from "@t3tools/contracts";
 import {
   BanIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronUpIcon,
-  XIcon,
   ChevronsUpDownIcon,
   PlusIcon,
   Trash2Icon,
@@ -53,7 +50,6 @@ import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Input } from "../ui/input";
 import { Menu, MenuPopup, MenuTrigger } from "../ui/menu";
-import { ScrollArea } from "../ui/scroll-area";
 import {
   Select,
   SelectItem,
@@ -63,7 +59,7 @@ import {
   selectTriggerVariants,
 } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { BackgroundControls, RangeControl } from "./BackgroundControls";
+import { BackgroundControls, RangeControl, StudioField } from "./BackgroundControls";
 import {
   BackgroundImagePicker,
   BackgroundThumbnail,
@@ -152,8 +148,7 @@ function DitheringPresetRow({
   if (record.filter.kind !== "image-dithering") return null;
   const current = record.filter;
   return (
-    <div className="flex items-start gap-3">
-      <span className="w-28 shrink-0 pt-1 text-[13px] text-muted-foreground">Look</span>
+    <StudioField label="Look" align="start">
       <div
         className="flex min-w-0 flex-1 flex-wrap gap-1.5"
         role="group"
@@ -188,7 +183,7 @@ function DitheringPresetRow({
           );
         })}
       </div>
-    </div>
+    </StudioField>
   );
 }
 
@@ -216,8 +211,7 @@ function SourceOptionField<Value extends string>({
   onChange: (value: Value) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">{label}</span>
+    <StudioField label={label}>
       <Select
         value={value}
         onValueChange={(next) => {
@@ -240,7 +234,7 @@ function SourceOptionField<Value extends string>({
           ))}
         </SelectPopup>
       </Select>
-    </div>
+    </StudioField>
   );
 }
 
@@ -282,8 +276,7 @@ function RotationFields({
 
 function RotationStepRow() {
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Preview</span>
+    <StudioField label="Preview">
       <div className="flex gap-1.5">
         <Button size="xs" variant="outline" onClick={() => stepBackgroundImage(-1)}>
           <ChevronLeftIcon /> Previous
@@ -292,7 +285,7 @@ function RotationStepRow() {
           Next <ChevronRightIcon />
         </Button>
       </div>
-    </div>
+    </StudioField>
   );
 }
 
@@ -310,8 +303,7 @@ function RotationIntervalField({
   onChange: (source: CustomBackgroundImageSource) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Change every</span>
+    <StudioField label="Change every">
       <Select
         value={String(source.rotationMinutes)}
         onValueChange={(value) => {
@@ -334,7 +326,7 @@ function RotationIntervalField({
           ))}
         </SelectPopup>
       </Select>
-    </div>
+    </StudioField>
   );
 }
 
@@ -477,24 +469,16 @@ function LibraryPicker({
   );
 }
 
-export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
+export function BackgroundStudioPanel() {
   const mounted = useRef(true);
-  const dragOffset = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     mounted.current = true;
-    const resetPosition = () => setPosition(null);
-    window.addEventListener("resize", resetPosition);
     return () => {
       mounted.current = false;
-      window.removeEventListener("resize", resetPosition);
     };
   }, []);
   const library = useClientSettings((settings) => settings.customBackgrounds);
   const activeId = useClientSettings((settings) => settings.activeCustomBackgroundId);
-  const inConversations = useClientSettings((settings) => settings.customBackgroundInConversations);
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
   const updateSettings = useUpdateClientSettings();
 
@@ -627,306 +611,194 @@ export function BackgroundStudioPanel({ onClose }: { onClose: () => void }) {
     filtersEqual(record.filter, defaultCustomBackgroundFilter(record.filter.kind));
 
   return (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-label="Customize background"
-      className={cn(
-        "dialog-glass fixed z-40 flex max-h-[calc(100dvh-2rem)] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border text-popover-foreground",
-        position === null && "bottom-4 right-4",
-        !isMinimized && "h-[min(42rem,calc(100dvh-2rem))]",
-      )}
-      style={
-        position
-          ? {
-              left: position.x,
-              top: position.y,
-              maxHeight: `calc(100dvh - ${position.y + 16}px)`,
-            }
-          : undefined
-      }
-    >
-      <div
-        className="flex shrink-0 cursor-grab touch-none select-none items-center gap-1 border-b border-border/70 px-3 py-2 active:cursor-grabbing"
-        onPointerDown={(event) => {
-          if (
-            event.button !== 0 ||
-            (event.target instanceof Element && event.target.closest("button"))
-          )
-            return;
-          const rect = panelRef.current?.getBoundingClientRect();
-          if (!rect) return;
-          dragOffset.current = {
-            x: event.clientX - rect.x,
-            y: event.clientY - rect.y,
-          };
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          const offset = dragOffset.current;
-          if (!offset) return;
-          setPosition({
-            x: Math.max(
-              8,
-              Math.min(
-                event.clientX - offset.x,
-                window.innerWidth - (panelRef.current?.offsetWidth ?? 0) - 8,
-              ),
-            ),
-            y: Math.max(8, Math.min(event.clientY - offset.y, window.innerHeight - 100)),
-          });
-        }}
-        onPointerUp={() => {
-          dragOffset.current = null;
-        }}
-        onPointerCancel={() => {
-          dragOffset.current = null;
-        }}
-      >
-        <h2 className="min-w-0 flex-1 truncate text-sm font-medium">Customize background</h2>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          aria-label={isMinimized ? "Expand background controls" : "Minimize background controls"}
-          onClick={() => setIsMinimized(!isMinimized)}
-        >
-          {isMinimized ? <ChevronUpIcon /> : <ChevronDownIcon />}
-        </Button>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          aria-label="Close background controls"
-          onClick={onClose}
-        >
-          <XIcon />
-        </Button>
-      </div>
-      <div className={cn("flex min-h-0 flex-1 flex-col", isMinimized && "hidden")}>
-        <div className="flex min-h-0 flex-1 flex-col p-4">
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="space-y-3">
-              <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                Enable custom background
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={(checked) =>
-                    updateSettings({ customBackgroundEnabled: checked })
-                  }
-                />
-              </label>
-              <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                Show in threads
-                <Switch
-                  checked={inConversations}
-                  disabled={!enabled}
-                  onCheckedChange={(checked) =>
-                    updateSettings({ customBackgroundInConversations: checked })
-                  }
-                />
-              </label>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[13px] font-medium text-foreground">Playlist</span>
-              <Button
-                size="xs"
-                variant="outline"
-                aria-label="Add playlist"
-                onClick={createBackground}
-              >
-                <PlusIcon /> New playlist
-              </Button>
-            </div>
-            <LibraryPicker
-              library={library}
-              selectedId={selectedId}
-              selectedRecord={record}
-              onSelect={selectRow}
-              onDelete={(entry) => void deleteBackground(entry)}
+    <div className="@container/studio flex min-w-0 flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        <div className="space-y-3">
+          <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            Enable custom background
+            <Switch
+              checked={enabled}
+              onCheckedChange={(checked) => updateSettings({ customBackgroundEnabled: checked })}
             />
-
-            {record ? (
-              <ScrollArea className="min-h-0 flex-1" scrollFade>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-[13px] text-muted-foreground">Name</span>
-                    <NameField
-                      key={record.id}
-                      name={record.name}
-                      onCommit={(name) =>
-                        commitRecord({
-                          ...record,
-                          name,
-                        })
-                      }
-                    />
-                  </div>
-                  <>
-                    <BackgroundImagePicker
-                      selectedImageIds={
-                        record.source.kind === "image" ? record.source.imageIds : []
-                      }
-                      referencedImageIds={referencedImageIds}
-                      busy={upload.busy}
-                      busyLabel={uploadLabel(upload)}
-                      onToggle={(imageId) =>
-                        commitRecord({
-                          ...record,
-                          source: toggleBackgroundImage(record.source, imageId),
-                        })
-                      }
-                      onUpload={(files) => {
-                        void uploadImages(files).then((imageIds) => {
-                          if (imageIds.length > 0) {
-                            flushPending();
-                            const current = getClientSettings().customBackgrounds;
-                            // Add the image only to a surviving record whose images
-                            // did not change meanwhile. Edits made during encoding,
-                            // including edits to another selection, win.
-                            persistLibrary(
-                              current.map((entry) =>
-                                entry.id === record.id && sourcesEqual(entry.source, record.source)
-                                  ? {
-                                      ...entry,
-                                      source: imageIds.reduce<CustomBackgroundSource>(
-                                        appendBackgroundImage,
-                                        entry.source,
-                                      ),
-                                    }
-                                  : entry,
-                              ),
-                            );
-                          }
-                        });
-                      }}
-                    />
-                    {record.source.kind === "image" ? (
-                      <RotationFields
-                        source={record.source}
-                        onChange={(source) => commitRecord({ ...record, source })}
-                      />
-                    ) : null}
-                  </>
-
-                  <h3 className="text-[13px] font-medium">Filter</h3>
-                  {!filtersAvailable ? (
-                    <p role="status" className="text-xs text-muted-foreground">
-                      Filters need WebGL to be active.
-                    </p>
-                  ) : null}
-                  <div className="shrink-0">
-                    <div className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-[13px] text-muted-foreground">
-                        Filter
-                      </span>
-                      <Select
-                        disabled={!filtersAvailable}
-                        value={record.filter.kind}
-                        onValueChange={(kind) => {
-                          if (isFilterKind(kind)) commitRecord(withFilterKind(record, kind));
-                        }}
-                      >
-                        <SelectTrigger
-                          size="sm"
-                          className="min-h-0 h-7.5 min-w-0 flex-1 sm:h-6.5 sm:min-h-0"
-                          aria-label="Filter"
-                        >
-                          <SelectValue>{FILTER_LABELS[record.filter.kind]}</SelectValue>
-                        </SelectTrigger>
-                        <SelectPopup align="end" alignItemWithTrigger={false}>
-                          <SelectItem hideIndicator value="none">
-                            {FILTER_LABELS.none}
-                          </SelectItem>
-                          {CUSTOM_BACKGROUND_FILTERS.map(({ kind }) => (
-                            <SelectItem key={kind} hideIndicator value={kind}>
-                              {FILTER_LABELS[kind]}
-                            </SelectItem>
-                          ))}
-                        </SelectPopup>
-                      </Select>
-                      {filtersAvailable && !filterIsDefault && record.filter.kind !== "none" ? (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                size="icon-sm"
-                                variant="ghost-muted"
-                                aria-label="Reset filter to defaults"
-                                onClick={() =>
-                                  commitRecord({
-                                    ...record,
-                                    filter: defaultCustomBackgroundFilter(record.filter.kind),
-                                  })
-                                }
-                              >
-                                <Undo2Icon />
-                              </Button>
-                            }
-                          />
-                          <TooltipPopup side="top">Reset filter to defaults</TooltipPopup>
-                        </Tooltip>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {upload.error ? (
-                    <p role="alert" className="pl-[calc(7rem+0.75rem)] text-xs text-destructive">
-                      {upload.error}
-                    </p>
-                  ) : null}
-
-                  {FADE_CONTROLS.map(({ key, label }) => (
-                    <RangeControl
-                      key={key}
-                      label={label}
-                      min={MIN_CUSTOM_BACKGROUND_FADE}
-                      max={MAX_CUSTOM_BACKGROUND_FADE}
-                      step={1}
-                      value={record[key]}
-                      format={(value) => `${Math.round(value)}%`}
-                      onChange={(value) =>
-                        commitRecord({
-                          ...record,
-                          [key]: Math.round(value),
-                        })
-                      }
-                    />
-                  ))}
-
-                  {filtersAvailable ? (
-                    <DitheringPresetRow
-                      record={record}
-                      onPick={(preset) =>
-                        commitRecord({ ...record, filter: preset.filter, ...preset.fade })
-                      }
-                    />
-                  ) : null}
-
-                  {filtersAvailable ? (
-                    <BackgroundControls
-                      filter={record.filter}
-                      onChange={(filter) =>
-                        commitRecord({
-                          ...record,
-                          filter,
-                        })
-                      }
-                    />
-                  ) : null}
-                </div>
-              </ScrollArea>
-            ) : (
-              <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 p-6 text-center text-[13px] text-muted-foreground">
-                Add a playlist to get started, or pick one to edit.
-              </div>
-            )}
-          </div>
+          </label>
         </div>
-        <div className="flex shrink-0 justify-end border-t border-border/70 px-3 py-2">
-          <Button size="sm" onClick={onClose}>
-            Done
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[13px] font-medium text-foreground">Playlist</span>
+          <Button size="xs" variant="outline" aria-label="Add playlist" onClick={createBackground}>
+            <PlusIcon /> New playlist
           </Button>
         </div>
+        <LibraryPicker
+          library={library}
+          selectedId={selectedId}
+          selectedRecord={record}
+          onSelect={selectRow}
+          onDelete={(entry) => void deleteBackground(entry)}
+        />
       </div>
+      {record ? (
+        <div className="space-y-4">
+          <StudioField label="Name">
+            <NameField
+              key={record.id}
+              name={record.name}
+              onCommit={(name) =>
+                commitRecord({
+                  ...record,
+                  name,
+                })
+              }
+            />
+          </StudioField>
+          <BackgroundImagePicker
+            selectedImageIds={record.source.kind === "image" ? record.source.imageIds : []}
+            referencedImageIds={referencedImageIds}
+            busy={upload.busy}
+            busyLabel={uploadLabel(upload)}
+            onToggle={(imageId) =>
+              commitRecord({
+                ...record,
+                source: toggleBackgroundImage(record.source, imageId),
+              })
+            }
+            onUpload={(files) => {
+              void uploadImages(files).then((imageIds) => {
+                if (imageIds.length > 0) {
+                  flushPending();
+                  const current = getClientSettings().customBackgrounds;
+                  // Add the image only to a surviving record whose images
+                  // did not change meanwhile. Edits made during encoding,
+                  // including edits to another selection, win.
+                  persistLibrary(
+                    current.map((entry) =>
+                      entry.id === record.id && sourcesEqual(entry.source, record.source)
+                        ? {
+                            ...entry,
+                            source: imageIds.reduce<CustomBackgroundSource>(
+                              appendBackgroundImage,
+                              entry.source,
+                            ),
+                          }
+                        : entry,
+                    ),
+                  );
+                }
+              });
+            }}
+          />
+          {record.source.kind === "image" ? (
+            <RotationFields
+              source={record.source}
+              onChange={(source) => commitRecord({ ...record, source })}
+            />
+          ) : null}
+
+          <h3 className="text-[13px] font-medium">Filter</h3>
+          {!filtersAvailable ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              Filters need WebGL to be active.
+            </p>
+          ) : null}
+          <StudioField label="Filter">
+            <Select
+              disabled={!filtersAvailable}
+              value={record.filter.kind}
+              onValueChange={(kind) => {
+                if (isFilterKind(kind)) commitRecord(withFilterKind(record, kind));
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className="min-h-0 h-7.5 min-w-0 flex-1 sm:h-6.5 sm:min-h-0"
+                aria-label="Filter"
+              >
+                <SelectValue>{FILTER_LABELS[record.filter.kind]}</SelectValue>
+              </SelectTrigger>
+              <SelectPopup align="end" alignItemWithTrigger={false}>
+                <SelectItem hideIndicator value="none">
+                  {FILTER_LABELS.none}
+                </SelectItem>
+                {CUSTOM_BACKGROUND_FILTERS.map(({ kind }) => (
+                  <SelectItem key={kind} hideIndicator value={kind}>
+                    {FILTER_LABELS[kind]}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+            {filtersAvailable && !filterIsDefault && record.filter.kind !== "none" ? (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      size="icon-sm"
+                      variant="ghost-muted"
+                      aria-label="Reset filter to defaults"
+                      onClick={() =>
+                        commitRecord({
+                          ...record,
+                          filter: defaultCustomBackgroundFilter(record.filter.kind),
+                        })
+                      }
+                    >
+                      <Undo2Icon />
+                    </Button>
+                  }
+                />
+                <TooltipPopup side="top">Reset filter to defaults</TooltipPopup>
+              </Tooltip>
+            ) : null}
+          </StudioField>
+
+          {upload.error ? (
+            <p role="alert" className="text-xs text-destructive">
+              {upload.error}
+            </p>
+          ) : null}
+
+          {FADE_CONTROLS.map(({ key, label }) => (
+            <RangeControl
+              key={key}
+              label={label}
+              min={MIN_CUSTOM_BACKGROUND_FADE}
+              max={MAX_CUSTOM_BACKGROUND_FADE}
+              step={1}
+              value={record[key]}
+              format={(value) => `${Math.round(value)}%`}
+              onChange={(value) =>
+                commitRecord({
+                  ...record,
+                  [key]: Math.round(value),
+                })
+              }
+            />
+          ))}
+
+          {filtersAvailable ? (
+            <DitheringPresetRow
+              record={record}
+              onPick={(preset) =>
+                commitRecord({ ...record, filter: preset.filter, ...preset.fade })
+              }
+            />
+          ) : null}
+
+          {filtersAvailable ? (
+            <BackgroundControls
+              filter={record.filter}
+              onChange={(filter) =>
+                commitRecord({
+                  ...record,
+                  filter,
+                })
+              }
+            />
+          ) : null}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-[13px] text-muted-foreground">
+          Add a playlist to get started, or pick one to edit.
+        </div>
+      )}
     </div>
   );
 }

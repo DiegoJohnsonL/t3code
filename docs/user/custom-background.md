@@ -2,18 +2,19 @@
 
 In web or desktop, open **Settings → Appearance → Custom background**. Turn on the switch,
 then select **Customize background**, or run **Customize background** from the command palette.
-The controller opens over your current chat, or returns you to your last chat from Settings.
-If there is no previous chat, the app opens a draft for your most recently used project.
-With no projects yet, you can configure the background behind the add-project screen.
+The picture button at the bottom of the sidebar has it too. The controls take over the
+sidebar, and **Back** at the bottom returns you to your threads. Opening it from Settings
+returns you to your last chat first. If there is no previous chat, the app opens a draft
+for your most recently used project. With no projects yet, you can configure the background
+behind the add-project screen.
 
-Your current background configuration stays selected. Adjust it directly in the app, drag
-the controller by its header, or minimize it to see more of your chat. It stays open as you
-switch chats. Opening Settings, Usage, or Pull requests closes it. Opening the theme editor
-closes the background controller, and vice versa.
-Changes save automatically; **Done** or close keeps them. **Enable custom background** in the
-controller and the switch in Settings control the same preference. Turning either off hides the
-background everywhere without deleting your selection or library. The controller stays open
-so you can turn it back on. Select **None** in the controller to deselect the background.
+Your current background configuration stays selected. Adjust it and watch your chat change
+behind the sidebar. The panel stays open as you switch chats. Opening Settings, Usage, or
+Pull requests closes it. Opening the theme editor closes the background panel, and vice
+versa. Changes save automatically. **Enable custom background** in the panel and the switch
+in Settings control the same preference. Turning either off hides the background everywhere
+without deleting your selection or library. The panel stays open so you can turn it back
+on. Select **None** to deselect the background.
 
 ## Backgrounds
 
@@ -33,7 +34,7 @@ Paper's playgrounds, and every filter renders a single still frame.
   into your theme color, while **Violet**, **Terminal**, and **Mono** repaint it in a
   tinted palette. Every slider stays editable after picking one.
 
-Filters need WebGL. In a browser without it the controller says so and turns the filter
+Filters need WebGL. In a browser without it the panel says so and turns the filter
 selector off. The picture still shows, without its filter.
 
 ## Fade
@@ -58,18 +59,16 @@ stays up. **Order** plays them as picked or shuffles them; shuffle shows every i
 before any repeats and never shows the same one twice in a row. **Transition** is a slow
 crossfade or a plain cut. Rotation follows the clock, so every window and reload
 shows the same image at the same time. The picture button at the bottom of the sidebar
-steps to the next or previous image and opens the controller; the controller has the
-same **Next** and **Previous** buttons for trying transitions out. Images stay on this client when you
+steps to the next or previous image; the panel has the same **Next** and **Previous**
+buttons for trying transitions out. Images stay on this client when you
 connect to remote environments; other browsers, devices, and T3 Code Mobile keep their own
 appearance.
 
 ## New chats and conversations
 
-While custom backgrounds are enabled, the selected background appears on new chats.
-**Show in threads**, inside the controller, decides whether it stays after you submit
-your first prompt. When off, the background disappears as soon as you submit. Changes
-take effect immediately, including while the controller is open. Both switches keep their
-values after a refresh.
+While custom backgrounds are enabled, the selected background appears on new chats and
+stays there once you submit your first prompt. Changes take effect immediately, including
+while the panel is open, and the switch keeps its value after a refresh.
 
-**Restore defaults** deselects the background and turns both switches back on, but keeps your
+**Restore defaults** deselects the background and turns the switch back on, but keeps your
 library.

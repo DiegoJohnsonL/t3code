@@ -50,7 +50,6 @@ vi.mock("../ui/button", () => ({ Button: "button" }));
 vi.mock("../ui/input", () => ({ Input: "input" }));
 vi.mock("../ui/switch", () => ({ Switch: "switch" }));
 vi.mock("../ui/menu", () => ({ Menu: "menu", MenuPopup: "popup", MenuTrigger: "trigger" }));
-vi.mock("../ui/scroll-area", () => ({ ScrollArea: "scroll-area" }));
 vi.mock("../ui/tooltip", () => ({
   Tooltip: "tooltip",
   TooltipPopup: "popup",
@@ -67,6 +66,7 @@ vi.mock("../ui/select", () => ({
 vi.mock("./BackgroundControls", () => ({
   BackgroundControls: () => null,
   RangeControl: () => null,
+  StudioField: ({ children }: { children: unknown }) => children,
 }));
 vi.mock("./BackgroundImagePicker", () => ({
   BackgroundImagePicker: () => null,
@@ -114,7 +114,7 @@ beforeEach(async () => {
   });
   state.upload.mockReset().mockReturnValue(upload);
   await act(async () => {
-    renderer = create(<BackgroundStudioPanel onClose={() => undefined} />);
+    renderer = create(<BackgroundStudioPanel />);
   });
   act(() =>
     renderer.root
@@ -206,7 +206,7 @@ it("does not change the library after closing during encoding", async () => {
 it("disables the filter selector and explains when WebGL is missing", async () => {
   state.filtersAvailable = false;
   await act(async () => {
-    renderer.update(<BackgroundStudioPanel onClose={() => undefined} />);
+    renderer.update(<BackgroundStudioPanel />);
   });
   expect(renderer.root.findByType("select").props.disabled).toBe(true);
   expect(renderer.root.findByProps({ role: "status" }).children.join("")).toContain(

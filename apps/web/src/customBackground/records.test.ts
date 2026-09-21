@@ -127,7 +127,6 @@ describe("live app background", () => {
     enabled: true,
     editing: false,
     routeKind: "other" as const,
-    inConversations: false,
   };
 
   it("previews slider changes only on routes where backgrounds are enabled", () => {
@@ -138,24 +137,12 @@ describe("live app background", () => {
       resolveDisplayedBackground({ ...options, editing: true, preview, routeKind: "draft" }),
     ).toBe(preview);
     expect(
-      resolveDisplayedBackground({
-        ...options,
-        editing: true,
-        preview,
-        routeKind: "conversation",
-        inConversations: true,
-      }),
+      resolveDisplayedBackground({ ...options, editing: true, preview, routeKind: "conversation" }),
     ).toBe(preview);
     const saved = { ...options, selected: preview, preview, editing: false };
     expect(resolveDisplayedBackground(saved)).toBeNull();
     expect(resolveDisplayedBackground({ ...saved, routeKind: "draft" })).toBe(preview);
-    expect(
-      resolveDisplayedBackground({
-        ...saved,
-        routeKind: "conversation",
-        inConversations: true,
-      }),
-    ).toBe(preview);
+    expect(resolveDisplayedBackground({ ...saved, routeKind: "conversation" })).toBe(preview);
   });
 
   it("hides drafts and editor previews when disabled", () => {
@@ -193,28 +180,25 @@ describe("live app background", () => {
 
 describe("background visibility during first submission", () => {
   it.each([
-    { hasTimelineEntries: false, isWorking: false, draftHeroDockRequested: false, visible: true },
-    { hasTimelineEntries: false, isWorking: false, draftHeroDockRequested: true, visible: false },
-    { hasTimelineEntries: true, isWorking: false, draftHeroDockRequested: false, visible: false },
-    { hasTimelineEntries: true, isWorking: true, draftHeroDockRequested: false, visible: false },
-  ])("respects the empty chat state: %j", ({ visible, ...state }) => {
+    { hasTimelineEntries: false, isWorking: false, draftHeroDockRequested: false },
+    { hasTimelineEntries: false, isWorking: false, draftHeroDockRequested: true },
+    { hasTimelineEntries: true, isWorking: false, draftHeroDockRequested: false },
+    { hasTimelineEntries: true, isWorking: true, draftHeroDockRequested: false },
+  ])("paints through the whole draft-to-conversation handoff: %j", (state) => {
     const isDraftHeroState = resolveDraftHeroState({
       ...state,
       isLocalDraftThread: true,
       backgroundSubmissionPending: false,
     });
-    for (const inConversations of [false, true]) {
-      expect(
-        resolveDisplayedBackground({
-          selected: sunset,
-          preview: null,
-          enabled: true,
-          editing: false,
-          routeKind: isDraftHeroState ? "draft" : "conversation",
-          inConversations,
-        }),
-      ).toBe(visible || inConversations ? sunset : null);
-    }
+    expect(
+      resolveDisplayedBackground({
+        selected: sunset,
+        preview: null,
+        enabled: true,
+        editing: false,
+        routeKind: isDraftHeroState ? "draft" : "conversation",
+      }),
+    ).toBe(sunset);
   });
 });
 

@@ -1,4 +1,4 @@
-import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
+import { openBackgroundStudio } from "~/customBackground/backgroundStudioStore";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { useClientSettings, useUpdateClientSettings } from "~/hooks/useSettings";
 import { Button } from "../ui/button";
@@ -12,7 +12,6 @@ export function CustomBackgroundSettings() {
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
   const libraryCount = useClientSettings((settings) => settings.customBackgrounds.length);
   const updateSettings = useUpdateClientSettings();
-  const openBackgroundStudio = useBackgroundStudioStore((store) => store.openBackgroundStudio);
 
   return (
     <SettingsSection id="appearance-background" title="Background">

@@ -1,21 +1,26 @@
 import { useLocation, useRouterState, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   backgroundStudioChatPath,
   backgroundStudioNavAction,
   isBackgroundStudioDismissPath,
 } from "~/customBackground/backgroundStudioNavigation";
-import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
+import {
+  closeBackgroundStudio,
+  useBackgroundStudioOpen,
+} from "~/customBackground/backgroundStudioStore";
 import { useThemeEditorStore } from "../settings/themeEditorStore";
 
-const BackgroundStudioPanel = lazy(() =>
-  import("./BackgroundStudioPanel").then((module) => ({ default: module.BackgroundStudioPanel })),
-);
-
+/**
+ * The studio's cross-route behaviour, mounted above the router because the
+ * background it edits is only visible on chat surfaces: opening it from
+ * Settings walks back to the last thread, and navigating to a page that hides
+ * the background closes it. The controls themselves live in the sidebar, which
+ * is where `AppSidebarLayout` renders them.
+ */
 export function BackgroundStudioHost() {
-  const open = useBackgroundStudioStore((store) => store.open);
-  const closeBackgroundStudio = useBackgroundStudioStore((store) => store.closeBackgroundStudio);
+  const open = useBackgroundStudioOpen();
   const themeSession = useThemeEditorStore((store) => store.session);
   const pathname = useLocation({ select: (location) => location.pathname });
   const navigate = useNavigate();
@@ -45,16 +50,11 @@ export function BackgroundStudioHost() {
       returning.current = false;
     }
     wasOpen.current = open;
-  }, [chatPath, closeBackgroundStudio, dismiss, navigate, open, pathname]);
+  }, [chatPath, dismiss, navigate, open, pathname]);
 
   useEffect(() => {
     if (themeSession !== null) closeBackgroundStudio();
-  }, [closeBackgroundStudio, themeSession]);
+  }, [themeSession]);
 
-  if (!open || dismiss) return null;
-  return (
-    <Suspense fallback={null}>
-      <BackgroundStudioPanel onClose={closeBackgroundStudio} />
-    </Suspense>
-  );
+  return null;
 }

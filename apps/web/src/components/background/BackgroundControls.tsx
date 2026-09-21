@@ -7,7 +7,7 @@ import {
   customBackgroundFilterControls,
 } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
-import { type CSSProperties, useId, useMemo } from "react";
+import { type CSSProperties, type ReactNode, useId, useMemo } from "react";
 
 import { cn } from "~/lib/utils";
 import { ThemeColorPicker } from "../settings/ThemeColorPicker";
@@ -47,6 +47,45 @@ function formatNumber(value: number, spec: NumberControlSpec): string {
   return value.toFixed(decimals);
 }
 
+/**
+ * One labelled control. The studio lives in the sidebar, which the user can
+ * drag from 13rem up, so the label sits above its control until the container
+ * is wide enough to put the two on one line.
+ */
+export function StudioField({
+  label,
+  htmlFor,
+  align = "center",
+  children,
+}: {
+  label: ReactNode;
+  htmlFor?: string;
+  /** `start` keeps a tall control, such as a wrapping button group, top-aligned. */
+  align?: "center" | "start";
+  children: ReactNode;
+}) {
+  const Label = htmlFor === undefined ? "span" : "label";
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-1.5 @sm/studio:flex-row @sm/studio:gap-3",
+        align === "center" ? "@sm/studio:items-center" : "@sm/studio:items-start",
+      )}
+    >
+      <Label
+        htmlFor={htmlFor}
+        className={cn(
+          "truncate text-[13px] text-muted-foreground @sm/studio:w-28 @sm/studio:shrink-0",
+          align === "start" && "@sm/studio:pt-1",
+        )}
+      >
+        {label}
+      </Label>
+      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+    </div>
+  );
+}
+
 export function RangeControl({
   id,
   label,
@@ -74,10 +113,7 @@ export function RangeControl({
     "--settings-slider-fill-offset": `${0.5 - ratio}rem`,
   } as CSSProperties;
   return (
-    <div className="flex items-center gap-3">
-      <label htmlFor={inputId} className="w-28 shrink-0 truncate text-[13px] text-muted-foreground">
-        {label}
-      </label>
+    <StudioField label={label} htmlFor={inputId}>
       <input
         aria-label={label}
         className="settings-slider min-w-0 flex-1"
@@ -94,12 +130,12 @@ export function RangeControl({
         }}
       />
       <output
-        className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+        className="min-w-12 shrink-0 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
         htmlFor={inputId}
       >
         {format(value)}
       </output>
-    </div>
+    </StudioField>
   );
 }
 
@@ -114,12 +150,9 @@ function BooleanControl({
 }) {
   const id = useId();
   return (
-    <div className="flex items-center gap-3">
-      <label htmlFor={id} className="w-28 shrink-0 truncate text-[13px] text-muted-foreground">
-        {spec.label}
-      </label>
+    <StudioField label={spec.label} htmlFor={id}>
       <Switch id={id} size="sm" checked={value} onCheckedChange={onChange} />
-    </div>
+    </StudioField>
   );
 }
 
@@ -192,10 +225,7 @@ export function BackgroundControls({
             );
           case "select":
             return (
-              <div key={key} className="flex items-center gap-3">
-                <span className="w-28 shrink-0 truncate text-[13px] text-muted-foreground">
-                  {spec.label}
-                </span>
+              <StudioField key={key} label={spec.label}>
                 <Select
                   value={typeof current === "string" ? current : spec.default}
                   onValueChange={(value) => {
@@ -215,7 +245,7 @@ export function BackgroundControls({
                     ))}
                   </SelectPopup>
                 </Select>
-              </div>
+              </StudioField>
             );
           case "boolean":
             return (
@@ -231,8 +261,7 @@ export function BackgroundControls({
         }
       })}
       {colorEntries.length > 0 && !palettesHidden ? (
-        <div className="flex items-start gap-3">
-          <span className="w-28 shrink-0 pt-1 text-[13px] text-muted-foreground">Colors</span>
+        <StudioField label="Colors" align="start">
           <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
             {colorEntries.map(([key, spec]) => {
               const current: unknown = Reflect.get(filter, key);
@@ -249,7 +278,7 @@ export function BackgroundControls({
               return null;
             })}
           </div>
-        </div>
+        </StudioField>
       ) : null}
     </div>
   );

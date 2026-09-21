@@ -1,6 +1,9 @@
 import { lazy, memo, Suspense, useState } from "react";
 
-import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
+import {
+  useBackgroundStudioOpen,
+  useBackgroundStudioStore,
+} from "~/customBackground/backgroundStudioStore";
 import { useClientSettings } from "~/hooks/useSettings";
 import { useBackgroundImageUrl } from "~/customBackground/imageStore";
 import {
@@ -28,10 +31,9 @@ export const CustomBackground = memo(function CustomBackground({
 }: {
   routeKind: CustomBackgroundRouteKind;
 }) {
-  const inConversations = useClientSettings((settings) => settings.customBackgroundInConversations);
   const selected = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
-  const editing = useBackgroundStudioStore((store) => store.open);
+  const editing = useBackgroundStudioOpen();
   const preview = useBackgroundStudioStore((store) => store.preview);
   const record = resolveDisplayedBackground({
     selected,
@@ -39,7 +41,6 @@ export const CustomBackground = memo(function CustomBackground({
     enabled,
     editing,
     routeKind,
-    inConversations,
   });
   const filtersAvailable = isWebGlAvailable();
   const source = record?.source ?? ({ kind: "none" } as const);

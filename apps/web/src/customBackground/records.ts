@@ -245,17 +245,13 @@ export function resolveDisplayedBackground({
   enabled,
   editing,
   routeKind,
-  inConversations,
 }: {
   selected: CustomBackgroundRecord | null;
   preview: CustomBackgroundRecord | null;
   enabled: boolean;
   editing: boolean;
   routeKind: CustomBackgroundRouteKind;
-  inConversations: boolean;
 }): CustomBackgroundRecord | null {
-  if (!enabled || routeKind === "other" || (routeKind === "conversation" && !inConversations)) {
-    return null;
-  }
+  if (!enabled || routeKind === "other") return null;
   return editing && preview?.id === selected?.id ? preview : selected;
 }

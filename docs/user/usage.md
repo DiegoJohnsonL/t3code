@@ -1,5 +1,13 @@
 # Usage and limits
 
+## Check usage at a glance
+
+The chart button at the bottom of the sidebar opens a usage panel in its place, so your
+thread stays where it is. Each provider gets its remaining quota per window, when the next
+one resets, and what it has cost today, yesterday, and over the last 30 days. **Back**
+returns to your threads, and the chart button in the panel opens the full page described
+below.
+
 ## Understand your usage
 
 **Usage** combines Codex, Claude Code, and Grok Build session history from your connected

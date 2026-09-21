@@ -16,8 +16,9 @@ vi.mock("~/hooks/useSettings", () => ({
     select(DEFAULT_CLIENT_SETTINGS),
 }));
 vi.mock("~/customBackground/backgroundStudioStore", () => ({
-  useBackgroundStudioStore: (select: (store: { open: boolean; preview: null }) => unknown) =>
-    select({ open: false, preview: null }),
+  useBackgroundStudioOpen: () => false,
+  useBackgroundStudioStore: (select: (store: { preview: null }) => unknown) =>
+    select({ preview: null }),
 }));
 vi.mock("~/customBackground/imageStore", () => ({ useBackgroundImageUrl: () => false }));
 vi.mock("~/customBackground/webgl", () => ({ isWebGlAvailable: () => true }));

@@ -526,9 +526,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       ...(theme !== "system" ? ["Theme"] : []),
       ...(!followSystem ? ["Follow system"] : []),
       ...(themeHalves !== null ? ["Theme mix"] : []),
-      ...(settings.activeCustomBackgroundId !== null ||
-      !settings.customBackgroundEnabled ||
-      !settings.customBackgroundInConversations
+      ...(settings.activeCustomBackgroundId !== null || !settings.customBackgroundEnabled
         ? ["Custom background"]
         : []),
       ...(settings.appearanceContrast !== DEFAULT_UNIFIED_SETTINGS.appearanceContrast
@@ -649,7 +647,6 @@ export function useSettingsRestore(onRestored?: () => void) {
       settings.diffColorScheme,
       settings.activeCustomBackgroundId,
       settings.customBackgroundEnabled,
-      settings.customBackgroundInConversations,
       settings.enableAgentBrowserAccess,
       settings.confirmQuit,
       settings.confirmThreadArchive,
@@ -762,7 +759,6 @@ export function useSettingsRestore(onRestored?: () => void) {
       // Only the selection resets; the background library is user content.
       activeCustomBackgroundId: null,
       customBackgroundEnabled: true,
-      customBackgroundInConversations: true,
       appearanceContrast: DEFAULT_UNIFIED_SETTINGS.appearanceContrast,
       diffColorScheme: DEFAULT_UNIFIED_SETTINGS.diffColorScheme,
       timestampFormat: DEFAULT_UNIFIED_SETTINGS.timestampFormat,

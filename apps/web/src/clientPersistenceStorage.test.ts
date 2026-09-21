@@ -72,35 +72,32 @@ describe("clientPersistenceStorage", () => {
     },
   );
 
-  it.each([
-    { enabled: false, inConversations: false },
-    { enabled: false, inConversations: true },
-    { enabled: true, inConversations: false },
-    { enabled: true, inConversations: true },
-  ])("keeps background visibility after reload: %j", async ({ enabled, inConversations }) => {
-    getTestWindow();
-    const { writeBrowserClientSettings } = await import("./clientPersistenceStorage");
-    const record = createEmptyBackground({
-      id: "saved-background",
-      name: "Mesh",
-      filter: defaultCustomBackgroundFilter("image-dithering"),
-      createdAt: "2026-09-08T00:00:00.000Z",
-    });
-    const settings = {
-      ...DEFAULT_CLIENT_SETTINGS,
-      customBackgrounds: [record],
-      activeCustomBackgroundId: record.id,
-      customBackgroundEnabled: enabled,
-      customBackgroundInConversations: inConversations,
-    };
-    writeBrowserClientSettings(settings);
+  it.each([{ enabled: false }, { enabled: true }])(
+    "keeps background visibility after reload: %j",
+    async ({ enabled }) => {
+      getTestWindow();
+      const { writeBrowserClientSettings } = await import("./clientPersistenceStorage");
+      const record = createEmptyBackground({
+        id: "saved-background",
+        name: "Mesh",
+        filter: defaultCustomBackgroundFilter("image-dithering"),
+        createdAt: "2026-09-08T00:00:00.000Z",
+      });
+      const settings = {
+        ...DEFAULT_CLIENT_SETTINGS,
+        customBackgrounds: [record],
+        activeCustomBackgroundId: record.id,
+        customBackgroundEnabled: enabled,
+      };
+      writeBrowserClientSettings(settings);
 
-    // Reload modules while keeping the browser's persisted storage.
-    vi.resetModules();
-    const { readBrowserClientSettings } = await import("./clientPersistenceStorage");
-    const reloaded = readBrowserClientSettings();
-    expect(reloaded).toEqual(settings);
-  });
+      // Reload modules while keeping the browser's persisted storage.
+      vi.resetModules();
+      const { readBrowserClientSettings } = await import("./clientPersistenceStorage");
+      const reloaded = readBrowserClientSettings();
+      expect(reloaded).toEqual(settings);
+    },
+  );
 
   it("reports structured decode failures while preserving the fallback", async () => {
     const testWindow = getTestWindow();

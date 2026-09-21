@@ -197,6 +197,7 @@ import {
 import type { Project } from "../types";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
+import { useSidebarPanelStore } from "~/components/sidebar/sidebarPanelStore";
 
 const EMPTY_BROWSE_ENTRIES: FilesystemBrowseResult["entries"] = [];
 
@@ -2033,6 +2034,8 @@ function OpenCommandPaletteDialog(props: {
     title: "Open usage",
     icon: <ChartNoAxesColumnIcon className={ITEM_ICON_CLASS} />,
     run: async () => {
+      // The full page and the sidebar panel are the same numbers twice over.
+      useSidebarPanelStore.getState().closeSidebarPanel();
       await navigate({ to: "/usage" });
     },
   });

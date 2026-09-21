@@ -1,6 +1,8 @@
 import { useAtomValue } from "@effect/atom-react";
 import * as Schema from "effect/Schema";
 import {
+  lazy,
+  Suspense,
   useEffect,
   useState,
   useSyncExternalStore,
@@ -27,6 +29,16 @@ import {
 import LegacyThreadSidebar from "./LegacySidebar";
 import ThreadSidebar from "./Sidebar";
 import { SettingsSidebarNav } from "./settings/SettingsSidebarNav";
+import { UsageSidebarPanel } from "./usage/UsageSidebarPanel";
+import { useSidebarPanelStore } from "./sidebar/sidebarPanelStore";
+
+// The studio pulls in the filter controls and image store; it stays out of the
+// initial bundle until someone opens it.
+const BackgroundStudioSidebar = lazy(() =>
+  import("./background/BackgroundStudioSidebar").then((module) => ({
+    default: module.BackgroundStudioSidebar,
+  })),
+);
 import { SidebarChromeHeader } from "./sidebar/SidebarChrome";
 import {
   resolveSidebarStageFocusRingOffsetClass,
@@ -165,6 +177,9 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const panelAnimationsSuppressed = usePanelNavigationSuppression(pathname);
   const routePanelAnimationsActive = panelAnimationsActive && !panelAnimationsSuppressed;
   const isOnSettings = pathname === "/settings" || pathname.startsWith("/settings/");
+  // Usage and the background studio are sidebar modes, not routes, so they
+  // take over whichever sidebar the current route would otherwise show.
+  const sidebarPanel = useSidebarPanelStore((store) => store.panel);
   const isMacosDesktop = isElectron && isMacPlatform(navigator.platform);
   const [sidebarWidth, setSidebarWidth] = useState(readInitialThreadSidebarWidth);
   // Subscribed rather than read once: the clamp must track live window size,
@@ -255,7 +270,18 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
             onResize: setSidebarWidth,
           }}
         >
-          {isOnSettings ? (
+          {sidebarPanel !== null ? (
+            <>
+              <SidebarChromeHeader isElectron={isElectron} />
+              {sidebarPanel === "usage" ? (
+                <UsageSidebarPanel />
+              ) : (
+                <Suspense fallback={null}>
+                  <BackgroundStudioSidebar />
+                </Suspense>
+              )}
+            </>
+          ) : isOnSettings ? (
             <>
               <SidebarChromeHeader isElectron={isElectron} />
               <SettingsSidebarNav pathname={pathname} />

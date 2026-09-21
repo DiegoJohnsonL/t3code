@@ -34,10 +34,11 @@ import {
 } from "../ui/sidebar";
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
+import { openBackgroundStudio } from "~/customBackground/backgroundStudioStore";
 import { stepBackgroundImage } from "~/customBackground/rotationOffsetStore";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
+import { useSidebarPanelStore } from "./sidebarPanelStore";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
 import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUpdatePill";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
@@ -140,9 +141,8 @@ function SidebarUtilityItem({
   );
 }
 
-function SidebarBackgroundMenu({ onNavigate }: { onNavigate: () => void }) {
+function SidebarBackgroundMenu() {
   const active = useActiveBackground();
-  const openBackgroundStudio = useBackgroundStudioStore((store) => store.openBackgroundStudio);
   const rotating = active?.source.kind === "image" && active.source.imageIds.length > 1;
   return (
     <SidebarMenuItem className="shrink-0">
@@ -165,12 +165,7 @@ function SidebarBackgroundMenu({ onNavigate }: { onNavigate: () => void }) {
             <ChevronLeftIcon /> Previous image
           </MenuItem>
           <MenuSeparator />
-          <MenuItem
-            onClick={() => {
-              onNavigate();
-              openBackgroundStudio();
-            }}
-          >
+          <MenuItem onClick={openBackgroundStudio}>
             <SlidersHorizontalIcon /> Customize background
           </MenuItem>
         </MenuPopup>
@@ -195,6 +190,9 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
               ? "pull-requests"
               : null,
   });
+  const sidebarPanel = useSidebarPanelStore((store) => store.panel);
+  const openSidebarPanel = useSidebarPanelStore((store) => store.openSidebarPanel);
+  const closeSidebarPanel = useSidebarPanelStore((store) => store.closeSidebarPanel);
   const { environments } = useEnvironments();
   // The page reads every connected server, so one of them offering pull requests is enough for
   // the link to lead somewhere.
@@ -218,25 +216,28 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
     void navigate({ to: "/settings" });
   }, [closeMobileSidebar, navigate]);
 
+  // Usage takes over the sidebar rather than the main pane, so the thread
+  // stays put and the mobile sheet stays open on the panel it just opened.
   const handleUsageClick = useCallback(() => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-    void navigate({ to: "/usage" });
-  }, [isMobile, navigate, setOpenMobile]);
+    openSidebarPanel("usage");
+  }, [openSidebarPanel]);
 
   const handleBackClick = useCallback(() => {
+    if (sidebarPanel !== null) {
+      closeSidebarPanel();
+      return;
+    }
     closeMobileSidebar();
     if (canGoBack) {
       window.history.back();
       return;
     }
     void navigate({ to: "/" });
-  }, [canGoBack, closeMobileSidebar, navigate]);
+  }, [canGoBack, closeMobileSidebar, closeSidebarPanel, navigate, sidebarPanel]);
 
   return (
     <SidebarMenu className="flex-row items-center">
-      {currentFooterPage ? (
+      {sidebarPanel !== null || currentFooterPage ? (
         <SidebarMenuItem className="min-w-0 flex-1">
           <SidebarMenuButton onClick={handleBackClick}>
             <ArrowLeftIcon />
@@ -262,7 +263,7 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
             label="Usage"
             onClick={handleUsageClick}
           />
-          <SidebarBackgroundMenu onNavigate={closeMobileSidebar} />
+          <SidebarBackgroundMenu />
         </>
       )}
       <SidebarUpdatePill />

@@ -315,14 +315,6 @@ export const ClientSettingsSchema = Schema.Struct({
   activeCustomBackgroundId: Schema.NullOr(CustomBackgroundId).pipe(
     Schema.withDecodingDefault(Effect.succeed(null)),
   ),
-  /**
-   * Whether the active entry also draws behind threads that have messages.
-   * When backgrounds are enabled, drafts show the selected entry; this decides
-   * if it stays in conversations. Off keeps the selection.
-   */
-  customBackgroundInConversations: Schema.Boolean.pipe(
-    Schema.withDecodingDefault(Effect.succeed(true)),
-  ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
   ),
@@ -1554,7 +1546,6 @@ export const ClientSettingsPatch = Schema.Struct({
   customBackgrounds: Schema.optionalKey(CustomBackgroundRecords),
   customBackgroundEnabled: Schema.optionalKey(Schema.Boolean),
   activeCustomBackgroundId: Schema.optionalKey(Schema.NullOr(CustomBackgroundId)),
-  customBackgroundInConversations: Schema.optionalKey(Schema.Boolean),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

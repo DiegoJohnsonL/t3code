@@ -994,34 +994,21 @@ describe("ClientSettings custom backgrounds", () => {
     const settings = decodeClientSettings({});
     expect(settings.customBackgrounds).toEqual([]);
     expect(settings.activeCustomBackgroundId).toBeNull();
-    expect(settings.customBackgroundInConversations).toBe(true);
   });
 
-  it("persists the master switch independently of the selection and conversation preference", () => {
+  it("persists the master switch independently of the selection", () => {
     const settings = decodeClientSettings({
       customBackgrounds: [record],
       activeCustomBackgroundId: record.id,
       customBackgroundEnabled: false,
-      customBackgroundInConversations: true,
     });
     expect(decodeClientSettings(encodeClientSettings(settings))).toEqual(settings);
     expect(settings.customBackgroundEnabled).toBe(false);
     expect(settings.activeCustomBackgroundId).toBe(record.id);
-    expect(settings.customBackgroundInConversations).toBe(true);
     expect(
       decodeClientSettingsPatch({ customBackgroundEnabled: true }).customBackgroundEnabled,
     ).toBe(true);
     expect(decodeClientSettings({}).customBackgroundEnabled).toBe(true);
-  });
-
-  it("keeps the selection when backgrounds are turned off in conversations", () => {
-    const settings = decodeClientSettings({
-      customBackgrounds: [record],
-      activeCustomBackgroundId: "bg-1",
-      customBackgroundInConversations: false,
-    });
-    expect(settings.activeCustomBackgroundId).toBe("bg-1");
-    expect(settings.customBackgroundInConversations).toBe(false);
   });
 
   it("round-trips a library and its active entry", () => {
