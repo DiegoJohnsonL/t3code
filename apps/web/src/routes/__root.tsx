@@ -31,6 +31,7 @@ import { ThreadNotificationCoordinator } from "../components/ThreadNotificationC
 import { ProjectCloneToastCoordinator } from "../components/ProjectCloneToastCoordinator";
 import { SlowRpcRequestToastCoordinator } from "../components/SlowRpcRequestToastCoordinator";
 import { BackgroundStudioHost } from "../components/background/BackgroundStudioHost";
+import { BackgroundThemeSync } from "../components/background/BackgroundThemeSync";
 import { ThemeEditorHost } from "../components/settings/ThemeEditorHost";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useDefaultThemeAdoption } from "../hooks/useDefaultTheme";
@@ -212,6 +213,7 @@ function RootRouteView() {
         <DocumentTitleSync />
         <ContrastAppearanceSync />
         <EnvironmentThemeSync />
+        <BackgroundThemeSync />
         <GlassAppearanceSync />
         <FontAppearanceSync />
         <FirstRunGate

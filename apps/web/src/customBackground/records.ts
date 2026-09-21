@@ -239,19 +239,28 @@ export function filtersEqual(a: CustomBackgroundFilter, b: CustomBackgroundFilte
   return true;
 }
 
-export function resolveDisplayedBackground({
+/** The background in effect app-wide: the studio's live edits while it is open, else the saved pick. */
+export function resolveActiveBackground({
   selected,
   preview,
   enabled,
   editing,
-  routeKind,
 }: {
   selected: CustomBackgroundRecord | null;
   preview: CustomBackgroundRecord | null;
   enabled: boolean;
   editing: boolean;
+}): CustomBackgroundRecord | null {
+  if (!enabled) return null;
+  return editing && preview?.id === selected?.id ? preview : selected;
+}
+
+/** The background painted behind a route; only chat routes draw one. */
+export function resolveDisplayedBackground({
+  routeKind,
+  ...active
+}: Parameters<typeof resolveActiveBackground>[0] & {
   routeKind: CustomBackgroundRouteKind;
 }): CustomBackgroundRecord | null {
-  if (!enabled || routeKind === "other") return null;
-  return editing && preview?.id === selected?.id ? preview : selected;
+  return routeKind === "other" ? null : resolveActiveBackground(active);
 }
