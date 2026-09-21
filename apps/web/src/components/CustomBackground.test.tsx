@@ -20,7 +20,10 @@ vi.mock("~/customBackground/backgroundStudioStore", () => ({
   useBackgroundStudioStore: (select: (store: { preview: null }) => unknown) =>
     select({ preview: null }),
 }));
-vi.mock("~/customBackground/imageStore", () => ({ useBackgroundImageUrl: () => false }));
+vi.mock("~/customBackground/imageStore", () => ({
+  useBackgroundImageUrl: () => false,
+  useBackgroundImageSourceColor: () => null,
+}));
 vi.mock("~/customBackground/webgl", () => ({ isWebGlAvailable: () => true }));
 vi.mock("./background/BackgroundRenderer", () => ({
   BackgroundRenderer: () => <div>Rendered background</div>,

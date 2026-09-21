@@ -6,7 +6,7 @@ import {
   hexFromArgb,
 } from "@material/material-color-utilities";
 
-import type { ThemeAppearance, ThemeColors } from "~/themePalette";
+import type { DynamicTheme, ThemeAppearance, ThemeColors } from "~/themePalette";
 
 /**
  * Tonal spot is the scheme Android defaults to for wallpaper colors. It keeps
@@ -99,5 +99,61 @@ export function backgroundThemeColors(
     terminalSelection: color(Material.secondaryContainer),
     terminalScrollbar: color(Material.surfaceContainerHighest),
     terminalScrollbarHover: color(Material.outlineVariant),
+  };
+}
+
+/**
+ * The sidebar header art paints itself from its own variables, so the seed has
+ * to reach them too or a blue header sits above an orange interface. Tones
+ * mirror the shipped artwork's own light-to-dark run rather than the surface
+ * ladder: this is illustration, and it stays brighter than any surface.
+ */
+function stageArtworkVariables(scheme: SchemeTonalSpot): Record<string, string> {
+  const primary = (value: number): string =>
+    hexFromArgb(
+      Hct.from(
+        scheme.sourceColorHct.hue,
+        Math.max(48, scheme.sourceColorHct.chroma),
+        value,
+      ).toInt(),
+    );
+  const accentHue = (scheme.sourceColorHct.hue + 40) % 360;
+  const accent = (value: number): string => hexFromArgb(Hct.from(accentHue, 60, value).toInt());
+
+  return {
+    "--stage-art-top": primary(78),
+    "--stage-art-mid": primary(62),
+    "--stage-art-bottom": primary(44),
+    "--stage-art-highlight": primary(95),
+    "--stage-art-secondary": accent(79),
+    "--stage-art-tertiary": accent(68),
+    "--stage-art-line": primary(96),
+    "--stage-art-grid-line": primary(97),
+    "--stage-art-celeste-highlight": accent(97),
+    "--stage-art-celeste-secondary": accent(83),
+    "--stage-art-violet-highlight": primary(90),
+    "--stage-night-base-top": primary(28),
+    "--stage-night-base-mid": primary(23),
+    "--stage-night-base-bottom": primary(20),
+    "--stage-night-highlight": primary(71),
+    "--stage-night-secondary": accent(60),
+    "--stage-night-tertiary": accent(63),
+    "--stage-night-line": primary(94),
+    "--stage-night-glow-highlight": primary(55),
+    "--stage-night-glow-secondary": primary(35),
+    "--stage-night-sparkle": primary(88),
+  };
+}
+
+/** The full repaint for one picture: interface roles plus the header artwork. */
+export function backgroundTheme(sourceColor: number, appearance: ThemeAppearance): DynamicTheme {
+  const scheme = new SchemeTonalSpot(
+    Hct.fromInt(sourceColor),
+    appearance === "dark",
+    CONTRAST_LEVEL,
+  );
+  return {
+    colors: backgroundThemeColors(sourceColor, appearance),
+    artwork: stageArtworkVariables(scheme),
   };
 }

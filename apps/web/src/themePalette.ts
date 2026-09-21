@@ -1495,21 +1495,40 @@ export const THEME_PREVIEW_ID = "__preview";
 /** Marks the document as wearing colors pulled from the background picture. */
 export const DYNAMIC_THEME_ID = "__background";
 
-let dynamicThemeColors: ThemeColors | null = null;
+export interface DynamicTheme {
+  readonly colors: ThemeColors;
+  /** Stage artwork custom properties, keyed by CSS variable name. */
+  readonly artwork: Readonly<Record<string, string>>;
+}
+
+let dynamicTheme: DynamicTheme | null = null;
+let appliedArtworkVariables: ReadonlyArray<string> = [];
 
 /**
- * Colors derived from whichever background picture is showing. They stand in
- * for the selected theme's palette until cleared, so the next `applyThemePalette`
- * repaints from the picture instead of the library entry. Callers own the
- * repaint: set the colors, then refresh the theme.
+ * A palette derived from whichever background picture is showing. It stands in
+ * for the selected theme until cleared, so the next `applyThemePalette` repaints
+ * from the picture instead of the library entry. Callers own the repaint: set
+ * the theme, then refresh.
  */
-export function setDynamicThemeColors(colors: ThemeColors | null): void {
-  dynamicThemeColors = colors;
+export function setDynamicTheme(next: DynamicTheme | null): void {
+  dynamicTheme = next;
 }
 
 function writeThemeColors(root: HTMLElement, colors: ThemeColors): void {
   for (const [role, value] of Object.entries(colors) as Array<[ThemeColorRole, string]>) {
     root.style.setProperty(APP_THEME_VARIABLES[role], value);
+  }
+}
+
+// The stage artwork reads its own variables, and whichever theme is selected
+// still defines them. Clearing the previous set by name is what lets a picture
+// hand the header art back when the dynamic theme goes away.
+function writeArtworkVariables(root: HTMLElement): void {
+  for (const name of appliedArtworkVariables) root.style.removeProperty(name);
+  appliedArtworkVariables = dynamicTheme ? Object.keys(dynamicTheme.artwork) : [];
+  if (!dynamicTheme) return;
+  for (const [name, value] of Object.entries(dynamicTheme.artwork)) {
+    root.style.setProperty(name, value);
   }
 }
 
@@ -1543,19 +1562,21 @@ export function applyThemePalette(theme: ThemePreference, appearance?: ThemeAppe
   setThemePreviewSidebarArtwork(null);
   const palette = getThemeDefinition(theme);
 
+  writeArtworkVariables(root);
+
   if (palette) {
-    root.dataset.themeId = dynamicThemeColors ? DYNAMIC_THEME_ID : palette.id;
+    root.dataset.themeId = dynamicTheme ? DYNAMIC_THEME_ID : palette.id;
     const mode = appearance ?? legacyThemeMode(theme) ?? palette.appearance;
     writeThemeColors(
       root,
-      dynamicThemeColors ?? getThemeColorsForMode(palette, mode) ?? palette.colors,
+      dynamicTheme?.colors ?? getThemeColorsForMode(palette, mode) ?? palette.colors,
     );
     return;
   }
 
-  if (dynamicThemeColors) {
+  if (dynamicTheme) {
     root.dataset.themeId = DYNAMIC_THEME_ID;
-    writeThemeColors(root, dynamicThemeColors);
+    writeThemeColors(root, dynamicTheme.colors);
     return;
   }
 

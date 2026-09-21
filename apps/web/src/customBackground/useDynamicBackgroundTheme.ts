@@ -2,9 +2,9 @@ import type { CustomBackgroundImageId } from "@t3tools/contracts";
 import { useEffect } from "react";
 
 import { useTheme } from "~/hooks/useTheme";
-import { setDynamicThemeColors } from "~/themePalette";
+import { setDynamicTheme } from "~/themePalette";
 
-import { backgroundThemeColors } from "./dynamicTheme";
+import { backgroundTheme } from "./dynamicTheme";
 import { useBackgroundImageSourceColor } from "./imageStore";
 
 /**
@@ -16,15 +16,13 @@ export function useDynamicBackgroundTheme(imageId: CustomBackgroundImageId | nul
   const sourceColor = useBackgroundImageSourceColor(imageId);
 
   useEffect(() => {
-    setDynamicThemeColors(
-      sourceColor === null ? null : backgroundThemeColors(sourceColor, resolvedTheme),
-    );
+    setDynamicTheme(sourceColor === null ? null : backgroundTheme(sourceColor, resolvedTheme));
     refreshTheme();
   }, [refreshTheme, resolvedTheme, sourceColor]);
 
   useEffect(
     () => () => {
-      setDynamicThemeColors(null);
+      setDynamicTheme(null);
       refreshTheme();
     },
     [refreshTheme],
