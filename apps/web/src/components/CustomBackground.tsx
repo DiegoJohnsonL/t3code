@@ -10,12 +10,9 @@ import {
   type CustomBackgroundRouteKind,
   backgroundDrawMode,
   backgroundIsRenderable,
-  currentBackgroundImageId,
   resolveDisplayedBackground,
-  upcomingBackgroundImageId,
 } from "~/customBackground/records";
-import { useRotationClock } from "~/customBackground/useRotationClock";
-import { useRotationOffsetStore } from "~/customBackground/rotationOffsetStore";
+import { useRotatingBackgroundImage } from "~/customBackground/rotation";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 
@@ -45,9 +42,7 @@ export const CustomBackground = memo(function CustomBackground({
   });
   const filtersAvailable = isWebGlAvailable();
   const source = record?.source ?? ({ kind: "none" } as const);
-  const now = useRotationClock(source);
-  const offset = useRotationOffsetStore((store) => store.offset);
-  const imageId = currentBackgroundImageId(source, now, offset);
+  const { current: imageId, upcoming } = useRotatingBackgroundImage(source);
   // Only the plain <img> path can show 4K pixels; the shader draws a fraction
   // of them and uploads whatever it is given as a full-size GPU texture.
   const variant =
@@ -56,7 +51,7 @@ export const CustomBackground = memo(function CustomBackground({
       ? "shader"
       : "full";
   const image = useBackgroundImageUrl(imageId, variant);
-  useBackgroundImageUrl(upcomingBackgroundImageId(source, now, offset), variant);
+  useBackgroundImageUrl(upcoming, variant);
   // Hold the previous picture while the next one decodes so a rotation never
   // flashes the bare theme between images.
   const [lastImage, setLastImage] = useState<string | null>(null);

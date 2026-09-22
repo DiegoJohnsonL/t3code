@@ -35,7 +35,7 @@ import {
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { openBackgroundStudio } from "~/customBackground/backgroundStudioStore";
-import { stepBackgroundImage } from "~/customBackground/rotationOffsetStore";
+import { stepBackgroundImage } from "~/customBackground/rotation";
 import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
 import { useSidebarPanelStore } from "./sidebarPanelStore";

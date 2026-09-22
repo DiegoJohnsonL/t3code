@@ -28,7 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
 import { storeBackgroundImage } from "~/customBackground/imageStore";
-import { stepBackgroundImage } from "~/customBackground/rotationOffsetStore";
+import { stepBackgroundImage } from "~/customBackground/rotation";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
   type CustomBackgroundLibrary,
