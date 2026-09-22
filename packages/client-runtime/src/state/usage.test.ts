@@ -210,10 +210,10 @@ describe("limits refresh cooldown", () => {
         }
         expect(settled).toHaveBeenCalledTimes(1);
         const next = vi.fn(async () => undefined);
-        clock.mockReturnValue(300_999);
+        clock.mockReturnValue(120_999);
         await refreshUsageLimits(id, next, true);
         expect(next).not.toHaveBeenCalled();
-        clock.mockReturnValue(301_000);
+        clock.mockReturnValue(121_000);
         await refreshUsageLimits(id, next, true);
         expect(next).toHaveBeenCalledTimes(1);
         await refreshUsageLimits(id, next);

@@ -30,7 +30,7 @@ export async function refreshUsageLimits<A>(
     .finally(() => {
       limitsRefreshes.delete(environmentId);
       // @effect-diagnostics-next-line globalDate:off
-      limitsRefreshAfter.set(environmentId, Date.now() + 5 * 60_000);
+      limitsRefreshAfter.set(environmentId, Date.now() + 2 * 60_000);
     });
   limitsRefreshes.set(environmentId, current);
   return await current;

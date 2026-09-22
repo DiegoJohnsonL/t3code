@@ -18,7 +18,15 @@ import {
 import { enumerateDays, formatTokens, formatUsd, makeWindow } from "@t3tools/shared/usageFormat";
 import type { DailyTotals } from "@t3tools/shared/usageMerge";
 import { ChartNoAxesColumnIcon } from "lucide-react";
-import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { environmentPresentations } from "../../state/presentation";
@@ -90,26 +98,24 @@ export function UsageSidebarPanel() {
   // Advanced on refresh rather than ticking: a live clock would repaint the
   // sidebar every second for countdowns nobody reads that closely.
   const [now, setNow] = useState(() => Date.now());
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshing, startRefresh] = useTransition();
   const refreshingRef = useRef(false);
   const { merged, refresh } = useUsage(window);
 
-  const refreshLimits = async (automatic = false) => {
-    try {
-      await Promise.all(
-        Array.from(presentations, ([environmentId, presentation]) =>
-          presentation.connection.phase === "connected" && presentation.serverConfig !== null
-            ? refreshUsageLimits(
-                environmentId,
-                () => refreshProviders({ environmentId, input: {} }),
-                automatic,
-              )
-            : undefined,
-        ),
-      );
-    } finally {
+  const refreshLimits = async (automatic: boolean) => {
+    await Promise.all(
+      Array.from(presentations, ([environmentId, presentation]) =>
+        presentation.connection.phase === "connected" && presentation.serverConfig !== null
+          ? refreshUsageLimits(
+              environmentId,
+              () => refreshProviders({ environmentId, input: {} }),
+              automatic,
+            )
+          : undefined,
+      ),
+    ).finally(() => {
       setNow(Date.now());
-    }
+    });
   };
 
   const connectedEnvironments = [...presentations]
@@ -120,26 +126,24 @@ export function UsageSidebarPanel() {
     .map(([environmentId]) => environmentId)
     .sort()
     .join(",");
-  const autoRefreshLimits = useEffectEvent(() => {
-    void refreshLimits(true);
-  });
-  useEffect(() => {
-    if (connectedEnvironments) autoRefreshLimits();
-  }, [connectedEnvironments]);
-
-  const handleRefresh = () => {
+  const handleRefresh = ({ automatic = false }: { automatic?: boolean } = {}) => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
-    setIsRefreshing(true);
-    const nextWindow = makeWindow(COST_WINDOW_DAYS);
-    if (nextWindow.sinceDay !== window.sinceDay || nextWindow.untilDay !== window.untilDay) {
-      setWindow(nextWindow);
-    }
-    void Promise.all([refreshLimits(), refresh(nextWindow)]).finally(() => {
-      refreshingRef.current = false;
-      setIsRefreshing(false);
+    startRefresh(async () => {
+      const nextWindow = makeWindow(COST_WINDOW_DAYS);
+      if (nextWindow.sinceDay !== window.sinceDay || nextWindow.untilDay !== window.untilDay) {
+        setWindow(nextWindow);
+      }
+      await Promise.all([refreshLimits(automatic), refresh(nextWindow)]).finally(() => {
+        refreshingRef.current = false;
+      });
     });
   };
+
+  const refreshOnOpen = useEffectEvent(() => handleRefresh({ automatic: true }));
+  useEffect(() => {
+    if (connectedEnvironments) refreshOnOpen();
+  }, [connectedEnvironments]);
 
   const pools = useMemo(
     () => collectLimitPools(collectLimitAccounts(presentations), now),
@@ -226,7 +230,7 @@ export function UsageSidebarPanel() {
                   label="Refresh usage"
                   aria-busy={isRefreshing}
                   disabled={isRefreshing}
-                  onClick={handleRefresh}
+                  onClick={() => handleRefresh()}
                 >
                   <RefreshIcon className="size-4" refreshing={isRefreshing} />
                 </SidebarHeaderIconButton>
