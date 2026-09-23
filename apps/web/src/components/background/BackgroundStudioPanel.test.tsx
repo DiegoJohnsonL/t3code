@@ -89,7 +89,7 @@ const original: CustomBackgroundRecord = {
   createdAt: "2026-09-11",
   fade: 100,
   fadeHeight: 60,
-  dim: 35,
+  fadeSoftness: 30,
   opacity: 100,
   source: { kind: "none" },
   filter: defaultCustomBackgroundFilter("none"),
@@ -144,7 +144,7 @@ it("preserves both persisted and pending edits when encoding finishes", async ()
     name: "Renamed",
     fade: 35,
     fadeHeight: 60,
-    dim: 35,
+    fadeSoftness: 30,
     opacity: 100,
     source: {
       kind: "image",

@@ -1,5 +1,9 @@
 import { ImageDithering } from "@paper-design/shaders-react";
 import type { CustomBackgroundFilter, CustomBackgroundTransition } from "@t3tools/contracts";
+import {
+  type CustomBackgroundFadeLevels,
+  customBackgroundFadeStops,
+} from "@t3tools/shared/customBackgroundFade";
 import { memo, useEffect, useState } from "react";
 
 import { BACKGROUND_WEBGL_CONTEXT_ATTRIBUTES } from "~/customBackground/webgl";
@@ -34,32 +38,13 @@ function ShaderLayer({ filter, image }: { filter: CustomBackgroundFilter; image:
   }
 }
 
-export interface BackgroundFade {
-  /** Overlay strength at the bottom edge, 0 to 100. */
-  fade: number;
-  /** Percent of the pane the overlay climbs before it settles. */
-  fadeHeight: number;
-  /** Flat overlay strength everywhere above the fade. */
-  dim: number;
-}
+const themeOverlay = (opacity: number) =>
+  `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent)`;
 
-const FADE_STOPS = 8;
-// The bottom share of the height holds full strength before the ramp begins,
-// so the sliders always produce the same silhouette.
-const SOLID_SHARE = 0.45;
-
-export function fadeOverlayGradient({ fade, fadeHeight, dim }: BackgroundFade): string {
-  const stop = (opacity: number, position: number) =>
-    `color-mix(in srgb, var(--background) ${Math.round(opacity)}%, transparent) ${Math.round(position)}%`;
-  const top = dim;
-  const solid = fadeHeight * SOLID_SHARE;
-  const stops = [stop(fade, 0)];
-  for (let index = 0; index <= FADE_STOPS; index += 1) {
-    const t = index / FADE_STOPS;
-    const eased = t * t * (3 - 2 * t);
-    stops.push(stop(fade + (top - fade) * eased, solid + t * (fadeHeight - solid)));
-  }
-  stops.push(stop(top, 100));
+function fadeOverlayGradient(fade: CustomBackgroundFadeLevels): string {
+  const stops = customBackgroundFadeStops(fade).map(
+    ({ opacity, position }) => `${themeOverlay(opacity)} ${Math.round(position)}%`,
+  );
   return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
@@ -103,7 +88,7 @@ export interface BackgroundRendererProps {
   /** Object URL of the source image; null while it loads. */
   image: string | null;
   transition: CustomBackgroundTransition;
-  fade: BackgroundFade;
+  fade: CustomBackgroundFadeLevels;
   /** Picture opacity, 0 to 100; the theme background shows through the rest. */
   opacity: number;
   /** When false, skip Paper entirely and draw the photo if one is loaded. */

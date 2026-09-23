@@ -25,8 +25,8 @@ function usePictureUrl(
 /**
  * Draws a connected computer's background behind navigation. Home and thread
  * screens clear their backdrop while it shows, so the picture fills the phone
- * the way a wallpaper does: cropped to cover, centered, under the same dim and
- * bottom fade the desktop draws.
+ * the way a wallpaper does: cropped to cover, centered, under the same bottom
+ * fade the desktop draws.
  */
 export function ComputerBackgroundLayer() {
   const source = useComputerBackgroundSource();

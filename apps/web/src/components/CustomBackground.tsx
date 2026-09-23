@@ -31,6 +31,8 @@ export const CustomBackground = memo(function CustomBackground({
 }) {
   const selected = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const textGlow = useClientSettings((settings) => settings.customBackgroundTextGlow);
+  const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
   const editing = useBackgroundStudioOpen();
   const preview = useBackgroundStudioStore((store) => store.preview);
   const record = resolveDisplayedBackground({
@@ -60,13 +62,22 @@ export const CustomBackground = memo(function CustomBackground({
   if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
   if (imageId !== null && shownImage === null) return null;
   return (
-    <div data-chat-backdrop="source" className="pointer-events-none absolute inset-0 -z-10">
+    <div
+      data-chat-backdrop="source"
+      data-text-glow={textGlow || undefined}
+      data-agent-bubbles={agentBubbles || undefined}
+      className="pointer-events-none absolute inset-0 -z-10"
+    >
       <Suspense fallback={null}>
         <BackgroundRenderer
           filter={record.filter}
           image={shownImage}
           transition={source.kind === "image" ? source.transition : "cut"}
-          fade={{ fade: record.fade, fadeHeight: record.fadeHeight, dim: record.dim }}
+          fade={{
+            fade: record.fade,
+            fadeHeight: record.fadeHeight,
+            fadeSoftness: record.fadeSoftness,
+          }}
           opacity={record.opacity}
           filtersAvailable={filtersAvailable}
         />

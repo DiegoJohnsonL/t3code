@@ -204,6 +204,18 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["material you dynamic color wallpaper palette accent tint background playlist"],
   },
   {
+    id: "background-text-glow",
+    title: "Glow behind text",
+    to: "/settings/appearance",
+    searchTerms: ["readability halo shadow contrast wallpaper background text"],
+  },
+  {
+    id: "background-agent-bubbles",
+    title: "Bubbles behind agent replies",
+    to: "/settings/appearance",
+    searchTerms: ["readability card assistant response message wallpaper background"],
+  },
+  {
     // Prefixed because the slider control already owns the `appearance-contrast` id.
     id: "setting-appearance-contrast",
     title: "Contrast",

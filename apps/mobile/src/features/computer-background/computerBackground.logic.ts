@@ -9,15 +9,19 @@ import {
 } from "@material/material-color-utilities";
 import {
   type CustomBackgroundImageId,
-  DEFAULT_CUSTOM_BACKGROUND_DIM,
   DEFAULT_CUSTOM_BACKGROUND_FADE,
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
+  DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
   DEFAULT_CUSTOM_BACKGROUND_OPACITY,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   type EnvironmentId,
   type PhoneBackground,
   type ServerSettings,
 } from "@t3tools/contracts";
+import {
+  type CustomBackgroundFadeLevels,
+  customBackgroundFadeStops,
+} from "@t3tools/shared/customBackgroundFade";
 
 import type { MaterialYouPalette } from "../../lib/materialYouPalette";
 import type { MobileThemeAppearance, MobileThemeVariables } from "../../lib/mobileTheme";
@@ -119,27 +123,11 @@ function withOpacity(color: string, percent: number): string {
   return `#${rgb}${alpha.toString(16).padStart(2, "0")}`;
 }
 
-const FADE_STOPS = 8;
-// Matches the desktop renderer so both draw the same silhouette from the same sliders.
-const SOLID_SHARE = 0.45;
-
-/** The desktop's bottom fade and flat dim, painted in the backdrop color. */
-export function fadeOverlayGradient(
-  color: string,
-  fade: { readonly fade: number; readonly fadeHeight: number; readonly dim: number },
-): string {
-  const stop = (opacity: number, position: number) =>
-    `${withOpacity(color, opacity)} ${Math.round(position)}%`;
-  const solid = fade.fadeHeight * SOLID_SHARE;
-  const stops = [stop(fade.fade, 0)];
-  for (let index = 0; index <= FADE_STOPS; index += 1) {
-    const t = index / FADE_STOPS;
-    const eased = t * t * (3 - 2 * t);
-    stops.push(
-      stop(fade.fade + (fade.dim - fade.fade) * eased, solid + t * (fade.fadeHeight - solid)),
-    );
-  }
-  stops.push(stop(fade.dim, 100));
+/** The desktop's bottom fade, painted in the backdrop color. */
+export function fadeOverlayGradient(color: string, levels: CustomBackgroundFadeLevels): string {
+  const stops = customBackgroundFadeStops(levels).map(
+    ({ opacity, position }) => `${withOpacity(color, opacity)} ${Math.round(position)}%`,
+  );
   return `linear-gradient(to top, ${stops.join(", ")})`;
 }
 
@@ -175,7 +163,7 @@ export function phoneBackgroundWithPictures(
       filter: { kind: "none" },
       fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
       fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-      dim: DEFAULT_CUSTOM_BACKGROUND_DIM,
+      fadeSoftness: DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
       opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
       createdAt,
     },

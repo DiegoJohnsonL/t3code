@@ -25,7 +25,7 @@ const background: PhoneBackground = {
     filter: { kind: "none" },
     fade: 83,
     fadeHeight: 76,
-    dim: 38,
+    fadeSoftness: 30,
     opacity: 75,
     createdAt: "2026-09-22T00:00:00.000Z",
   },
@@ -81,10 +81,24 @@ describe("computerBackgroundThemeVariables", () => {
 });
 
 describe("fadeOverlayGradient", () => {
-  it("runs from the fade strength at the bottom to the flat dim at the top", () => {
-    const gradient = fadeOverlayGradient("#112233FF", { fade: 100, fadeHeight: 60, dim: 0 });
+  it("runs from the fade at the bottom to clear at the fade height", () => {
+    const gradient = fadeOverlayGradient("#112233FF", {
+      fade: 100,
+      fadeHeight: 60,
+      fadeSoftness: 30,
+    });
     expect(gradient.startsWith("linear-gradient(to top, #112233ff 0%")).toBe(true);
+    expect(gradient).toContain("#11223300 60%");
     expect(gradient.endsWith("#11223300 100%)")).toBe(true);
+  });
+
+  it("follows the desktop's intensity curve", () => {
+    const gradient = fadeOverlayGradient("#112233FF", {
+      fade: 50,
+      fadeHeight: 100,
+      fadeSoftness: 100,
+    });
+    expect(gradient.startsWith("linear-gradient(to top, #112233bf 0%")).toBe(true);
   });
 });
 

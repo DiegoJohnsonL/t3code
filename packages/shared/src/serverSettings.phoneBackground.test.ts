@@ -18,7 +18,7 @@ function phoneBackground(imageIds: ReadonlyArray<string>): PhoneBackground {
       filter: { kind: "none" },
       fade: 83,
       fadeHeight: 76,
-      dim: 38,
+      fadeSoftness: 30,
       opacity: 75,
       createdAt: "2026-09-22T00:00:00.000Z",
     },

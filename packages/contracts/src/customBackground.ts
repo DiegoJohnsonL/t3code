@@ -187,15 +187,21 @@ export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
 export const MIN_CUSTOM_BACKGROUND_FADE = 0;
 export const MAX_CUSTOM_BACKGROUND_FADE = 100;
 /**
- * Strength of the theme-colored overlay at the bottom edge, 0 to 100. It eases
- * down to the dim level over the fade height; the renderer owns the curve so
- * every playlist keeps the same shape.
+ * Intensity of the theme-colored overlay at the bottom edge, 0 to 100. Clients
+ * map it onto an ease-out opacity curve, so the slider darkens evenly.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE = 83;
-/** How far up the pane, in percent, the overlay climbs before it settles. */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 76;
-/** Flat overlay strength across the whole picture, above the bottom fade. */
-export const DEFAULT_CUSTOM_BACKGROUND_DIM = 38;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE = 60;
+/**
+ * How far up the pane, in percent, the fade reaches before it has eased away
+ * completely; at 100 it reaches the top, where the chat text fades out.
+ */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 100;
+/**
+ * How long, in percent of the pane, the ease below the fade height is. The
+ * curve lives in `@t3tools/shared/customBackgroundFade` so every client draws
+ * the same shape.
+ */
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS = 66;
 /** Opacity of the picture itself over the theme background, 0 to 100. Lower it for more text contrast. */
 export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 75;
 export const CustomBackgroundFade = Schema.Int.check(
@@ -209,7 +215,7 @@ export interface ImageDitheringPreset {
   readonly name: string;
   readonly filter: ImageDitheringFilter;
   /** Only presets that define a look for the overlay set the fade sliders. */
-  readonly fade?: { readonly fade: number; readonly fadeHeight: number; readonly dim: number };
+  readonly fade?: Pick<CustomBackgroundRecord, "fade" | "fadeHeight" | "fadeSoftness">;
 }
 
 /**
@@ -227,7 +233,7 @@ export const IMAGE_DITHERING_PRESETS: ReadonlyArray<ImageDitheringPreset> = [
     id: "faded",
     name: "Faded",
     filter: IMAGE_DITHERING_FILTER.defaults,
-    fade: { fade: 100, fadeHeight: 85, dim: 55 },
+    fade: { fade: 100, fadeHeight: 85, fadeSoftness: 47 },
   },
   {
     id: "violet",
@@ -395,12 +401,14 @@ export const CustomBackgroundRecord = Schema.Struct({
   name: CustomBackgroundName,
   source: CustomBackgroundSource,
   filter: CustomBackgroundRecordFilter,
-  fade: CustomBackgroundFade,
+  fade: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE)),
+  ),
   fadeHeight: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT)),
   ),
-  dim: CustomBackgroundFade.pipe(
-    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_DIM)),
+  fadeSoftness: CustomBackgroundFade.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS)),
   ),
   opacity: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_OPACITY)),

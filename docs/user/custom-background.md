@@ -39,14 +39,16 @@ selector off. The picture still shows, without its filter.
 
 ## Fade
 
-**Image opacity** sets how much of the picture shows over your theme's background at all;
-lower it when text needs more contrast. The other sliders blend your theme's background
-color over the picture, so the tint always matches the theme you picked. **Bottom fade** is
-the strength at the bottom edge; 100% goes solid. **Fade height** is how far up the pane
-that fade reaches; the lower part of the stretch stays solid and the rest eases off.
-**Dim** is the flat strength everywhere above the fade, so lower it to keep the top and
-sides of the picture bright. For a picture that melts into your theme color halfway up,
-keep bottom fade at 100% and raise fade height.
+The fade blends your theme's background color over the picture, so the tint always matches
+the theme you picked. **Bottom fade** is how strong it is at the bottom edge; 100% goes solid.
+**Fade height** is where the fade has eased away completely; at 100% it reaches the top, where
+the chat text fades under the header. **Fade softness** is how long that ease is: low values
+give a crisp edge, high values start easing lower down for a gentler fade. **Image opacity**
+sets how much of the picture shows over your theme's background at all.
+
+**Glow behind text** draws a soft halo in your theme's background color around chat text, and
+**Bubbles behind agent replies** sets the text of agent replies on a translucent bubble, like
+your own messages. Both switches are at the top of the studio and in **Settings → Appearance**.
 
 ## Images
 

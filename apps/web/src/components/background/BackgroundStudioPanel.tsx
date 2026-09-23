@@ -95,7 +95,7 @@ const UPLOAD_CONCURRENCY = 4;
 const FADE_CONTROLS = [
   { key: "fade", label: "Bottom fade" },
   { key: "fadeHeight", label: "Fade height" },
-  { key: "dim", label: "Dim" },
+  { key: "fadeSoftness", label: "Fade softness" },
   { key: "opacity", label: "Image opacity" },
 ] as const satisfies ReadonlyArray<{ key: keyof CustomBackgroundRecord; label: string }>;
 
@@ -165,7 +165,7 @@ function DitheringPresetRow({
             (preset.fade === undefined ||
               (record.fade === preset.fade.fade &&
                 record.fadeHeight === preset.fade.fadeHeight &&
-                record.dim === preset.fade.dim));
+                record.fadeSoftness === preset.fade.fadeSoftness));
           return (
             <Button
               key={preset.id}
@@ -486,6 +486,8 @@ export function BackgroundStudioPanel() {
   const activeId = useClientSettings((settings) => settings.activeCustomBackgroundId);
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
   const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
+  const textGlow = useClientSettings((settings) => settings.customBackgroundTextGlow);
+  const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
   const updateSettings = useUpdateClientSettings();
 
   const selectedId = activeId;
@@ -654,6 +656,22 @@ export function BackgroundStudioPanel() {
               checked={dynamicTheme}
               onCheckedChange={(checked) =>
                 updateSettings({ customBackgroundDynamicTheme: checked })
+              }
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            Glow behind text
+            <Switch
+              checked={textGlow}
+              onCheckedChange={(checked) => updateSettings({ customBackgroundTextGlow: checked })}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            Bubbles behind agent replies
+            <Switch
+              checked={agentBubbles}
+              onCheckedChange={(checked) =>
+                updateSettings({ customBackgroundAgentBubbles: checked })
               }
             />
           </label>
