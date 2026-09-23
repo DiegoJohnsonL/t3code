@@ -61,7 +61,7 @@ vi.mock("../ui/select", () => ({
   SelectPopup: "popup",
   SelectTrigger: "trigger",
   SelectValue: "value",
-  selectTriggerVariants: () => "",
+  SelectButton: "button",
 }));
 vi.mock("./BackgroundControls", () => ({
   BackgroundControls: () => null,

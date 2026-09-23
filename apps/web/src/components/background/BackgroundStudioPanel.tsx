@@ -19,7 +19,6 @@ import {
   BanIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronsUpDownIcon,
   PlusIcon,
   Trash2Icon,
   Undo2Icon,
@@ -55,8 +54,8 @@ import {
   SelectItem,
   SelectPopup,
   SelectTrigger,
+  SelectButton,
   SelectValue,
-  selectTriggerVariants,
 } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BackgroundControls, RangeControl, StudioField } from "./BackgroundControls";
@@ -429,25 +428,15 @@ function LibraryPicker({
   };
   return (
     <Menu open={open} onOpenChange={setOpen}>
-      <MenuTrigger
-        render={
-          <button
-            type="button"
-            aria-label={`Background: ${name}, ${filter}`}
-            className={cn(
-              selectTriggerVariants({ size: "default" }),
-              "h-auto w-full items-center py-1.5",
-            )}
-          >
-            <LibraryThumb record={selectedRecord} className="size-8 shrink-0 rounded-md" />
-            <span className="min-w-0 flex-1 text-left leading-tight">
-              <span className="block truncate text-sm font-medium text-foreground">{name}</span>
-              <span className="block truncate text-[11px] text-muted-foreground">{filter}</span>
-            </span>
-            <ChevronsUpDownIcon className="-me-1 size-4 opacity-80" />
-          </button>
-        }
-      />
+      <MenuTrigger aria-label={`Background: ${name}, ${filter}`} render={<SelectButton />}>
+        <span className="flex items-center gap-2 py-1.5">
+          <LibraryThumb record={selectedRecord} className="size-8 shrink-0 rounded-md" />
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-sm font-medium text-foreground">{name}</span>
+            <span className="block truncate text-[11px] text-muted-foreground">{filter}</span>
+          </span>
+        </span>
+      </MenuTrigger>
       <MenuPopup align="start" className="w-(--anchor-width) min-w-80">
         <div className={cn(backgroundPickerMenuGridClass, "gap-2.5")}>
           <LibraryTile
