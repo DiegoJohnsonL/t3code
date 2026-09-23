@@ -29,6 +29,7 @@ jobs:
       version: ${{ steps.prepare.outputs.version }}
       release_tag: ${{ steps.prepare.outputs.release_tag }}
       release_name: ${{ steps.prepare.outputs.release_name }}
+      android_version_code: ${{ steps.prepare.outputs.android_version_code }}
     steps:
       - name: Checkout customization branch
         shell: bash
@@ -104,6 +105,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
           echo "release_name=T3 Code Custom Nightly $version" >> "$GITHUB_OUTPUT"
+          # Minutes since the epoch keep Android version codes increasing across runs and reruns.
+          echo "android_version_code=$(( $(date -u +%s) / 60 ))" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build macOS arm64
@@ -265,3 +268,106 @@ jobs:
           gh release edit "${{ needs.prepare.outputs.release_tag }}" \
             --repo "$GITHUB_REPOSITORY" \
             --draft=false
+
+  android:
+    name: Build Android APK
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      APK_PATH: release/T3-Code-${{ needs.prepare.outputs.version }}-android-arm64.apk
+    steps:
+      - name: Checkout release commit
+        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "$RELEASE_COMMIT"
+          git sparse-checkout set --no-cone '/*' '!/.repos/'
+          git checkout --detach FETCH_HEAD
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          cache: true
+          run-install: |
+            args:
+              - --filter=@t3tools/mobile...
+              - --filter=@t3tools/scripts...
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build signed APK
+        shell: bash
+        env:
+          CUSTOM_ANDROID_KEYSTORE: ${{ secrets.CUSTOM_ANDROID_KEYSTORE }}
+          T3CODE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.CUSTOM_ANDROID_KEYSTORE_PASSWORD }}
+          T3CODE_ANDROID_UPDATE_RELEASES_URL: https://api.github.com/repos/${{ github.repository }}/releases
+        run: |
+          set -euo pipefail
+          if [[ -z "$CUSTOM_ANDROID_KEYSTORE" || -z "$T3CODE_ANDROID_KEYSTORE_PASSWORD" ]]; then
+            echo "Custom Android signing secrets are missing." >&2
+            exit 1
+          fi
+          export T3CODE_ANDROID_KEYSTORE="$RUNNER_TEMP/custom-android-signing.p12"
+          printf '%s' "$CUSTOM_ANDROID_KEYSTORE" | base64 -d > "$T3CODE_ANDROID_KEYSTORE"
+          mkdir -p release
+          scripts/build-custom-android-apk.sh \
+            "${{ needs.prepare.outputs.version }}" \
+            "${{ needs.prepare.outputs.android_version_code }}" \
+            "$APK_PATH"
+
+      - name: Validate APK identity and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$build_tools/aapt2" dump badging "$APK_PATH" \
+            | grep -F "package: name='com.t3tools.t3code.preview' versionCode='${{ needs.prepare.outputs.android_version_code }}'"
+          "$build_tools/apksigner" verify --print-certs "$APK_PATH" \
+            | grep -F 'certificate SHA-256 digest: c4dec69aca9c6c1da72b2bf83d506222359bf69067ca34dec29c88603ab0df20'
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-apk
+          path: ${{ env.APK_PATH }}
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-android:
+    name: Attach Android APK
+    needs: [prepare, build, android]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v8
+        with:
+          name: android-apk
+          path: release
+
+      - name: Attach APK to the custom nightly
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" release/*.apk --repo "$GITHUB_REPOSITORY"
+          # The app only offers releases that carry this marker next to an uploaded APK.
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body > "$notes_file"
+          printf '\n<!-- android-version-code: %s -->\n' "${{ needs.prepare.outputs.android_version_code }}" >> "$notes_file"
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --notes-file "$notes_file"

@@ -1,6 +1,6 @@
 # Custom nightly builds
 
-This fork follows released T3 Code nightlies and publishes a macOS arm64 build signed with a private development certificate. The application uses T3 Code's built-in Check, Download, and Install update flow against the fork's GitHub releases.
+This fork follows released T3 Code nightlies and publishes a macOS arm64 build signed with a private development certificate, plus a signed Android APK. Both apps update from the fork's GitHub releases.
 
 The automation merges upstream nightly tags into the fork's default branch. A merge conflict stops the workflow so a customization cannot disappear silently. The workflow retries the build until a release records the upstream tag it contains.
 
@@ -43,8 +43,48 @@ Remove the hourly job without deleting the application, data, or signing identit
 ./scripts/custom-nightly-macos.sh uninstall
 ```
 
+## Android app
+
+Install the `-android-arm64.apk` from a release. It installs as `com.t3tools.t3code.preview` (T3 Code Preview), next to the Play Store app and local development builds. Its Clerk sign-in callback is already allowlisted, so T3 Connect works. It never takes Expo over-the-air updates.
+
+The app checks the fork's releases at launch and after 15 minutes in the background, and offers newer APKs. **Settings > About > Check for updates** checks on demand. Android asks to confirm every install; the first update also asks to allow T3 Code to install unknown apps.
+
+### Signing key
+
+Android only accepts an update signed with the same key as the installed app. Losing the key means reinstalling and losing the app's data, so back up the keystore at `~/Library/Application Support/T3 Code Custom Android/release.p12` and its password, stored in the login keychain as `T3 Code Custom Android signing`.
+
+The key was created once with:
+
+```bash
+keytool -genkeypair -keystore release.p12 -storetype PKCS12 -alias t3code-custom \
+  -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=T3 Code Custom Android"
+```
+
+Give it to GitHub Actions:
+
+```bash
+base64 -i "$HOME/Library/Application Support/T3 Code Custom Android/release.p12" \
+  | gh secret set CUSTOM_ANDROID_KEYSTORE
+security find-generic-password -s "T3 Code Custom Android signing" -w \
+  | gh secret set CUSTOM_ANDROID_KEYSTORE_PASSWORD
+```
+
+The workflow rejects an APK whose certificate does not match the key's SHA-256 fingerprint. Replacing the key means updating that fingerprint and reinstalling the app.
+
+### Build locally
+
+```bash
+JAVA_HOME="$(/usr/libexec/java_home -v 17)" \
+ANDROID_HOME="$HOME/Library/Android/sdk" \
+T3CODE_ANDROID_KEYSTORE="$HOME/Library/Application Support/T3 Code Custom Android/release.p12" \
+T3CODE_ANDROID_KEYSTORE_PASSWORD="$(security find-generic-password -s 'T3 Code Custom Android signing' -w)" \
+  scripts/build-custom-android-apk.sh <version-name> <version-code> T3-Code.apk
+```
+
+Android refuses to install a lower version code than the installed one. Releases use minutes since the Unix epoch, so keep local version codes below that. Set `T3CODE_ANDROID_UPDATE_RELEASES_URL` to point a test build at another GitHub-style releases feed.
+
 ## Publish a build
 
-The `Custom nightly` GitHub Actions workflow runs hourly. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum.
+The `Custom nightly` GitHub Actions workflow runs hourly. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum. The Android APK is attached once its parallel build finishes. A failed Android build does not block the macOS release, and is only retried by a later build or a `force` dispatch.
 
 All inherited upstream workflows remain disabled in the fork. Some expect the maintainers' production credentials, and others would duplicate work after every automated merge. Only `Custom nightly` runs here.

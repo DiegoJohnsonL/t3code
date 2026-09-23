@@ -1,0 +1,39 @@
+#!/bin/bash
+# Builds the fork's signed Android APK, which updates itself from GitHub releases.
+# Needs Java 17 in JAVA_HOME, the Android SDK in ANDROID_HOME, and the release
+# keystore in T3CODE_ANDROID_KEYSTORE with its password in T3CODE_ANDROID_KEYSTORE_PASSWORD.
+
+set -euo pipefail
+
+if [[ $# -ne 3 ]]; then
+  echo "Usage: $0 <version-name> <version-code> <output.apk>" >&2
+  exit 1
+fi
+: "${T3CODE_ANDROID_KEYSTORE:?Set T3CODE_ANDROID_KEYSTORE to the release keystore path.}"
+: "${T3CODE_ANDROID_KEYSTORE_PASSWORD:?Set T3CODE_ANDROID_KEYSTORE_PASSWORD.}"
+
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+keystore="$(cd "$(dirname "$T3CODE_ANDROID_KEYSTORE")" && pwd)/$(basename "$T3CODE_ANDROID_KEYSTORE")"
+output="$(cd "$(dirname "$3")" && pwd)/$(basename "$3")"
+
+export APP_VARIANT=preview
+export T3CODE_ANDROID_UPDATE_RELEASES_URL="${T3CODE_ANDROID_UPDATE_RELEASES_URL:-https://api.github.com/repos/DiegoJohnsonL/t3code/releases}"
+export T3CODE_ANDROID_VERSION_NAME="$1"
+export T3CODE_ANDROID_VERSION_CODE="$2"
+# The public T3 Connect identifiers official builds ship with, overriding any local .env.
+while IFS= read -r setting; do
+  export "$setting"
+done < <(sed -n '/^T3CODE_CLERK_PUBLISHABLE_KEY=/p; /^T3CODE_CLERK_JWT_TEMPLATE=/p; /^T3CODE_RELAY_URL=/p' "$repo_root/.env.example")
+
+cd "$repo_root/apps/mobile"
+EXPO_NO_GIT_STATUS=1 vp exec expo prebuild --clean --platform android --no-install
+
+cd android
+./gradlew :app:assembleRelease \
+  -PreactNativeArchitectures=arm64-v8a \
+  "-Pandroid.injected.signing.store.file=$keystore" \
+  "-Pandroid.injected.signing.store.password=$T3CODE_ANDROID_KEYSTORE_PASSWORD" \
+  "-Pandroid.injected.signing.key.alias=${T3CODE_ANDROID_KEY_ALIAS:-t3code-custom}" \
+  "-Pandroid.injected.signing.key.password=$T3CODE_ANDROID_KEYSTORE_PASSWORD"
+cp app/build/outputs/apk/release/app-release.apk "$output"
+echo "Built $output"

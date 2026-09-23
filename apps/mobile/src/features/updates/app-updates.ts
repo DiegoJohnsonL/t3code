@@ -460,7 +460,7 @@ async function defaultConfirmInstallNow(): Promise<boolean> {
   });
 }
 
-async function defaultFlushPendingWrites(): Promise<void> {
+export async function defaultFlushPendingWrites(): Promise<void> {
   // Attempt every flush before surfacing the first failure, so one broken
   // store cannot keep the others from landing.
   const results = await Promise.allSettled([
