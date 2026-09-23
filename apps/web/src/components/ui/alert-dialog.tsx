@@ -9,13 +9,6 @@ import {
   DIALOG_POPUP_CLASS,
 } from "~/components/ui/dialog-styles";
 
-/**
- * Menus, selects, and popovers sit at z-[130] so they can open from dialogs
- * (z-50). Alerts are blocking, so they have to cover that layer; otherwise an
- * open menu paints through the overlay and steals clicks.
- */
-const ALERT_DIALOG_LAYER_CLASS = "z-[150]";
-
 const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
@@ -24,7 +17,7 @@ function AlertDialogBackdrop({ className, ...props }: AlertDialogPrimitive.Backd
   return (
     <AlertDialogPrimitive.Backdrop
       forceRender
-      className={cn(DIALOG_BACKDROP_CLASS, ALERT_DIALOG_LAYER_CLASS, className)}
+      className={cn(DIALOG_BACKDROP_CLASS, className)}
       data-slot="alert-dialog-backdrop"
       {...props}
     />
@@ -35,8 +28,7 @@ function AlertDialogViewport({ className, ...props }: AlertDialogPrimitive.Viewp
   return (
     <AlertDialogPrimitive.Viewport
       className={cn(
-        "fixed inset-0 grid grid-rows-[1fr_auto_1fr] justify-items-center p-4",
-        ALERT_DIALOG_LAYER_CLASS,
+        "fixed inset-0 z-50 grid grid-rows-[1fr_auto_1fr] justify-items-center p-4",
         className,
       )}
       data-slot="alert-dialog-viewport"

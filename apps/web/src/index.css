@@ -107,7 +107,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --glass-blur: 12px;
   --glass-opacity: 80%;
   --glass-saturation: 1.14;
-  --glass-surface: var(--card);
   --desktop-window-right-resize-inset: 0px;
   --workspace-topbar-height: 52px;
   --workspace-controls-top: 0px;
@@ -124,7 +123,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     --app-scrollbar-thumb-hover: rgb(255 255 255 / 12%);
     --glass-blur: 16px;
     --glass-saturation: 1.08;
-    --glass-surface: var(--surface-raised);
   }
 }
 
@@ -268,27 +266,12 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 }
 
 @utility surface-glass {
-  background: color-mix(
-    in srgb,
-    var(--glass-fill, var(--glass-surface)) var(--glass-opacity),
-    transparent
-  );
+  background: color-mix(in srgb, var(--background) var(--glass-opacity), transparent);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
 
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    background: var(--glass-fill, var(--glass-surface)) !important;
-  }
-}
-
-@utility code-glass {
-  --glass-fill: var(--code-background);
-  background: color-mix(in srgb, var(--code-background) var(--glass-opacity), transparent);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
-
-  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    background: var(--code-background) !important;
+    background: var(--background) !important;
   }
 }
 
@@ -634,96 +617,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 }
 
 @layer components {
-  /* The hero composer floats mid-pane where the wallpaper is brightest, so its
-     glass needs more fill than the bottom-anchored composer over the fade. */
-  [data-chat-background-pane][data-chat-draft-hero]:has(> [data-chat-backdrop="source"])
-    [data-chat-composer-stack] {
-    --glass-opacity: 94%;
-  }
-
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
-    z-index: 10;
-  }
-
-  /* A soft halo in the theme background color keeps text readable over busy
-     pictures without dimming them. text-shadow inherits, so the pane's rule
-     reaches every line; opaque surfaces reset it. */
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow]) {
-    text-shadow:
-      0 0 1px color-mix(in srgb, var(--background) 95%, transparent),
-      0 0 4px color-mix(in srgb, var(--background) 85%, transparent),
-      0 0 14px color-mix(in srgb, var(--background) 65%, transparent);
-  }
-
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow])
-    :is([data-chat-composer-stack], [data-slot="button"]) {
-    text-shadow: none;
-  }
-
-  /* Only the reply's text sits on the bubble, not its copy button or timestamp.
-     A flat translucent fill rather than the user bubble's glass: backdrop blur
-     on every reply would re-sample the picture on each scrolled frame. */
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-agent-bubbles])
-    [data-assistant-reply]
-    > [data-assistant-citation-source] {
-    width: fit-content;
-    max-width: 100%;
-    border-radius: var(--radius-2xl);
-    padding: calc(var(--spacing) * 3);
-    background-color: color-mix(in srgb, var(--message-surface) 82%, transparent);
-  }
-
-  /* Wallpaper is painted at viewport width and shifted left by this amount so
-     cover/center stays on the window. Mobile uses a sheet, so stay at 0. */
-  [data-slot="sidebar-wrapper"] {
-    --sidebar-occupied-width: 0px;
-  }
-
-  @media (min-width: 768px) {
-    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"] {
-      --sidebar-occupied-width: var(--sidebar-width);
-    }
-  }
-
-  /* Outgoing picture sits above the incoming one and animates out; one
-     shot per switch, nothing repaints between rotations. */
-  .custom-background-slide[data-leaving] {
-    z-index: 1;
-    opacity: 0;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .custom-background-slide:not([data-transition="cut"]) {
-      transition: opacity 1400ms ease-in-out;
-    }
-  }
-
-  /* The image-colors theme crossfades the whole page alongside the picture
-     fade above. The snapshots must not swallow clicks while they blend. */
-  ::view-transition {
-    pointer-events: none;
-  }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 1400ms;
-    animation-timing-function: ease-in-out;
-  }
-
-  .custom-background-layer {
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(var(--sidebar-occupied-width, 0px) * -1);
-    z-index: -10;
-    width: 100vw;
-  }
-
-  [data-panel-animations="true"] .custom-background-layer {
-    transition: left var(--panel-animation-duration) ease-out;
-  }
-
   /* AnimatedHeight owns resizing for its contents. Nested collapsibles must
      expose their final layout immediately, otherwise each animation frame
      restarts the parent's transition and the dialog trails behind its content. */
@@ -1093,7 +986,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --foreground: var(--color-zinc-800);
   --card: var(--color-white);
   --card-foreground: var(--color-zinc-800);
-  --glass-surface: var(--card);
   --popover: var(--color-white);
   --popover-foreground: var(--color-zinc-800);
   --primary: oklch(0.488 0.217 264);
@@ -1155,14 +1047,11 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
        Borders and hover states provide separation without milky gray fills. */
     --background: var(--color-neutral-950);
     --surface-raised: color-mix(in srgb, var(--background) 97%, var(--color-white));
-    --glass-surface: var(--surface-raised);
     --foreground: var(--color-neutral-100);
     --card: color-mix(in srgb, var(--background) 97%, var(--color-white));
     --card-foreground: var(--color-neutral-100);
     --popover: color-mix(in srgb, var(--background) 97%, var(--color-white));
     --popover-foreground: var(--color-neutral-100);
-    --toolbar-control: var(--popover);
-    --toolbar-control-hover: color-mix(in srgb, var(--background) 90%, var(--color-white));
     --primary: oklch(0.571 0.21 264);
     --secondary: --alpha(var(--color-white) / 3%);
     --secondary-foreground: var(--color-neutral-100);
@@ -1309,7 +1198,6 @@ html[data-theme-id]:not([data-theme-id=""]) {
   --sidebar-stage-fade: var(--app-theme-sidebar);
   --code-background: var(--app-theme-code-background);
   --code-foreground: var(--app-theme-code-foreground);
-  --glass-surface: var(--app-theme-surface-raised);
   --terminal-background: var(--app-theme-terminal-background);
   --terminal-foreground: var(--app-theme-terminal-foreground);
   --terminal-cursor: var(--app-theme-terminal-cursor);
@@ -1397,13 +1285,6 @@ html[data-theme-id] [data-chat-header] {
   color: var(--contrast-toolbar-foreground);
 }
 
-/* Over a wallpaper the header stays clear so the picture runs to the top edge;
-   the timeline's scroll fade keeps text from meeting the header. Unlayered and
-   more specific, so it wins over the palette rule above for every theme. */
-[data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
-  background-color: transparent;
-}
-
 html[data-theme-id] [data-chat-header] [data-slot="button"],
 html[data-theme-id] [data-chat-header] [data-slot="menu-trigger"],
 html[data-theme-id] [data-chat-header] [data-toolbar-control] {
@@ -1451,21 +1332,22 @@ html[data-theme-id] [data-chat-header] [data-slot="separator"] {
   background-color: var(--contrast-toolbar-border);
 }
 
+/* Chat code blocks join the other code surfaces on the code tokens. The
+   default look keeps its secondary/input tints; themed palettes tint those
+   surfaces with the accent, which fights syntax highlighting. */
 html[data-theme-id] .chat-markdown .chat-markdown-codeblock {
-  @apply code-glass;
+  background-color: var(--code-background);
   border-color: var(--contrast-border);
   color: var(--code-foreground);
 }
 
 html[data-theme-id] .chat-markdown pre {
-  @apply code-glass;
+  background-color: var(--code-background);
   color: var(--code-foreground);
 }
 
 html[data-theme-id] .chat-markdown .chat-markdown-codeblock pre {
   background-color: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 html[data-theme-id] .chat-markdown .chat-markdown-codeblock-header {
@@ -1480,8 +1362,7 @@ html[data-theme-id="t3-chat"] {
     & .chat-markdown :not(pre) > code,
     & [data-changed-files-state],
     & [data-changed-files-header] {
-      --glass-fill: var(--message-surface);
-      background: color-mix(in srgb, var(--message-surface) var(--glass-opacity), transparent);
+      background-color: var(--message-surface);
     }
 
     & .chat-markdown :not(pre) > code,
@@ -1939,9 +1820,7 @@ code {
 .chat-markdown :not(pre) > code {
   border: 1px solid var(--contrast-border);
   border-radius: 0.375rem;
-  @apply code-glass;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  background: var(--muted);
   padding: 0.1rem 0.35rem;
   color: var(--contrast-foreground);
   font-size: 0.75rem;
@@ -1952,7 +1831,7 @@ code {
   overflow-x: auto;
   border: 1px solid var(--contrast-border);
   border-radius: 0.75rem;
-  @apply code-glass;
+  background: var(--muted);
   padding: 0.8rem 0.9rem;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--contrast-border) 78%, transparent) transparent;
@@ -1973,10 +1852,6 @@ code {
   background: color-mix(in srgb, var(--contrast-border) 78%, transparent);
 }
 
-.chat-markdown .chat-markdown-codeblock {
-  @apply code-glass;
-}
-
 .chat-markdown .chat-markdown-codeblock-header {
   color: color-mix(in srgb, var(--contrast-foreground) 72%, transparent);
 }
@@ -1986,8 +1861,6 @@ code {
   border: none;
   border-radius: 0;
   background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 .chat-markdown .chat-markdown-codeblock[data-wrap="true"] pre {
@@ -2330,3 +2203,6 @@ code {
 .composer-tiptap li[data-checked] > div > p {
   margin: 0;
 }
+
+/* Fork-owned styling. Keep this import last so it overrides everything above. */
+@import "./custom.css";

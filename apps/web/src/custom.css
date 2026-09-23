@@ -1,0 +1,210 @@
+/*
+ * Styling owned by the custom nightly. index.css imports this file last, so a
+ * rule here that repeats an upstream selector wins by source order. Change
+ * upstream styling from here instead of editing index.css or a component's
+ * classes; that keeps upstream nightlies merging without conflicts.
+ */
+
+/* Glass takes the raised surface color rather than the page background. */
+:root {
+  --glass-surface: var(--card);
+
+  @variant dark {
+    --glass-surface: var(--surface-raised);
+    --toolbar-control: var(--popover);
+    --toolbar-control-hover: color-mix(in srgb, var(--background) 90%, var(--color-white));
+  }
+}
+
+html[data-theme-id]:not([data-theme-id=""]) {
+  --glass-surface: var(--app-theme-surface-raised);
+}
+
+/* A plain rule rather than a second @utility: Tailwind places generated
+   utilities by its own sort, while this block is always last in the layer. */
+@layer utilities {
+  .surface-glass {
+    background: color-mix(
+      in srgb,
+      var(--glass-fill, var(--glass-surface)) var(--glass-opacity),
+      transparent
+    );
+
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+      background: var(--glass-fill, var(--glass-surface)) !important;
+    }
+  }
+}
+
+@utility code-glass {
+  --glass-fill: var(--code-background);
+  background: color-mix(in srgb, var(--code-background) var(--glass-opacity), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    background: var(--code-background) !important;
+  }
+}
+
+@layer components {
+  /* The hero composer floats mid-pane where the wallpaper is brightest, so its
+     glass needs more fill than the bottom-anchored composer over the fade. */
+  [data-chat-background-pane][data-chat-draft-hero]:has(> [data-chat-backdrop="source"])
+    [data-chat-composer-stack] {
+    --glass-opacity: 94%;
+  }
+
+  [data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
+    z-index: 10;
+  }
+
+  /* A soft halo in the theme background color keeps text readable over busy
+     pictures without dimming them. text-shadow inherits, so the pane's rule
+     reaches every line; opaque surfaces reset it. */
+  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow]) {
+    text-shadow:
+      0 0 1px color-mix(in srgb, var(--background) 95%, transparent),
+      0 0 4px color-mix(in srgb, var(--background) 85%, transparent),
+      0 0 14px color-mix(in srgb, var(--background) 65%, transparent);
+  }
+
+  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow])
+    :is([data-chat-composer-stack], [data-slot="button"]) {
+    text-shadow: none;
+  }
+
+  /* Only the reply's text sits on the bubble, not its copy button or timestamp.
+     A flat translucent fill rather than the user bubble's glass: backdrop blur
+     on every reply would re-sample the picture on each scrolled frame. */
+  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-agent-bubbles])
+    [data-assistant-reply]
+    > [data-assistant-citation-source] {
+    width: fit-content;
+    max-width: 100%;
+    border-radius: var(--radius-2xl);
+    padding: calc(var(--spacing) * 3);
+    background-color: color-mix(in srgb, var(--message-surface) 82%, transparent);
+  }
+
+  /* Wallpaper is painted at viewport width and shifted left by this amount so
+     cover/center stays on the window. Mobile uses a sheet, so stay at 0. */
+  [data-slot="sidebar-wrapper"] {
+    --sidebar-occupied-width: 0px;
+  }
+
+  @media (min-width: 768px) {
+    [data-slot="sidebar-wrapper"][data-sidebar-state="expanded"] {
+      --sidebar-occupied-width: var(--sidebar-width);
+    }
+  }
+
+  /* Outgoing picture sits above the incoming one and animates out; one
+     shot per switch, nothing repaints between rotations. */
+  .custom-background-slide[data-leaving] {
+    z-index: 1;
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .custom-background-slide:not([data-transition="cut"]) {
+      transition: opacity 1400ms ease-in-out;
+    }
+  }
+
+  /* The image-colors theme crossfades the whole page alongside the picture
+     fade above. The snapshots must not swallow clicks while they blend. */
+  ::view-transition {
+    pointer-events: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1400ms;
+    animation-timing-function: ease-in-out;
+  }
+
+  .custom-background-layer {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--sidebar-occupied-width, 0px) * -1);
+    z-index: -10;
+    width: 100vw;
+  }
+
+  [data-panel-animations="true"] .custom-background-layer {
+    transition: left var(--panel-animation-duration) ease-out;
+  }
+}
+
+/* The no-projects screen paints its wallpaper inside the inset itself. */
+[data-slot="sidebar-inset"]:has(> [data-chat-backdrop="source"]) {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+  color: var(--foreground);
+
+  & > :not([data-chat-backdrop]) {
+    background-color: transparent;
+  }
+}
+
+/* Over a wallpaper the header stays clear so the picture runs to the top edge;
+   the timeline's scroll fade keeps text from meeting the header. More specific
+   than the palette's header rule, so it wins for every theme. */
+[data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-chat-header] {
+  background-color: transparent;
+}
+
+/* Code surfaces are frosted glass over the wallpaper. Code inside a code
+   block's own <pre> or inline code stays unblurred, since its container
+   already is. */
+html[data-theme-id] .chat-markdown .chat-markdown-codeblock,
+html[data-theme-id] .chat-markdown pre,
+.chat-markdown pre,
+.chat-markdown .chat-markdown-codeblock {
+  @apply code-glass;
+}
+
+.chat-markdown :not(pre) > code {
+  @apply code-glass;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-theme-id] .chat-markdown .chat-markdown-codeblock pre,
+.chat-markdown .chat-markdown-codeblock pre {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-theme-id="t3-chat"] {
+  @variant light {
+    & .chat-markdown :not(pre) > code,
+    & [data-changed-files-state],
+    & [data-changed-files-header] {
+      --glass-fill: var(--message-surface);
+      background: color-mix(in srgb, var(--message-surface) var(--glass-opacity), transparent);
+    }
+  }
+}
+
+/* Neutral chips in sent messages drop their fill so the glass bubble shows
+   through; composer chips and colored or invalid chips keep theirs. */
+[data-slot="context-chip"]:not(
+  [class*="--context-chip-accent"],
+  [data-state="invalid"],
+  [data-chat-composer-stack] *
+) {
+  background-color: transparent;
+}
+
+/* Menus, selects, and popovers sit at z-[130] so they can open from dialogs
+   (z-50). Alerts are blocking, so they cover that layer; otherwise an open
+   menu paints through the overlay and steals clicks. */
+[data-slot="alert-dialog-backdrop"],
+[data-slot="alert-dialog-viewport"] {
+  z-index: 150;
+}

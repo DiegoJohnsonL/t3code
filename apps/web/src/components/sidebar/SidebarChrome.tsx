@@ -1,28 +1,11 @@
-import {
-  ArrowLeftIcon,
-  ChartNoAxesColumnIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  CoffeeIcon,
-  ImageIcon,
-  MoonIcon,
-  SettingsIcon,
-  SlidersHorizontalIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ChartNoAxesColumnIcon, SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { memo, useCallback } from "react";
 import { Link, useCanGoBack, useLocation, useNavigate } from "@tanstack/react-router";
-import { useAtomValue } from "@effect/atom-react";
-import type { UnifiedSettings } from "@t3tools/contracts";
 
-import {
-  useEnvironmentIdentificationMode,
-  usePrimarySettings,
-  useUpdatePrimarySettings,
-} from "../../hooks/useSettings";
+import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
-import { useEnvironments, usePrimaryEnvironmentId } from "../../state/environments";
-import { serverEnvironment } from "../../state/server";
+import { useEnvironments } from "../../state/environments";
 import { T3Wordmark } from "../T3Wordmark";
 import {
   resolveEnvironmentIdentificationPillLabel,
@@ -40,12 +23,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "../ui/sidebar";
-import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { openBackgroundStudio } from "~/customBackground/backgroundStudioStore";
-import { stepBackgroundImage } from "~/customBackground/rotation";
-import { useActiveBackground } from "~/customBackground/useActiveBackground";
 import { readPullRequestListPreferences } from "../pullRequest/pullRequestListPreferences";
+import { SidebarFooterExtras } from "./SidebarFooterExtras";
 import { useSidebarPanelStore } from "./sidebarPanelStore";
 import { SidebarThreadUndoNotice } from "./SidebarThreadUndoNotice";
 import { SidebarProviderUpdatePill } from "./SidebarProviderUpdatePill";
@@ -151,73 +131,6 @@ function SidebarUtilityItem({
   );
 }
 
-function SidebarBackgroundMenu() {
-  const active = useActiveBackground();
-  const rotating = active?.source.kind === "image" && active.source.imageIds.length > 1;
-  return (
-    <SidebarMenuItem className="shrink-0">
-      <Menu>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <MenuTrigger render={<SidebarMenuButton aria-label="Background" size="icon" />}>
-                <ImageIcon />
-              </MenuTrigger>
-            }
-          />
-          <TooltipPopup side="top">Background</TooltipPopup>
-        </Tooltip>
-        <MenuPopup side="top" align="start">
-          <MenuItem disabled={!rotating} onClick={() => stepBackgroundImage(1)}>
-            <ChevronRightIcon /> Next image
-          </MenuItem>
-          <MenuItem disabled={!rotating} onClick={() => stepBackgroundImage(-1)}>
-            <ChevronLeftIcon /> Previous image
-          </MenuItem>
-          <MenuSeparator />
-          <MenuItem onClick={openBackgroundStudio}>
-            <SlidersHorizontalIcon /> Customize background
-          </MenuItem>
-        </MenuPopup>
-      </Menu>
-    </SidebarMenuItem>
-  );
-}
-
-const selectServeMode = (settings: UnifiedSettings) => settings.serveMode;
-
-/** Serve mode for this computer's server, which only acts on macOS. */
-function SidebarServeModeItem() {
-  const primaryConfig = useAtomValue(serverEnvironment.configValueAtom(usePrimaryEnvironmentId()));
-  const serveMode = usePrimarySettings(selectServeMode);
-  const updateSettings = useUpdatePrimarySettings();
-  if (primaryConfig?.environment.platform.os !== "darwin") return null;
-  return (
-    <SidebarMenuItem className="shrink-0">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <SidebarMenuButton
-              aria-label="Serve mode"
-              aria-pressed={serveMode}
-              isActive={serveMode}
-              onClick={() => updateSettings({ serveMode: !serveMode })}
-              size="icon"
-            >
-              {serveMode ? <CoffeeIcon /> : <MoonIcon />}
-            </SidebarMenuButton>
-          }
-        />
-        <TooltipPopup side="top">
-          {serveMode
-            ? "Serve mode on: this Mac stays awake for agents and your phone"
-            : "Serve mode off: this Mac can sleep"}
-        </TooltipPopup>
-      </Tooltip>
-    </SidebarMenuItem>
-  );
-}
-
 export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
@@ -307,8 +220,7 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
             label="Usage"
             onClick={handleUsageClick}
           />
-          <SidebarBackgroundMenu />
-          <SidebarServeModeItem />
+          <SidebarFooterExtras />
         </>
       )}
       <SidebarUpdatePill />

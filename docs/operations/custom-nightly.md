@@ -4,6 +4,14 @@ This fork follows released T3 Code nightlies and publishes a macOS arm64 build s
 
 The automation merges upstream nightly tags into the fork's default branch. A merge conflict stops the workflow so a customization cannot disappear silently, and opens an issue on the fork listing the conflicted files. Merge the tag, resolve, and push; the next run closes the issue. The workflow retries the build until a release records the upstream tag it contains.
 
+## Keep customizations out of upstream files
+
+Conflicts come from fork edits inside lines upstream also changes. Upstream rewrites class strings, stylesheets, and shared components often, so fork changes live in files upstream never touches:
+
+- **Styling** goes in `apps/web/src/custom.css`, which `index.css` imports last. Repeat an upstream selector there to change it, rather than editing `index.css` or a component's `className`.
+- **Components** go in their own files, and an upstream file gets only the import and one element, like `SidebarFooterExtras` in `SidebarChrome.tsx`.
+- **Upstream UI primitives** are used only through what they export. Internal helpers such as a `cva` variants function can disappear in any nightly, which breaks the build without a merge conflict.
+
 ## Install the Mac updater
 
 Install and authenticate GitHub CLI, then run:
