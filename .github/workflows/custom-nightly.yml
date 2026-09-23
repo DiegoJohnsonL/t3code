@@ -110,7 +110,7 @@ jobs:
                   gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Superseded by ${upstream_tag}."
                 done
                 gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$(cat <<EOF
-          @${GITHUB_REPOSITORY_OWNER} merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved.
+          @DiegoJohnsonL merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved.
 
           ${conflicted_files:-See the run log.}
 
@@ -276,8 +276,8 @@ jobs:
           codesign -d --verbose=4 "$app_bundle" 2>&1 \
             | grep -F 'Authority=T3 Code Local Development'
           update_config="$app_bundle/Contents/Resources/app-update.yml"
-          grep -F 'owner: DiegoJohnsonL' "$update_config"
-          grep -F 'repo: t3code' "$update_config"
+          grep -F "owner: ${GITHUB_REPOSITORY_OWNER}" "$update_config"
+          grep -F "repo: ${GITHUB_REPOSITORY#*/}" "$update_config"
 
       - name: Publish custom nightly
         shell: bash

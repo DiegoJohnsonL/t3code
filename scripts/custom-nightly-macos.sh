@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly repository="${T3CODE_CUSTOM_REPOSITORY:-DiegoJohnsonL/t3code}"
+readonly repository="${T3CODE_CUSTOM_REPOSITORY:-d3labs-dev/t3code}"
 readonly signing_identity="${T3CODE_LOCAL_SIGNING_IDENTITY:-T3 Code Local Development}"
 readonly app_path="${T3CODE_CUSTOM_APP_PATH:-$HOME/Applications/T3 Code Custom Nightly.app}"
 readonly updater_home="${T3CODE_CUSTOM_UPDATER_HOME:-$HOME/Library/Application Support/T3 Code Custom Updater}"

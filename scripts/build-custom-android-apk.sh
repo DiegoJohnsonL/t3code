@@ -17,7 +17,7 @@ keystore="$(cd "$(dirname "$T3CODE_ANDROID_KEYSTORE")" && pwd)/$(basename "$T3CO
 output="$(cd "$(dirname "$3")" && pwd)/$(basename "$3")"
 
 export APP_VARIANT=preview
-export T3CODE_ANDROID_UPDATE_RELEASES_URL="${T3CODE_ANDROID_UPDATE_RELEASES_URL:-https://api.github.com/repos/DiegoJohnsonL/t3code/releases}"
+export T3CODE_ANDROID_UPDATE_RELEASES_URL="${T3CODE_ANDROID_UPDATE_RELEASES_URL:-https://api.github.com/repos/d3labs-dev/t3code/releases}"
 export T3CODE_ANDROID_VERSION_NAME="$1"
 export T3CODE_ANDROID_VERSION_CODE="$2"
 # The public T3 Connect identifiers official builds ship with, overriding any local .env.
