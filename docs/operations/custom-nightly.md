@@ -2,7 +2,7 @@
 
 This fork follows released T3 Code nightlies and publishes a macOS arm64 build signed with a private development certificate, plus a signed Android APK. Both apps update from the fork's GitHub releases.
 
-The automation merges upstream nightly tags into the fork's default branch. A merge conflict stops the workflow so a customization cannot disappear silently. The workflow retries the build until a release records the upstream tag it contains.
+The automation merges upstream nightly tags into the fork's default branch. A merge conflict stops the workflow so a customization cannot disappear silently, and opens an issue on the fork listing the conflicted files. Merge the tag, resolve, and push; the next run closes the issue. The workflow retries the build until a release records the upstream tag it contains.
 
 ## Install the Mac updater
 
@@ -85,6 +85,6 @@ Android refuses to install a lower version code than the installed one. Releases
 
 ## Publish a build
 
-The `Custom nightly` GitHub Actions workflow runs hourly. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum. The Android APK is attached once its parallel build finishes. A failed Android build does not block the macOS release, and is only retried by a later build or a `force` dispatch.
+The `Custom nightly` GitHub Actions workflow checks for a new upstream nightly every 30 minutes. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum. The Android APK is attached once its parallel build finishes. A failed Android build does not block the macOS release, and is only retried by a later build or a `force` dispatch.
 
 All inherited upstream workflows remain disabled in the fork. Some expect the maintainers' production credentials, and others would duplicate work after every automated merge. Only `Custom nightly` runs here.

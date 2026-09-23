@@ -2,7 +2,10 @@ name: Custom nightly
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    # Upstream publishes a nightly at most every six hours, at drifting times,
+    # and GitHub drops many scheduled runs. Checking twice an hour, off the busy
+    # minute zero, picks each nightly up soon after it lands.
+    - cron: "23,53 * * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -13,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: custom-nightly
@@ -85,10 +89,46 @@ jobs:
             exit 0
           fi
 
+          # One open issue per conflicting upstream nightly, so a stalled build notifies the owner.
+          conflict_title_suffix="conflicts with ${GITHUB_REF_NAME}"
+          open_conflict_issues() {
+            gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title \
+              --jq ".[] | select(.title | endswith(\"${conflict_title_suffix}\")) | .number"
+          }
+
           if ! git merge-base --is-ancestor "$upstream_tag" HEAD; then
-            git merge --no-edit "$upstream_tag"
+            if ! git merge --no-edit "$upstream_tag"; then
+              conflicted_files="$(git diff --name-only --diff-filter=U | sed 's/.*/- `&`/')"
+              git merge --abort
+              title="Upstream nightly ${upstream_tag} ${conflict_title_suffix}"
+              already_reported="$(
+                gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json title \
+                  --jq "[.[] | select(.title == \"${title}\")] | length"
+              )"
+              if [[ "$already_reported" == "0" ]]; then
+                for number in $(open_conflict_issues); do
+                  gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Superseded by ${upstream_tag}."
+                done
+                gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$(cat <<EOF
+          @${GITHUB_REPOSITORY_OWNER} merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved.
+
+          ${conflicted_files:-See the run log.}
+
+          Merge the tag into \`${GITHUB_REF_NAME}\`, resolve the conflicts, and push. The next run closes this issue.
+
+          Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
+                )"
+              fi
+              echo "Merging ${upstream_tag} conflicts with ${GITHUB_REF_NAME}." >&2
+              exit 1
+            fi
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+          for number in $(open_conflict_issues); do
+            gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Merged in $(git rev-parse --short HEAD)."
+          done
 
           package_version="$(node -p "require('./apps/desktop/package.json').version")"
           stable_version="${package_version%%-*}"
