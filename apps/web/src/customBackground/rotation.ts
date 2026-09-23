@@ -6,7 +6,7 @@ import {
   currentBackgroundImageId,
   nextBackgroundRotationAt,
   upcomingBackgroundImageId,
-} from "./records";
+} from "@t3tools/shared/customBackgroundRotation";
 
 /**
  * The one rotation clock behind every rotating background, so the chat

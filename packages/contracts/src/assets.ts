@@ -1,6 +1,7 @@
 import * as Schema from "effect/Schema";
 
 import { NonNegativeInt, ThreadId, TrimmedNonEmptyString } from "./baseSchemas.ts";
+import { CustomBackgroundImageId } from "./customBackground.ts";
 import {
   PROVIDER_SEND_TURN_MAX_FILE_BYTES,
   PROVIDER_SEND_TURN_MAX_IMAGE_BYTES,
@@ -49,6 +50,10 @@ export const AssetResource = Schema.Union([
   }),
   Schema.TaggedStruct("native-app-icon", {
     app: ToolActivityNativeAppReference,
+  }),
+  // A picture from the environment's phone background, keyed by its library id.
+  Schema.TaggedStruct("phone-background-image", {
+    imageId: CustomBackgroundImageId,
   }),
   // An upload a pull request body points at on GitHub. A private repository serves these only
   // to a request that carries a credential, which the client has none of, so the server fetches

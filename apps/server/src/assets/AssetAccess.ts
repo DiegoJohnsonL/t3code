@@ -14,6 +14,7 @@ import {
   AssetWorkspaceResolutionError,
   AssetWorkspaceRootNormalizationError,
   ToolActivityNativeAppReference,
+  CustomBackgroundImageId,
 } from "@t3tools/contracts";
 import {
   audioMimeTypeFromExtension,
@@ -52,6 +53,7 @@ import * as ServerConfig from "../config.ts";
 import * as ProjectFaviconResolver from "../project/ProjectFaviconResolver.ts";
 import * as WorkspacePaths from "../workspace/WorkspacePaths.ts";
 import * as NativeAppIconResolver from "./NativeAppIconResolver.ts";
+import { resolvePhoneBackgroundImage } from "./PhoneBackgroundImages.ts";
 import { openMediaFile, readMediaFileHeader, type OpenMediaFile } from "./MediaFile.ts";
 
 export const ASSET_ROUTE_PREFIX = "/api/assets";
@@ -135,6 +137,12 @@ const AssetClaimsSchema = Schema.Union([
     version: Schema.Literal(1),
     kind: Schema.Literal("native-app-icon"),
     app: ToolActivityNativeAppReference,
+    expiresAt: Schema.Number,
+  }),
+  Schema.Struct({
+    version: Schema.Literal(1),
+    kind: Schema.Literal("phone-background-image"),
+    imageId: CustomBackgroundImageId,
     expiresAt: Schema.Number,
   }),
   Schema.Struct({
@@ -676,6 +684,21 @@ export const issueAssetUrl = Effect.fn("AssetAccess.issueAssetUrl")(function* (i
       fileName = "native-app-icon.png";
       break;
     }
+    case "phone-background-image": {
+      const image = yield* resolvePhoneBackgroundImage(input.resource.imageId);
+      if (!image) {
+        return yield* new AssetAttachmentNotFoundError({ resource: input.resource });
+      }
+      imageDimensions = yield* readImageDimensionsFromHeader(image.path);
+      claims = {
+        version: 1,
+        kind: "phone-background-image",
+        imageId: input.resource.imageId,
+        expiresAt,
+      };
+      fileName = path.basename(image.path);
+      break;
+    }
     case "github-media": {
       const fetchUrl = githubMediaFetchUrl(input.resource.url);
       if (fetchUrl === null) {
@@ -798,6 +821,13 @@ export const resolveAsset = Effect.fn("AssetAccess.resolveAsset")(function* (
       cwd: claims.cwd,
       expiresAt: claims.expiresAt,
     } satisfies ResolvedAsset;
+  }
+
+  if (claims.kind === "phone-background-image") {
+    const image = yield* resolvePhoneBackgroundImage(claims.imageId);
+    return image
+      ? ({ kind: "file", path: image.path, mimeType: image.mimeType } satisfies ResolvedAsset)
+      : null;
   }
 
   if (claims.kind === "native-app-icon") {

@@ -43,6 +43,11 @@ import {
   getMobileUniwindThemeName,
   type MobileThemeRuntimeState,
 } from "../../../lib/mobileThemeRuntime";
+import {
+  useComputerBackgroundImage,
+  useComputerBackgroundSource,
+} from "../../computer-background/computerBackground";
+import { computerBackgroundThemeVariables } from "../../computer-background/computerBackground.logic";
 
 interface AppearancePreferencesContextValue {
   /** Effective values with base-size derivation applied. Use this for rendering. */
@@ -58,6 +63,8 @@ interface AppearancePreferencesContextValue {
     Record<MobileThemeAppearance, MobileThemeVariables>
   >;
   readonly systemColorPalettes: ReturnType<typeof readSystemColorPalettes>;
+  /** The theme's screen color under a connected computer's background; null when none shows. */
+  readonly computerBackdropColor: string | null;
   readonly isReady: boolean;
   readonly setThemeIdForAppearance: (
     appearance: MobileThemeAppearance,
@@ -126,7 +133,27 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
     };
     return { light: resolve("light"), dark: resolve("dark") };
   }, [themeIds, systemColorPalettes]);
-  const themeVariables = themeVariablesByAppearance[themeAppearance];
+  const computerBackground = useComputerBackgroundSource();
+  const computerImage = useComputerBackgroundImage(
+    computerBackground?.background.dynamicTheme
+      ? computerBackground.background.record.source
+      : null,
+  );
+  const computerTheme = useMemo(
+    () =>
+      computerBackground === null
+        ? null
+        : computerBackgroundThemeVariables({
+            variables: themeVariablesByAppearance[themeAppearance],
+            appearance: themeAppearance,
+            sourceColor:
+              computerImage.current === null
+                ? null
+                : (computerBackground.background.sourceColors[computerImage.current] ?? null),
+          }),
+    [computerBackground, computerImage.current, themeAppearance, themeVariablesByAppearance],
+  );
+  const themeVariables = computerTheme?.variables ?? themeVariablesByAppearance[themeAppearance];
   const activeThemeName = getMobileUniwindThemeName(themeId, themeAppearance);
   const { baseFontSize, codeFontSize, codeWordBreak, terminalFontSize } = preferences;
   const appearance = useMemo(
@@ -284,6 +311,7 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
       themeVariables,
       themeVariablesByAppearance,
       systemColorPalettes,
+      computerBackdropColor: computerTheme?.backdropColor ?? null,
       isReady,
       setThemeIdForAppearance,
       setThemeIdForBothAppearances,
@@ -303,6 +331,7 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
       themeVariables,
       themeVariablesByAppearance,
       systemColorPalettes,
+      computerTheme,
       isReady,
       setThemeIdForAppearance,
       setThemeIdForBothAppearances,

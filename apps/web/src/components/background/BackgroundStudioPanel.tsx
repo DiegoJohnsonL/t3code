@@ -60,6 +60,7 @@ import {
 } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BackgroundControls, RangeControl, StudioField } from "./BackgroundControls";
+import { PhoneBackgroundRow } from "./PhoneBackgroundRow";
 import {
   BackgroundImagePicker,
   BackgroundThumbnail,
@@ -670,6 +671,7 @@ export function BackgroundStudioPanel() {
           onSelect={selectRow}
           onDelete={(entry) => void deleteBackground(entry)}
         />
+        <PhoneBackgroundRow record={record} dynamicTheme={dynamicTheme} />
       </div>
       {record ? (
         <div className="space-y-4">

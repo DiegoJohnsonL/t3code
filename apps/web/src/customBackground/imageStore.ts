@@ -140,7 +140,9 @@ function isStoredBackgroundImage(value: unknown): value is StoredBackgroundImage
   );
 }
 
-async function readImage(id: CustomBackgroundImageId): Promise<StoredBackgroundImage | null> {
+export async function readBackgroundImage(
+  id: CustomBackgroundImageId,
+): Promise<StoredBackgroundImage | null> {
   const database = await openDatabase();
   const value = await requestToPromise(
     database.transaction(IMAGES_STORE, "readonly").objectStore(IMAGES_STORE).get(id),
@@ -199,7 +201,7 @@ export async function storeBackgroundImage(file: File): Promise<StoreBackgroundI
   if (!hasIndexedDb()) return { ok: false, reason: "unavailable" };
   const id = await hashBackgroundImageFile(file);
   try {
-    const existing = await readImage(id);
+    const existing = await readBackgroundImage(id);
     if (existing) {
       refreshImageUrls(existing);
       return { ok: true, image: existing, existed: true };
@@ -290,7 +292,7 @@ function ensureUrl(id: CustomBackgroundImageId, variant: UrlVariant): UrlState {
   if (cached) return cached;
   const loading: UrlState = { status: "loading" };
   urlStates.set(key, loading);
-  void readImage(id)
+  void readBackgroundImage(id)
     .then((image) => {
       // A delete that raced the read already cleared the slot; leave it.
       if (urlStates.get(key) !== loading) return;
@@ -339,7 +341,7 @@ function ensureSourceColor(id: CustomBackgroundImageId): SourceColorState {
       sourceColorStates.set(id, { status: "ready", sourceColor });
     }
   };
-  void readImage(id)
+  void readBackgroundImage(id)
     .then((image) => settle(image?.sourceColor ?? null))
     .catch(() => settle(null))
     .finally(emitUrlChange);

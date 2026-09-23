@@ -36,6 +36,11 @@ import {
   storeAttachmentUpload,
   validateAttachmentUploadToken,
 } from "./assets/AttachmentUpload.ts";
+import {
+  PHONE_BACKGROUND_UPLOAD_ROUTE_PREFIX,
+  storePhoneBackgroundUpload,
+  validatePhoneBackgroundUploadToken,
+} from "./assets/PhoneBackgroundImages.ts";
 import * as BrowserTraceCollector from "./observability/BrowserTraceCollector.ts";
 import * as EnvironmentAuth from "./auth/EnvironmentAuth.ts";
 import { traceRelayRequest } from "./cloud/traceRelayRequest.ts";
@@ -452,6 +457,35 @@ export const attachmentUploadRouteLayer = HttpRouter.add(
     // Keep the request stream in the route scope until the response is sent.
     const bodyPull = yield* Stream.toPull(request.stream);
     const stored = yield* storeAttachmentUpload(claims, Stream.fromPull(Effect.succeed(bodyPull)));
+    return stored.ok
+      ? HttpServerResponse.empty({ status: 204 })
+      : HttpServerResponse.text(stored.detail, { status: stored.status });
+  }),
+);
+
+export const phoneBackgroundUploadRouteLayer = HttpRouter.add(
+  "POST",
+  `${PHONE_BACKGROUND_UPLOAD_ROUTE_PREFIX}/*`,
+  Effect.gen(function* () {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const url = HttpServerRequest.toURL(request);
+    if (Option.isNone(url)) {
+      return HttpServerResponse.text("Bad Request", { status: 400 });
+    }
+    const claims = yield* validatePhoneBackgroundUploadToken(
+      url.value.pathname.slice(`${PHONE_BACKGROUND_UPLOAD_ROUTE_PREFIX}/`.length),
+    );
+    if (!claims) {
+      return HttpServerResponse.text("Not Found", { status: 404 });
+    }
+
+    // Keep the request stream in the route scope until the response is sent.
+    const bodyPull = yield* Stream.toPull(request.stream);
+    const stored = yield* storePhoneBackgroundUpload({
+      claims,
+      mimeType: request.headers["content-type"],
+      body: Stream.fromPull(Effect.succeed(bodyPull)),
+    });
     return stored.ok
       ? HttpServerResponse.empty({ status: 204 })
       : HttpServerResponse.text(stored.detail, { status: stored.status });
