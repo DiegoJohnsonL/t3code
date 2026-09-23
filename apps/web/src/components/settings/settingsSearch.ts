@@ -771,6 +771,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     localBackendManagementOnly: true,
   },
   {
+    id: "serve-mode",
+    title: "Serve mode",
+    to: "/settings/connections",
+    targetId: "connections-environment",
+    searchTerms: ["keep awake sleep caffeinate lid closed clamshell low power mode phone battery"],
+    macOnly: true,
+  },
+  {
     id: "wsl-backend",
     title: "WSL backend",
     to: "/settings/connections",

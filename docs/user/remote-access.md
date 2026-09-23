@@ -143,6 +143,24 @@ running is left alone.
 For Antigravity's Google callback on a remote host, see
 [remote sign-in](./providers-antigravity.md#sign-in-from-a-remote-device).
 
+## Keep a Mac awake (serve mode)
+
+On a Mac, select the moon button at the bottom of the sidebar, next to the
+background button, or turn on **Settings → Connections → Serve mode**. On mobile, it's in **Settings →
+Maintenance**. While serve mode is on, the button shows a coffee cup and the Mac
+doesn't go to sleep, so agents keep working and you can connect from your phone
+at any time. The display still sleeps and locks as usual; agents and connections
+keep working behind the lock screen. Turn it off and the Mac sleeps normally
+again, with T3 Code still open.
+
+To keep the Mac running with the lid closed and in Low Power Mode, install the
+helper once from a checkout of T3 Code with `sudo scripts/serve-mode/install.sh`.
+Running with the lid closed only applies while the Mac is plugged in. On
+battery, closing the lid puts it to sleep as usual. About a minute after serve
+mode turns off or T3 Code quits, your previous Low Power Mode settings come back
+and closing the lid sleeps again. Remove the helper with
+`sudo scripts/serve-mode/install.sh uninstall`.
+
 ## Manage or revoke access
 
 On the host, **Settings → Connections** lets authorized administrators create

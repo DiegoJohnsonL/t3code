@@ -3,17 +3,26 @@ import {
   ChartNoAxesColumnIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CoffeeIcon,
   ImageIcon,
+  MoonIcon,
   SettingsIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { memo, useCallback } from "react";
 import { Link, useCanGoBack, useLocation, useNavigate } from "@tanstack/react-router";
+import { useAtomValue } from "@effect/atom-react";
+import type { UnifiedSettings } from "@t3tools/contracts";
 
-import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
+import {
+  useEnvironmentIdentificationMode,
+  usePrimarySettings,
+  useUpdatePrimarySettings,
+} from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
-import { useEnvironments } from "../../state/environments";
+import { useEnvironments, usePrimaryEnvironmentId } from "../../state/environments";
+import { serverEnvironment } from "../../state/server";
 import { T3Wordmark } from "../T3Wordmark";
 import {
   resolveEnvironmentIdentificationPillLabel,
@@ -175,6 +184,40 @@ function SidebarBackgroundMenu() {
   );
 }
 
+const selectServeMode = (settings: UnifiedSettings) => settings.serveMode;
+
+/** Serve mode for this computer's server, which only acts on macOS. */
+function SidebarServeModeItem() {
+  const primaryConfig = useAtomValue(serverEnvironment.configValueAtom(usePrimaryEnvironmentId()));
+  const serveMode = usePrimarySettings(selectServeMode);
+  const updateSettings = useUpdatePrimarySettings();
+  if (primaryConfig?.environment.platform.os !== "darwin") return null;
+  return (
+    <SidebarMenuItem className="shrink-0">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <SidebarMenuButton
+              aria-label="Serve mode"
+              aria-pressed={serveMode}
+              isActive={serveMode}
+              onClick={() => updateSettings({ serveMode: !serveMode })}
+              size="icon"
+            >
+              {serveMode ? <CoffeeIcon /> : <MoonIcon />}
+            </SidebarMenuButton>
+          }
+        />
+        <TooltipPopup side="top">
+          {serveMode
+            ? "Serve mode on: this Mac stays awake for agents and your phone"
+            : "Serve mode off: this Mac can sleep"}
+        </TooltipPopup>
+      </Tooltip>
+    </SidebarMenuItem>
+  );
+}
+
 export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
@@ -265,6 +308,7 @@ export const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
             onClick={handleUsageClick}
           />
           <SidebarBackgroundMenu />
+          <SidebarServeModeItem />
         </>
       )}
       <SidebarUpdatePill />

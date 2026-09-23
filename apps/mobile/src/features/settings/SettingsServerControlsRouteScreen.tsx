@@ -205,6 +205,9 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
     (target) =>
       target.environment.serverConfig.environment.capabilities.threadRestartContinuation === true,
   );
+  const allMacServers = targets.every(
+    (target) => target.environment.serverConfig.environment.platform.os === "darwin",
+  );
   const disabledFor = (key: string) =>
     disabled ||
     (projectSelected &&
@@ -426,6 +429,23 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
                       onValueChange={(value) => write({ continueThreadsAfterServerUpdate: value })}
                     />
                   </View>
+                </SettingsSection>
+              ) : null}
+
+              {props.page === "maintenance" && allMacServers ? (
+                <SettingsSection title="Power">
+                  <FanoutSwitchRow
+                    icon="bolt.circle"
+                    label="Serve mode"
+                    subtitle={
+                      projectSelected
+                        ? "Environment-wide setting. Select All projects to change it."
+                        : "Keep the Mac awake so agents keep working and you can connect."
+                    }
+                    value={uniform("serveMode")}
+                    disabled={disabledFor("serveMode")}
+                    onValueChange={(value) => write({ serveMode: value })}
+                  />
                 </SettingsSection>
               ) : null}
             </>

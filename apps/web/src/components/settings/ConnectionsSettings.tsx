@@ -67,6 +67,7 @@ import {
   useRelativeTimeTick,
 } from "./settingsLayout";
 import { LocalEnvironmentSetting } from "./LocalEnvironmentSetting";
+import { ServeModeRow } from "./ServeModeRow";
 import { searchableSetting } from "./settingsSearch";
 import { EnvironmentIconMenu } from "./EnvironmentIconPicker";
 import {
@@ -3363,6 +3364,7 @@ export function ConnectionsSettings() {
                 <CloudLinkRow canManageRelay={canManageRelay} />
               </>
             ) : null}
+            {primaryServerConfig?.environment.platform.os === "darwin" ? <ServeModeRow /> : null}
           </SettingsSection>
 
           {isLocalBackendRemotelyReachable ? (
