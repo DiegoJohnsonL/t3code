@@ -128,12 +128,15 @@ jobs:
                   gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Superseded by ${upstream_tag}."
                 done
                 # Chamaquita works issues labeled chamaquita and merges the pull request of one labeled automerge.
+                # A label problem must not stop the issue that tells the owner the build stalled.
                 gh label create chamaquita --repo "$GITHUB_REPOSITORY" --force --color 5319e7 \
-                  --description "Chamaquita works this issue as a Job"
+                  --description "Chamaquita works this issue as a Job" ||
+                  echo "::warning::Could not create the chamaquita label."
                 gh label create automerge --repo "$GITHUB_REPOSITORY" --force --color 0e8a16 \
-                  --description "Chamaquita merges the Job's pull request once its checks pass"
+                  --description "Chamaquita merges the Job's pull request once its checks pass" ||
+                  echo "::warning::Could not create the automerge label."
                 job_branch="chamaquita/upstream-${upstream_tag}"
-                gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label chamaquita --label automerge --body "$(cat <<EOF
+                issue_url="$(gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$(cat <<EOF
           @DiegoJohnsonL merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved. Chamaquita resolves them and, because this issue carries \`automerge\`, merges its pull request once every check passes.
 
           Base branch: \`${GITHUB_REF_NAME}\`
@@ -160,12 +163,14 @@ jobs:
              - \`pnpm exec vp run --filter t3 test\`
              - \`pnpm exec vp run --parallel --concurrency-limit 2 --filter '!t3' --filter '!@t3tools/monorepo' test\`
              - \`pnpm run build:desktop\`
-          4. Commit the merge, push \`${job_branch}\`, and open a pull request into \`${GITHUB_REF_NAME}\`. Its body has a table with one row per conflicted hunk and the columns File:lines, Class, ${GITHUB_REF_NAME}, Upstream, Kept, and Why, followed by each check and its result.
+          4. Commit the merge, push \`${job_branch}\`, and open a pull request into \`${GITHUB_REF_NAME}\`. Its body has a table with one row per conflicted hunk and the columns File:lines, Class, ${GITHUB_REF_NAME}, Upstream, Kept, and Why, followed by each check and its result. If a push is refused for the workflows permission, change nothing and finish blocked with that reason.
           5. Report whether every check passed. Chamaquita merges the pull request as a merge commit only then, and only when GitHub finds it mergeable. The next run finds the tag merged, publishes the build, and closes this issue.
 
           Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           EOF
-                )"
+                )")"
+                gh issue edit "$issue_url" --repo "$GITHUB_REPOSITORY" --add-label chamaquita --add-label automerge ||
+                  echo "::warning::Could not label ${issue_url} for Chamaquita."
               fi
               echo "Merging ${upstream_tag} conflicts with ${GITHUB_REF_NAME}." >&2
               exit 1
