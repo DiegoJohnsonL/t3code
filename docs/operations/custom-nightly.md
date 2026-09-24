@@ -93,6 +93,6 @@ Android refuses to install a lower version code than the installed one. Releases
 
 ## Publish a build
 
-The `Custom nightly` GitHub Actions workflow checks for a new upstream nightly every 30 minutes. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum. The Android APK is attached once its parallel build finishes. A failed Android build does not block the macOS release, and is only retried by a later build or a `force` dispatch.
+The `Custom nightly` GitHub Actions workflow checks for a new upstream nightly every 30 minutes and builds every push to `custom-nightly`. A push cancels the build in progress, so only the newest commit finishes; scheduled and manual runs wait for it instead. Its manual dispatch has a `force` input for rebuilding the current upstream nightly. Each release contains a DMG, a signed zip, update metadata, a blockmap, and the zip's SHA-256 checksum. The Android APK is attached once its parallel build finishes. A failed Android build does not block the macOS release, and is only retried by a later build or a `force` dispatch.
 
 All inherited upstream workflows remain disabled in the fork. Some expect the maintainers' production credentials, and others would duplicate work after every automated merge. Only `Custom nightly` runs here.

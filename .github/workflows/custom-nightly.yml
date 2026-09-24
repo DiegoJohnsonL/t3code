@@ -6,6 +6,8 @@ on:
     # and GitHub drops many scheduled runs. Checking twice an hour, off the busy
     # minute zero, picks each nightly up soon after it lands.
     - cron: "23,53 * * * *"
+  push:
+    branches: [custom-nightly]
   workflow_dispatch:
     inputs:
       force:
@@ -19,9 +21,12 @@ permissions:
   issues: write
   id-token: write
 
+# A push supersedes whatever is building, including the run whose upstream
+# merge push triggered it. Scheduled and manual runs queue instead, so a check
+# for a new nightly never restarts a build that is already on its way.
 concurrency:
   group: custom-nightly
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   prepare:
