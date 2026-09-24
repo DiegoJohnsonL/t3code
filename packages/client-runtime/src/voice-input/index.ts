@@ -18,3 +18,8 @@ export {
   type VoiceTranscriptionErrorCode,
   type VoiceTranscriptionOptions,
 } from "./transcription.ts";
+export {
+  createEnvironmentVoiceTranscriber,
+  environmentSupportsVoiceTranscription,
+  type EnvironmentVoiceTranscriptionTransport,
+} from "./environmentTranscription.ts";

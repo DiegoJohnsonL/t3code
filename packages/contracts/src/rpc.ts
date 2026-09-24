@@ -49,6 +49,12 @@ import {
   AttachmentUploadSigningKeyError,
 } from "./assets.ts";
 import {
+  VoiceTranscriptionCreateUrlInput,
+  VoiceTranscriptionCreateUrlResult,
+  VoiceTranscriptionNotConfiguredError,
+  VoiceTranscriptionSigningKeyError,
+} from "./voiceTranscription.ts";
+import {
   WorktreeSetupCancelInput,
   WorktreeSetupCancelResult,
   WorktreeSetupStreamEvent,
@@ -295,6 +301,7 @@ export const WS_METHODS = {
   assetsCreateUrl: "assets.createUrl",
   attachmentsCreateUploadUrl: "attachments.createUploadUrl",
   attachmentsDelete: "attachments.delete",
+  voiceCreateTranscriptionUrl: "voice.createTranscriptionUrl",
 
   // Provider methods
   providerUploadFeedback: "provider.uploadFeedback",
@@ -1000,6 +1007,16 @@ const WsAttachmentsDeleteRpc = Rpc.make(WS_METHODS.attachmentsDelete, {
   error: EnvironmentAuthorizationError,
 });
 
+const WsVoiceCreateTranscriptionUrlRpc = Rpc.make(WS_METHODS.voiceCreateTranscriptionUrl, {
+  payload: VoiceTranscriptionCreateUrlInput,
+  success: VoiceTranscriptionCreateUrlResult,
+  error: Schema.Union([
+    VoiceTranscriptionNotConfiguredError,
+    VoiceTranscriptionSigningKeyError,
+    EnvironmentAuthorizationError,
+  ]),
+});
+
 const WsProviderUploadFeedbackRpc = Rpc.make(WS_METHODS.providerUploadFeedback, {
   payload: ProviderUploadFeedbackInput,
   success: ProviderUploadFeedbackResult,
@@ -1476,6 +1493,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsAssetsCreateUrlRpc,
   WsAttachmentsCreateUploadUrlRpc,
   WsAttachmentsDeleteRpc,
+  WsVoiceCreateTranscriptionUrlRpc,
   WsProviderUploadFeedbackRpc,
   WsSubscribeVcsStatusRpc,
   WsSubscribeWorktreeSetupRpc,

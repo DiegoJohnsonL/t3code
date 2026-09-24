@@ -29,7 +29,8 @@ focused state or Atom constructors to application-owned runtimes.
 The `voice-input` controller accepts capture callbacks and a selected `VoiceTranscriber`.
 Preparation binds transcription to its implementation and resolved locale; one cancellation
 signal covers both operations. Applications provide recorder events, permissions, native
-transcription implementations, and presentation.
+transcription implementations, and presentation. `createEnvironmentVoiceTranscriber`
+covers transcription on the connected environment given a platform upload transport.
 
 Applications should import the narrowest relevant subpath. There is no broad
 `state` export: use domain paths such as `state/shell`, `state/threads`,

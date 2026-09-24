@@ -190,6 +190,7 @@ import * as NativeTelemetryClient from "./resourceTelemetry/NativeTelemetryClien
 import * as ResourceAttribution from "./resourceTelemetry/ResourceAttribution.ts";
 import * as ResourceTelemetry from "./resourceTelemetry/ResourceTelemetry.ts";
 import * as UsageService from "./usage/UsageService.ts";
+import * as VoiceTranscription from "./voice/VoiceTranscription.ts";
 import * as AnalyticsService from "./telemetry/AnalyticsService.ts";
 import * as Data from "effect/Data";
 
@@ -548,6 +549,7 @@ const buildAppUnderTest = (options?: {
     orchestrationEngine?: Partial<OrchestrationEngine.OrchestrationEngineService["Service"]>;
     threadDeletionReactor?: Partial<ThreadDeletionReactor["Service"]>;
     analyticsService?: Partial<AnalyticsService.AnalyticsService["Service"]>;
+    voiceTranscription?: Partial<VoiceTranscription.VoiceTranscription["Service"]>;
     projectionSnapshotQuery?: Partial<ProjectionSnapshotQuery.ProjectionSnapshotQuery["Service"]>;
     checkpointDiffQuery?: Partial<CheckpointDiffQuery.CheckpointDiffQuery["Service"]>;
     browserTraceCollector?: Partial<BrowserTraceCollector.BrowserTraceCollector["Service"]>;
@@ -1073,7 +1075,16 @@ const buildAppUnderTest = (options?: {
 
     const appLayer = servedRoutesLayer.pipe(
       Layer.provide(resourceTelemetryLayer),
-      Layer.provide(UsageService.layerTest),
+      Layer.provide(
+        Layer.mergeAll(
+          UsageService.layerTest,
+          Layer.mock(VoiceTranscription.VoiceTranscription)({
+            isConfigured: Effect.succeed(false),
+            transcribe: () => Effect.succeed(""),
+            ...options?.layers?.voiceTranscription,
+          }),
+        ),
+      ),
       Layer.provide(
         Layer.mock(AnalyticsService.AnalyticsService)({
           record: () => Effect.void,
@@ -5704,6 +5715,81 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
           }),
         ),
       );
+    }).pipe(Effect.provide(NodeHttpServer.layerTest)),
+  );
+
+  it.effect("transcribes a recording uploaded through a signed voice URL", () =>
+    Effect.gen(function* () {
+      yield* buildAppUnderTest({
+        layers: {
+          voiceTranscription: {
+            isConfigured: Effect.succeed(true),
+            transcribe: (audio) =>
+              audio[0] === 0
+                ? Effect.fail(
+                    new VoiceTranscription.VoiceTranscriptionFailure({ reason: "rate-limited" }),
+                  )
+                : Effect.succeed(`heard ${audio.byteLength} bytes`),
+          },
+        },
+      });
+      const wsUrl = yield* getWsServerUrl("/ws");
+
+      yield* Effect.scoped(
+        withWsRpcClient(wsUrl, (client) =>
+          Effect.gen(function* () {
+            const issued = yield* client[WS_METHODS.voiceCreateTranscriptionUrl]({
+              mimeType: "audio/webm",
+              sizeBytes: 4,
+            });
+            const short = yield* HttpClient.post(issued.relativeUrl, {
+              body: HttpBody.uint8Array(new Uint8Array([1, 2, 3]), "audio/webm"),
+            });
+            assert.equal(short.status, 400);
+
+            const response = yield* HttpClient.post(issued.relativeUrl, {
+              headers: { origin: crossOriginClientOrigin },
+              body: HttpBody.stream(
+                Stream.make(new Uint8Array([1, 2]), new Uint8Array([3, 4])),
+                "audio/webm",
+              ),
+            });
+            assert.equal(response.status, 200);
+            assertBrowserApiCorsResponseHeaders(response.headers);
+            assert.deepEqual(yield* response.json, { text: "heard 4 bytes" });
+
+            const limited = yield* HttpClient.post(issued.relativeUrl, {
+              body: HttpBody.uint8Array(new Uint8Array([0, 0, 0, 0]), "audio/webm"),
+            });
+            assert.equal(limited.status, 429);
+            assert.include(yield* limited.text, "rate limiting");
+
+            const forged = yield* HttpClient.post(`${issued.relativeUrl}x`, {
+              body: HttpBody.uint8Array(new Uint8Array([1, 2, 3, 4]), "audio/webm"),
+            });
+            assert.equal(forged.status, 404);
+          }),
+        ),
+      );
+    }).pipe(Effect.provide(NodeHttpServer.layerTest)),
+  );
+
+  it.effect("refuses voice transcription URLs until dictation is configured", () =>
+    Effect.gen(function* () {
+      yield* buildAppUnderTest();
+      const wsUrl = yield* getWsServerUrl("/ws");
+
+      const error = yield* Effect.flip(
+        Effect.scoped(
+          withWsRpcClient(wsUrl, (client) =>
+            client[WS_METHODS.voiceCreateTranscriptionUrl]({
+              mimeType: "audio/webm",
+              sizeBytes: 4,
+            }),
+          ),
+        ),
+      );
+      assert.equal(error._tag, "VoiceTranscriptionNotConfiguredError");
     }).pipe(Effect.provide(NodeHttpServer.layerTest)),
   );
 

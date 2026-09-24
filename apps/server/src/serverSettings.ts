@@ -150,6 +150,9 @@ function usageLimitSourceSecretName(sourceId: string): string {
   return `usage-limit-source-${Buffer.from(sourceId, "utf8").toString("base64url")}`;
 }
 
+const DICTATION_API_KEY_REDACTED = USAGE_LIMIT_SOURCE_KEY_REDACTED;
+const DICTATION_API_KEY_SECRET_NAME = "dictation-api-key";
+
 function redactProviderEnvironmentVariable(
   variable: ProviderInstanceEnvironmentVariable,
 ): ProviderInstanceEnvironmentVariable {
@@ -186,7 +189,11 @@ export function redactServerSettingsForClient(settings: ServerSettings): ServerS
       },
     ]),
   );
-  return { ...settings, providerInstances, usageLimitSources };
+  const dictation = {
+    ...settings.dictation,
+    apiKey: settings.dictation.apiKey.length > 0 ? DICTATION_API_KEY_REDACTED : "",
+  };
+  return { ...settings, providerInstances, usageLimitSources, dictation };
 }
 
 export class ServerSettingsService extends Context.Service<
@@ -709,10 +716,25 @@ const make = Effect.gen(function* () {
           managementKey: Option.isSome(secret) ? textDecoder.decode(secret.value) : "",
         };
       }
+      let dictation = settings.dictation;
+      if (dictation.apiKey === DICTATION_API_KEY_REDACTED) {
+        const secret = yield* secretStore
+          .get(DICTATION_API_KEY_SECRET_NAME)
+          .pipe(
+            Effect.mapError(
+              (cause) => new ServerSettingsError({ settingsPath, operation: "read-secret", cause }),
+            ),
+          );
+        dictation = {
+          ...dictation,
+          apiKey: Option.isSome(secret) ? textDecoder.decode(secret.value) : "",
+        };
+      }
       return {
         ...settings,
         providerInstances: providerInstances as ServerSettings["providerInstances"],
         usageLimitSources: usageLimitSources as ServerSettings["usageLimitSources"],
+        dictation,
       };
     });
 
@@ -854,11 +876,30 @@ const make = Effect.gen(function* () {
         });
       }
 
+      let dictation = next.dictation;
+      if (dictation.apiKey.length === 0) {
+        if (current.dictation.apiKey.length > 0) {
+          changes.push({
+            kind: "remove",
+            secretName: DICTATION_API_KEY_SECRET_NAME,
+            operation: "remove-secret",
+          });
+        }
+      } else if (dictation.apiKey !== DICTATION_API_KEY_REDACTED) {
+        changes.push({
+          kind: "write",
+          secretName: DICTATION_API_KEY_SECRET_NAME,
+          value: textEncoder.encode(dictation.apiKey),
+        });
+        dictation = { ...dictation, apiKey: DICTATION_API_KEY_REDACTED };
+      }
+
       return {
         settings: {
           ...next,
           providerInstances: providerInstances as ServerSettings["providerInstances"],
           usageLimitSources: usageLimitSources as ServerSettings["usageLimitSources"],
+          dictation,
         },
         changes,
       };

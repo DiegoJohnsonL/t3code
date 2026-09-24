@@ -79,6 +79,7 @@ import {
   WORKTREE_SETUP_ACTIVITY_KIND,
   worktreeSetupActivityId,
   type WorktreeSetupSnapshot,
+  VoiceTranscriptionNotConfiguredError,
 } from "@t3tools/contracts";
 import { resolveServerBackgroundActivitySettings } from "@t3tools/shared/backgroundActivitySettings";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
@@ -177,6 +178,8 @@ import * as VcsProjectConfig from "./vcs/VcsProjectConfig.ts";
 import * as PairingGrantStore from "./auth/PairingGrantStore.ts";
 import * as SessionStore from "./auth/SessionStore.ts";
 import { failEnvironmentAuthInvalid, failEnvironmentInternal } from "./auth/http.ts";
+import * as VoiceTranscription from "./voice/VoiceTranscription.ts";
+import { issueVoiceTranscriptionUrl } from "./voice/VoiceTranscriptionUrl.ts";
 import * as RelayClient from "@t3tools/shared/relayClient";
 const isOrchestrationDispatchCommandError = Schema.is(OrchestrationDispatchCommandError);
 
@@ -575,6 +578,7 @@ const makeWsRpcLayer = (
       const config = yield* ServerConfig.ServerConfig;
       const lifecycleEvents = yield* ServerLifecycleEvents.ServerLifecycleEvents;
       const serverSettings = yield* ServerSettings.ServerSettingsService;
+      const voiceTranscription = yield* VoiceTranscription.VoiceTranscription;
       const startup = yield* ServerRuntimeStartup.ServerRuntimeStartup;
       const workspaceEntries = yield* WorkspaceEntries.WorkspaceEntries;
       const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
@@ -3152,6 +3156,17 @@ const makeWsRpcLayer = (
           observeRpcEffect(WS_METHODS.attachmentsCreateUploadUrl, issueAttachmentUploadUrl(input), {
             "rpc.aggregate": "workspace",
           }),
+        [WS_METHODS.voiceCreateTranscriptionUrl]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.voiceCreateTranscriptionUrl,
+            Effect.gen(function* () {
+              if (!(yield* voiceTranscription.isConfigured)) {
+                return yield* new VoiceTranscriptionNotConfiguredError();
+              }
+              return yield* issueVoiceTranscriptionUrl(input);
+            }),
+            { "rpc.aggregate": "workspace" },
+          ),
         [WS_METHODS.attachmentsDelete]: (input) =>
           observeRpcEffect(
             WS_METHODS.attachmentsDelete,
