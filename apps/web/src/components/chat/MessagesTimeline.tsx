@@ -2083,7 +2083,10 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
 
   return (
     <div className="group flex flex-col items-end gap-1">
-      <div className="relative max-w-[80%] rounded-2xl surface-glass p-3 text-message-foreground [--glass-fill:var(--message-surface)]">
+      <div
+        data-user-message-bubble
+        className="relative max-w-[80%] rounded-2xl surface-glass p-3 text-message-foreground [--glass-fill:var(--message-surface)]"
+      >
         <MessageAuthorHeading>You</MessageAuthorHeading>
         {(regularImages.length > 0 || userVideos.length > 0) && (
           <div className="mb-2 grid max-w-[210px] grid-cols-2 gap-2">

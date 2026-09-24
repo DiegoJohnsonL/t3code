@@ -946,7 +946,7 @@ export function BackgroundStudioPanel() {
           </>
         ) : null}
         <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          Shadow under reply text
+          Thicker reply text
           <Switch
             checked={replyTextShadow}
             onCheckedChange={(checked) =>
