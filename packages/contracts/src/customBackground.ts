@@ -464,5 +464,10 @@ export const PhoneBackground = Schema.Struct({
   record: CustomBackgroundRecord,
   dynamicTheme: Schema.Boolean,
   sourceColors: Schema.Record(CustomBackgroundImageId, Schema.Int),
+  /** Phones start with reply bubbles on: a picture right behind small text is hard to read. */
+  agentBubbles: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+  agentBubbleOpacity: AgentBubbleOpacity.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_AGENT_BUBBLE_OPACITY)),
+  ),
 });
 export type PhoneBackground = typeof PhoneBackground.Type;

@@ -1,4 +1,5 @@
-import type { PhoneBackground } from "@t3tools/contracts";
+import { PhoneBackground } from "@t3tools/contracts";
+import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
 
 import { getMobileThemeRuntimeVariables } from "../../lib/mobileThemeVariables";
@@ -9,6 +10,8 @@ import {
   phoneBackgroundWithPictures,
   sourceColorFromPixels,
 } from "./phoneBackground.logic";
+
+const decodePhoneBackground = Schema.decodeUnknownSync(PhoneBackground);
 
 const background: PhoneBackground = {
   record: {
@@ -30,6 +33,8 @@ const background: PhoneBackground = {
   },
   dynamicTheme: true,
   sourceColors: {},
+  agentBubbles: true,
+  agentBubbleOpacity: 82,
 };
 
 describe("phoneBackgroundThemeVariables", () => {
@@ -129,5 +134,14 @@ describe("editing the shared phone playlist", () => {
     const orange = [255, 120, 0, 255];
     expect(sourceColorFromPixels(Uint8Array.from([...orange, ...orange]))).not.toBeNull();
     expect(sourceColorFromPixels(Uint8Array.from([255, 120, 0, 0]))).toBeNull();
+  });
+});
+
+describe("stored phone backgrounds", () => {
+  it("turn reply bubbles on for backgrounds saved before bubbles existed", () => {
+    const { agentBubbles: _bubbles, agentBubbleOpacity: _opacity, ...saved } = background;
+    const decoded = decodePhoneBackground(saved);
+    expect(decoded.agentBubbles).toBe(true);
+    expect(decoded.agentBubbleOpacity).toBe(82);
   });
 });

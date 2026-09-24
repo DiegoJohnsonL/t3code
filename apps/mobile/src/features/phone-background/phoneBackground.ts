@@ -1,4 +1,4 @@
-import { useAtomValue } from "@effect/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import type { CustomBackgroundSource, PhoneBackground } from "@t3tools/contracts";
 import {
   currentBackgroundImageId,
@@ -7,9 +7,9 @@ import {
 } from "@t3tools/shared/customBackgroundRotation";
 import * as Equal from "effect/Equal";
 import { AsyncResult, Atom } from "effect/unstable/reactivity";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { mobilePreferencesAtom } from "../../state/preferences";
+import { mobilePreferencesAtom, updateMobilePreferencesAtom } from "../../state/preferences";
 
 let previousBackground: PhoneBackground | null = null;
 
@@ -32,6 +32,20 @@ export function usePhoneBackgroundEnabled(): boolean {
   const preferences = useAtomValue(mobilePreferencesAtom);
   return !(
     AsyncResult.isSuccess(preferences) && preferences.value.phoneBackgroundEnabled === false
+  );
+}
+
+/** Edits the stored background; does nothing while the phone has none. */
+export function useUpdatePhoneBackground() {
+  const savePreferences = useAtomSet(updateMobilePreferencesAtom);
+  return useCallback(
+    (change: (background: PhoneBackground) => PhoneBackground) =>
+      savePreferences({
+        transform: (current) => ({
+          phoneBackground: current.phoneBackground ? change(current.phoneBackground) : null,
+        }),
+      }),
+    [savePreferences],
   );
 }
 

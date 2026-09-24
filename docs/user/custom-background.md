@@ -68,11 +68,15 @@ connect to remote environments; other browsers and devices keep their own appear
 
 ## Phone background
 
-T3 Code Mobile has its own background, set on the phone. In **Settings → Appearance →
-Background**, **Add photos** picks pictures from the phone's library; tap a picture to remove
-it. The pictures stay on the phone, so the background works with any computer, or none.
-It shows behind home and threads, cropped to fill the screen, with the same fade and rotation
-as the desktop. **Colors from pictures** themes the app from the picture showing, and **Show
+T3 Code Mobile has its own background, set on the phone in **Settings → Appearance →
+Wallpaper**. **Add photos** picks pictures from the phone's library; tap a picture to remove it.
+The pictures stay on the phone, so the background works with any computer, or none. It shows
+behind home and threads, cropped to fill the screen.
+
+The same screen sets how often the pictures change, their order, and whether they fade or cut,
+plus the bottom fade and picture opacity. **Bubbles behind agent replies** sets each reply on a
+translucent bubble so it stays readable over bright pictures; it starts on, and **Bubble
+opacity** tunes it. **Colors from pictures** themes the app from the picture showing, and **Show
 behind home and threads** hides the background without deleting it.
 
 ## New chats and conversations

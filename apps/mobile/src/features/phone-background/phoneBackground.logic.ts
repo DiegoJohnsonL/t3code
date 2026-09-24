@@ -13,6 +13,7 @@ import {
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
   DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
   DEFAULT_CUSTOM_BACKGROUND_OPACITY,
+  DEFAULT_AGENT_BUBBLE_OPACITY,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   type PhoneBackground,
 } from "@t3tools/contracts";
@@ -93,7 +94,7 @@ export function phoneBackgroundThemeVariables(input: {
   };
 }
 
-function withOpacity(color: string, percent: number): string {
+export function withOpacity(color: string, percent: number): string {
   const rgb = /^#([\da-f]{6})/iu.exec(color)?.[1] ?? "000000";
   const alpha = Math.round((Math.min(100, Math.max(0, percent)) / 100) * 255);
   return `#${rgb}${alpha.toString(16).padStart(2, "0")}`;
@@ -145,6 +146,8 @@ export function phoneBackgroundWithPictures(
     },
     dynamicTheme: true,
     sourceColors: {},
+    agentBubbles: true,
+    agentBubbleOpacity: DEFAULT_AGENT_BUBBLE_OPACITY,
   };
   const source = base.record.source;
   const existing = source.kind === "image" ? source.imageIds : [];
