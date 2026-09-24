@@ -15,8 +15,10 @@ import { useSharedValue } from "react-native-reanimated";
 
 import type { ComposerEditorSelection } from "../../components/ComposerEditor";
 import { getLocalVoiceTranscriber } from "../../native/voiceTranscription";
+import { useEnvironmentServerConfig } from "../../state/entities";
 import { getNativeShowcaseScene } from "../showcase/nativeShowcaseScene";
 import {
+  environmentSupportsVoiceTranscription,
   VoiceInputController,
   VOICE_RECORDING_LIMIT_SECONDS,
   voiceInputBlocksSubmission,
@@ -24,6 +26,8 @@ import {
   type VoiceDraftSnapshot,
   type VoiceInputState,
 } from "@t3tools/client-runtime/voice-input";
+import type { EnvironmentId } from "@t3tools/contracts";
+import { createMobileEnvironmentVoiceTranscriber } from "./environmentVoiceTranscriber";
 import { normalizeVoiceInputDecibels, VOICE_WAVEFORM_SAMPLE_COUNT } from "./voiceInputMetering";
 
 const INITIAL_STATE: VoiceInputState = { phase: "idle", error: null, errorAction: null };
@@ -64,6 +68,7 @@ async function configureVoiceRecordingAudio(): Promise<void> {
 
 export function useVoiceInputController(input: {
   readonly ownerKey: string | null;
+  readonly environmentId: EnvironmentId | null;
   readonly draftMessage: string;
   readonly selection: ComposerEditorSelection;
   readonly disabled?: boolean;
@@ -89,6 +94,13 @@ export function useVoiceInputController(input: {
   }
   const latestInputRef = useRef(input);
   latestInputRef.current = input;
+  const serverConfig = useEnvironmentServerConfig(input.environmentId);
+  const transcriptionEnvironmentId = environmentSupportsVoiceTranscription(serverConfig)
+    ? input.environmentId
+    : null;
+  const transcriptionEnvironmentIdRef = useRef(transcriptionEnvironmentId);
+  transcriptionEnvironmentIdRef.current = transcriptionEnvironmentId;
+  const permissionRequestPendingRef = useRef(false);
 
   const handleRecorderStatus = useCallback((status: RecordingStatus) => {
     controllerRef.current?.handleRecorderStatus({
@@ -103,10 +115,21 @@ export function useVoiceInputController(input: {
   if (!controllerRef.current) {
     controllerRef.current = new VoiceInputController({
       recorder,
-      getTranscriber: getLocalVoiceTranscriber,
+      getTranscriber: () => {
+        const environmentId = transcriptionEnvironmentIdRef.current;
+        return (
+          getLocalVoiceTranscriber() ??
+          (environmentId === null ? null : createMobileEnvironmentVoiceTranscriber(environmentId))
+        );
+      },
       requestPermission: async () => {
-        const permission = await requestRecordingPermissionsAsync();
-        return { granted: permission.granted, canAskAgain: permission.canAskAgain };
+        permissionRequestPendingRef.current = true;
+        try {
+          const permission = await requestRecordingPermissionsAsync();
+          return { granted: permission.granted, canAskAgain: permission.canAskAgain };
+        } finally {
+          permissionRequestPendingRef.current = false;
+        }
       },
       configureRecording: configureVoiceRecordingAudio,
       releaseRecording: releaseVoiceRecordingAudio,
@@ -149,10 +172,13 @@ export function useVoiceInputController(input: {
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
-      // iOS reports `inactive` while its permission dialog is open. Only the
+      // iOS reports `inactive` while its permission dialog is open, but Android
+      // pauses the activity, which React Native reports as `background`. Only the
       // real background state cancels preparation; recorder status handles
       // calls and route interruptions during capture.
-      if (nextState === "background") controller.appMovedToBackground();
+      if (nextState === "background" && !permissionRequestPendingRef.current) {
+        controller.appMovedToBackground();
+      }
     });
     return () => subscription.remove();
   }, [controller]);
@@ -221,7 +247,10 @@ export function useVoiceInputController(input: {
   return {
     // Store screenshots show the dictation button even on simulators, whose
     // on-device transcription is unavailable.
-    isAvailable: getLocalVoiceTranscriber() !== null || getNativeShowcaseScene() !== null,
+    isAvailable:
+      getLocalVoiceTranscriber() !== null ||
+      transcriptionEnvironmentId !== null ||
+      getNativeShowcaseScene() !== null,
     state,
     audioLevels,
     elapsedSeconds,

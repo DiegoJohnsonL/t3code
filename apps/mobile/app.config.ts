@@ -359,7 +359,6 @@ const config: ExpoConfig = {
       "expo-audio",
       {
         microphonePermission: "Allow T3 Code to use your microphone for voice input.",
-        recordAudioAndroid: false,
         enableBackgroundPlayback: false,
         enableBackgroundRecording: false,
       },
@@ -373,7 +372,7 @@ const config: ExpoConfig = {
         recordAudioAndroid: false,
       },
     ],
-    ["expo-image-picker", { photosPermission: false, microphonePermission: false }],
+    ["expo-image-picker", { photosPermission: false }],
     [
       "expo-splash-screen",
       {
