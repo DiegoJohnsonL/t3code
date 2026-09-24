@@ -9,6 +9,7 @@ import type {
   Options as ClaudeQueryOptions,
   PermissionMode,
   PermissionResult,
+  PreToolUseHookInput,
   SDKMessage,
   SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
@@ -30,6 +31,7 @@ import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Random from "effect/Random";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
@@ -3989,6 +3991,94 @@ describe("ClaudeAdapterLive", () => {
       assert.equal(progress?.type, "task.progress");
       if (progress?.type === "task.progress") {
         assert.equal(progress.payload.model, SYNTHETIC_SUBAGENT_MODEL);
+      }
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
+  it.effect("a hook fired inside a subagent refines its seeded effort", () => {
+    const harness = makeHarness();
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+      const nextTaskEvent = adapter.streamEvents.pipe(
+        Stream.filter((event) => event.type.startsWith("task.")),
+        Stream.runHead,
+        Effect.map(Option.getOrUndefined),
+      );
+
+      const session = yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        modelSelection: createModelSelection(
+          ProviderInstanceId.make("claudeAgent"),
+          SYNTHETIC_CLAUDE_CAPABLE_MODEL,
+          [{ id: "effort", value: "max" }],
+        ),
+        runtimeMode: "full-access",
+      });
+      yield* adapter.sendTurn({
+        threadId: session.threadId,
+        input: "spawn an agent",
+        attachments: [],
+      });
+
+      harness.query.emit({
+        type: "system",
+        subtype: "task_started",
+        task_id: "task-defined",
+        description: "Agent D",
+        subagent_type: "researcher",
+        task_type: "local_agent",
+        tool_use_id: "toolu_agent_defined",
+        uuid: "task-defined-uuid",
+        session_id: "sdk-session",
+      } as unknown as SDKMessage);
+      const started = yield* nextTaskEvent;
+      assert.equal(started?.type, "task.started");
+      if (started?.type === "task.started") {
+        assert.equal(started.payload.effort, "max");
+      }
+
+      // The subagent's definition sets its own effort, which the SDK only
+      // reports on hooks fired from inside it.
+      const preToolUse =
+        harness.getLastCreateQueryInput()?.options.hooks?.PreToolUse?.[0]?.hooks[0];
+      assert.equal(typeof preToolUse, "function");
+      if (!preToolUse) {
+        return;
+      }
+      const hookInput: PreToolUseHookInput = {
+        hook_event_name: "PreToolUse",
+        session_id: "sdk-session",
+        transcript_path: "/tmp/transcript.jsonl",
+        cwd: "/tmp",
+        agent_id: "task-defined",
+        agent_type: "researcher",
+        effort: { level: "high" },
+        tool_name: "Bash",
+        tool_input: { command: "pwd" },
+        tool_use_id: "toolu_subagent_bash",
+      };
+      yield* Effect.promise(() =>
+        preToolUse(hookInput, "toolu_subagent_bash", { signal: new AbortController().signal }),
+      );
+
+      harness.query.emit({
+        type: "system",
+        subtype: "task_progress",
+        task_id: "task-defined",
+        description: "Agent D",
+        usage: { total_tokens: 100, tool_uses: 1, duration_ms: 10 },
+        uuid: "task-defined-progress-uuid",
+        session_id: "sdk-session",
+      } as unknown as SDKMessage);
+
+      const progress = yield* nextTaskEvent;
+      assert.equal(progress?.type, "task.progress");
+      if (progress?.type === "task.progress") {
+        assert.equal(progress.payload.effort, "high");
       }
     }).pipe(
       Effect.provideService(Random.Random, makeDeterministicRandomService()),

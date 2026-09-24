@@ -11,6 +11,7 @@
 import * as NodeUtil from "node:util";
 import {
   type CanUseTool,
+  type HookCallback,
   query,
   getSessionMessages,
   forkSession,
@@ -377,6 +378,8 @@ interface ClaudeTaskAgentState {
   /** Seeded from the launching tool's input; refined by the subagent's own
    * assistant snapshots (authoritative API model). */
   model: string | undefined;
+  /** Seeded like `model`; refined by hooks fired inside the subagent, which
+   * report the effort it actually runs at (e.g. its agent definition's). */
   effort: string | undefined;
 }
 
@@ -417,7 +420,7 @@ interface ClaudeSessionContext {
   readonly basePermissionMode: PermissionMode | undefined;
   currentApiModelId: string | undefined;
   /** Effective effort for the session's turns; subagents without an explicit
-   * effort override inherit this. */
+   * effort override seed their label from this. */
   currentEffort: string | undefined;
   resumeSessionId: string | undefined;
   readonly pendingApprovals: Map<ApprovalRequestId, PendingApproval>;
@@ -3724,7 +3727,8 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
           context.turnState.hasSubagents = true;
         }
         // Model/effort: the Agent tool's input carries explicit overrides;
-        // absent ones inherit the session's selection (SDK behavior).
+        // absent ones seed from the session's selection. An agent definition's
+        // own effort only surfaces later, through `recordSubagentEffort`.
         // Subagent assistant snapshots refine model with the authoritative API
         // id: one that already arrived is buffered and outranks the seed here,
         // later ones refine the record in place. AgentInput.effort may be a
@@ -4825,6 +4829,16 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
 
       const canUseTool: CanUseTool = (toolName, toolInput, callbackOptions) =>
         runPromise(canUseToolEffect(toolName, toolInput, callbackOptions));
+      // Hooks are the only place the SDK reports the effort a subagent runs
+      // at; `agent_id` is the subagent's task id. Later task.* rows carry it.
+      const recordSubagentEffort: HookCallback = async (hookInput) => {
+        const agent = hookInput.agent_id ? taskAgents.get(hookInput.agent_id) : undefined;
+        const effort = trimmedString(hookInput.effort?.level);
+        if (agent && effort) {
+          agent.effort = effort;
+        }
+        return {};
+      };
       const onUserDialog: NonNullable<ClaudeQueryOptions["onUserDialog"]> = (
         request,
         callbackOptions,
@@ -4945,6 +4959,10 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
         ...(newSessionId ? { sessionId: newSessionId } : {}),
         includePartialMessages: true,
         canUseTool,
+        hooks: {
+          PreToolUse: [{ hooks: [recordSubagentEffort] }],
+          SubagentStop: [{ hooks: [recordSubagentEffort] }],
+        },
         onUserDialog,
         supportedDialogKinds: ["resume_return"],
         env: McpProviderSession.withAgentDeviceEnvironment(claudeEnvironment, mcpSession),
