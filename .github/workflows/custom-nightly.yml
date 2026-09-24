@@ -35,10 +35,20 @@ jobs:
       release_name: ${{ steps.prepare.outputs.release_name }}
       android_version_code: ${{ steps.prepare.outputs.android_version_code }}
     steps:
+      # github.token can never push .github/workflows changes, which upstream merges often carry.
+      - id: app-token
+        name: Mint Chamaquita token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CHAMAQUITA_CLIENT_ID }}
+          private-key: ${{ secrets.CHAMAQUITA_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+
       - name: Checkout customization branch
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           git init .
