@@ -13,5 +13,9 @@ export function createVoiceEnvironmentAtoms<R, E>(
       label: "environment-command:voice:create-transcription-url",
       tag: WS_METHODS.voiceCreateTranscriptionUrl,
     }),
+    learnCorrections: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:voice:learn-corrections",
+      tag: WS_METHODS.voiceLearnCorrections,
+    }),
   };
 }

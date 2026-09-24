@@ -518,7 +518,7 @@ export const voiceTranscriptionRouteLayer = HttpRouter.add(
     }
 
     const voiceTranscription = yield* VoiceTranscription.VoiceTranscription;
-    return yield* voiceTranscription.transcribe(audio).pipe(
+    return yield* voiceTranscription.transcribe({ audio, threadId: claims.threadId }).pipe(
       Effect.map((text) => HttpServerResponse.jsonUnsafe({ text })),
       Effect.catchTag("VoiceTranscriptionFailure", (failure) =>
         Effect.succeed(

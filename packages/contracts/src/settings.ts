@@ -944,6 +944,14 @@ export type UsageLimitSourceConfig = typeof UsageLimitSourceConfig.Type;
 export const DictationSettings = Schema.Struct({
   apiKey: TrimmedString.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
   vocabulary: TrimmedString.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
+  /** Spellings learned from the user's fixes to dictated text. */
+  learnedVocabulary: Schema.Array(TrimmedNonEmptyString).pipe(
+    Schema.withDecodingDefault(Effect.succeed([])),
+  ),
+  /** Learned words the user removed; never learned again. */
+  forgottenVocabulary: Schema.Array(TrimmedNonEmptyString).pipe(
+    Schema.withDecodingDefault(Effect.succeed([])),
+  ),
 });
 export type DictationSettings = typeof DictationSettings.Type;
 
@@ -1620,6 +1628,8 @@ export const ServerSettingsPatch = Schema.Struct({
     Schema.Struct({
       apiKey: Schema.optionalKey(TrimmedString),
       vocabulary: Schema.optionalKey(TrimmedString),
+      learnedVocabulary: Schema.optionalKey(Schema.Array(TrimmedNonEmptyString)),
+      forgottenVocabulary: Schema.optionalKey(Schema.Array(TrimmedNonEmptyString)),
     }),
   ),
 });

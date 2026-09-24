@@ -1,4 +1,5 @@
 import {
+  ThreadId,
   VOICE_TRANSCRIPTION_URL_TTL_MS,
   VoiceTranscriptionSigningKeyError,
   type VoiceTranscriptionCreateUrlInput,
@@ -26,6 +27,7 @@ const VoiceTranscriptionClaims = Schema.Struct({
   kind: Schema.Literal("voice-transcription"),
   mimeType: Schema.String,
   sizeBytes: Schema.Finite,
+  threadId: Schema.optionalKey(ThreadId),
   expiresAt: Schema.Finite,
 });
 export type VoiceTranscriptionClaims = typeof VoiceTranscriptionClaims.Type;
@@ -60,6 +62,7 @@ export const issueVoiceTranscriptionUrl = Effect.fn("VoiceTranscription.issueUrl
       kind: "voice-transcription",
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
+      ...(input.threadId === undefined ? {} : { threadId: input.threadId }),
       expiresAt,
     }),
   );

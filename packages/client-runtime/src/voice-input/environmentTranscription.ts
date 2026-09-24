@@ -1,6 +1,7 @@
 import {
   VoiceTranscriptionResult,
   type ServerConfig,
+  type ThreadId,
   type VoiceTranscriptionCreateUrlInput,
 } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
@@ -50,6 +51,7 @@ function isNotConfiguredFailure(error: unknown): boolean {
 
 async function transcribeRecording(
   transport: EnvironmentVoiceTranscriptionTransport,
+  threadId: ThreadId | null,
   uri: string,
   { signal }: VoiceTranscriptionOptions,
 ): Promise<string> {
@@ -57,7 +59,9 @@ async function transcribeRecording(
     throwIfVoiceTranscriptionAborted(signal);
     const recording = await transport.describeRecording(uri);
     throwIfVoiceTranscriptionAborted(signal);
-    const url = await transport.createUploadUrl(recording);
+    const url = await transport.createUploadUrl(
+      threadId === null ? recording : { ...recording, threadId },
+    );
     throwIfVoiceTranscriptionAborted(signal);
     const response = await transport.upload({ url, uri, mimeType: recording.mimeType, signal });
     throwIfVoiceTranscriptionAborted(signal);
@@ -90,6 +94,8 @@ async function transcribeRecording(
  */
 export function createEnvironmentVoiceTranscriber(input: {
   readonly locale: string;
+  /** The thread being dictated into; the environment reads its recent messages. */
+  readonly threadId: ThreadId | null;
   readonly transport: EnvironmentVoiceTranscriptionTransport;
 }): VoiceTranscriber {
   return {
@@ -97,7 +103,8 @@ export function createEnvironmentVoiceTranscriber(input: {
       throwIfVoiceTranscriptionAborted(signal);
       return {
         locale: input.locale,
-        transcribe: (uri, options) => transcribeRecording(input.transport, uri, options),
+        transcribe: (uri, options) =>
+          transcribeRecording(input.transport, input.threadId, uri, options),
       };
     },
   };

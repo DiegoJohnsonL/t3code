@@ -4,6 +4,9 @@ import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import type { ThreadId, VoiceCorrection } from "@t3tools/contracts";
+
+import { ProjectionThreadMessageRepository } from "../persistence/Services/ProjectionThreadMessages.ts";
 import * as ServerSettings from "../serverSettings.ts";
 import {
   makeGroqDictationProvider,
@@ -14,8 +17,15 @@ import {
   buildCleanupSystemPrompt,
   buildCleanupUserPrompt,
   buildTranscriptionPrompt,
+  isEchoedTranscriptionPrompt,
   parseDictationVocabulary,
 } from "./dictationPrompts.ts";
+import {
+  buildCorrectionReviewPrompt,
+  CORRECTION_REVIEW_SYSTEM_PROMPT,
+  mergeLearnedVocabulary,
+  parseReviewedTerms,
+} from "./dictationLearning.ts";
 
 export type VoiceTranscriptionFailureReason =
   | "not-configured"
@@ -59,16 +69,26 @@ export class VoiceTranscription extends Context.Service<
   {
     readonly isConfigured: Effect.Effect<boolean>;
     /** Transcribes a recording and cleans it up into the text the speaker meant to send. */
-    readonly transcribe: (audio: Uint8Array) => Effect.Effect<string, VoiceTranscriptionFailure>;
+    readonly transcribe: (input: {
+      readonly audio: Uint8Array;
+      /** The thread being dictated into; its recent messages help spell names and code. */
+      readonly threadId?: ThreadId | undefined;
+    }) => Effect.Effect<string, VoiceTranscriptionFailure>;
+    /** Remembers the spellings a user fixed in dictated text; returns the newly learned terms. */
+    readonly learnCorrections: (
+      corrections: ReadonlyArray<VoiceCorrection>,
+    ) => Effect.Effect<ReadonlyArray<string>, VoiceTranscriptionFailure>;
   }
 >()("t3/voice/VoiceTranscription") {}
 
 const PROVIDER_CALL_MAX_RETRIES = 1;
+const CONVERSATION_MESSAGES = 6;
+const LEARNED_VOCABULARY_LIMIT = 500;
 
 const transcribeWithProvider = (input: {
   readonly provider: DictationProvider;
   readonly audio: Uint8Array;
-  readonly vocabulary: ReadonlyArray<string>;
+  readonly vocabularyPrompt: string | undefined;
 }) =>
   Effect.tryPromise({
     try: (abortSignal) =>
@@ -76,7 +96,7 @@ const transcribeWithProvider = (input: {
         model: input.provider.transcriptionModel,
         audio: input.audio,
         providerOptions: input.provider.transcriptionOptions({
-          vocabularyPrompt: buildTranscriptionPrompt(input.vocabulary),
+          vocabularyPrompt: input.vocabularyPrompt,
         }),
         maxRetries: PROVIDER_CALL_MAX_RETRIES,
         abortSignal,
@@ -84,17 +104,17 @@ const transcribeWithProvider = (input: {
     catch: classifyProviderError,
   }).pipe(Effect.map((result) => result.text.trim()));
 
-const cleanUpWithProvider = (input: {
+const generateWithProvider = (input: {
   readonly provider: DictationProvider;
-  readonly transcript: string;
-  readonly vocabulary: ReadonlyArray<string>;
+  readonly system: string;
+  readonly prompt: string;
 }) =>
   Effect.tryPromise({
     try: (abortSignal) =>
       generateText({
         model: input.provider.cleanupModel,
-        system: buildCleanupSystemPrompt(input.vocabulary),
-        prompt: buildCleanupUserPrompt(input.transcript),
+        system: input.system,
+        prompt: input.prompt,
         providerOptions: input.provider.cleanupOptions,
         maxRetries: PROVIDER_CALL_MAX_RETRIES,
         abortSignal,
@@ -105,26 +125,57 @@ const cleanUpWithProvider = (input: {
 export const make = (makeProvider: MakeDictationProvider) =>
   Effect.gen(function* () {
     const serverSettings = yield* ServerSettings.ServerSettingsService;
+    const messages = yield* ProjectionThreadMessageRepository;
     const readDictationSettings = serverSettings.getSettings.pipe(
       Effect.map((settings) => settings.dictation),
       Effect.orDie,
     );
+    const readConfiguredDictation = readDictationSettings.pipe(
+      Effect.filterOrFail(
+        (dictation) => dictation.apiKey.length > 0,
+        () => new VoiceTranscriptionFailure({ reason: "not-configured" }),
+      ),
+    );
+    const readConversation = (threadId: ThreadId | undefined) =>
+      threadId === undefined
+        ? Effect.succeed([])
+        : messages.listRecentByThreadId({ threadId, limit: CONVERSATION_MESSAGES }).pipe(
+            Effect.tapError((cause) =>
+              Effect.logWarning("Could not read thread context for dictation.", { cause }),
+            ),
+            Effect.orElseSucceed(() => []),
+          );
 
-    const transcribeRecording = Effect.fn("VoiceTranscription.transcribe")(function* (
-      audio: Uint8Array,
-    ) {
-      const dictation = yield* readDictationSettings;
-      if (dictation.apiKey.length === 0) {
-        return yield* new VoiceTranscriptionFailure({ reason: "not-configured" });
-      }
+    const transcribeRecording = Effect.fn("VoiceTranscription.transcribe")(function* ({
+      audio,
+      threadId,
+    }: {
+      readonly audio: Uint8Array;
+      readonly threadId?: ThreadId | undefined;
+    }) {
+      const dictation = yield* readConfiguredDictation;
       const provider = makeProvider({ apiKey: dictation.apiKey });
-      const vocabulary = parseDictationVocabulary(dictation.vocabulary);
-
-      const transcript = yield* transcribeWithProvider({ provider, audio, vocabulary });
-      if (transcript.length === 0) return "";
+      const vocabulary = [
+        ...new Set([
+          ...parseDictationVocabulary(dictation.vocabulary),
+          ...dictation.learnedVocabulary,
+        ]),
+      ];
+      const vocabularyPrompt = buildTranscriptionPrompt(vocabulary);
+      const [transcript, conversation] = yield* Effect.all(
+        [transcribeWithProvider({ provider, audio, vocabularyPrompt }), readConversation(threadId)],
+        { concurrency: "unbounded" },
+      );
+      if (transcript.length === 0 || isEchoedTranscriptionPrompt(transcript, vocabularyPrompt)) {
+        return "";
+      }
 
       // A failed cleanup still leaves the speaker's words, which beats losing the recording.
-      return yield* cleanUpWithProvider({ provider, transcript, vocabulary }).pipe(
+      return yield* generateWithProvider({
+        provider,
+        system: buildCleanupSystemPrompt({ vocabulary, conversation }),
+        prompt: buildCleanupUserPrompt(transcript),
+      }).pipe(
         Effect.catch((failure) =>
           Effect.logWarning("Dictation cleanup failed; using the raw transcript.", {
             reason: failure.reason,
@@ -134,11 +185,37 @@ export const make = (makeProvider: MakeDictationProvider) =>
       );
     });
 
+    const learnCorrections = Effect.fn("VoiceTranscription.learnCorrections")(function* (
+      corrections: ReadonlyArray<VoiceCorrection>,
+    ) {
+      if (corrections.length === 0) return [];
+      const dictation = yield* readConfiguredDictation;
+      const reply = yield* generateWithProvider({
+        provider: makeProvider({ apiKey: dictation.apiKey }),
+        system: CORRECTION_REVIEW_SYSTEM_PROMPT,
+        prompt: buildCorrectionReviewPrompt(corrections),
+      });
+      const { added, learned } = mergeLearnedVocabulary({
+        reviewed: parseReviewedTerms(reply, corrections),
+        vocabulary: parseDictationVocabulary(dictation.vocabulary),
+        learned: dictation.learnedVocabulary,
+        forgotten: dictation.forgottenVocabulary,
+        limit: LEARNED_VOCABULARY_LIMIT,
+      });
+      if (added.length > 0) {
+        yield* serverSettings
+          .updateSettings({ dictation: { learnedVocabulary: learned } })
+          .pipe(Effect.orDie);
+      }
+      return added;
+    });
+
     return VoiceTranscription.of({
       isConfigured: readDictationSettings.pipe(
         Effect.map((dictation) => dictation.apiKey.length > 0),
       ),
       transcribe: transcribeRecording,
+      learnCorrections,
     });
   });
 

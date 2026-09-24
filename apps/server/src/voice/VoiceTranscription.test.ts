@@ -3,7 +3,11 @@ import { APICallError, type TranscriptionModel } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
+import { ThreadId } from "@t3tools/contracts";
+
+import { ProjectionThreadMessageRepository } from "../persistence/Services/ProjectionThreadMessages.ts";
 import * as ServerSettings from "../serverSettings.ts";
 import type { DictationProvider } from "./DictationProvider.ts";
 import * as VoiceTranscription from "./VoiceTranscription.ts";
@@ -60,21 +64,45 @@ function makeTestProvider(input: {
   };
 }
 
+const recentMessages = [
+  { role: "user" as const, text: "Wire dictation into the composer." },
+  { role: "assistant" as const, text: "I added `useComposerVoiceInput` to ChatComposer.tsx." },
+];
+
+const testLayer = (input: {
+  readonly apiKey?: string;
+  readonly vocabulary?: string;
+  readonly learnedVocabulary?: ReadonlyArray<string>;
+  readonly forgottenVocabulary?: ReadonlyArray<string>;
+}) =>
+  Layer.mergeAll(
+    ServerSettings.layerTest({
+      dictation: {
+        apiKey: input.apiKey ?? "test-key",
+        vocabulary: input.vocabulary ?? "",
+        learnedVocabulary: [...(input.learnedVocabulary ?? [])],
+        forgottenVocabulary: [...(input.forgottenVocabulary ?? [])],
+      },
+    }),
+    Layer.mock(ProjectionThreadMessageRepository)({
+      listRecentByThreadId: () => Effect.succeed(recentMessages),
+    }),
+  );
+
 const runTranscription = (input: {
   readonly provider: DictationProvider;
   readonly apiKey?: string;
   readonly vocabulary?: string;
+  readonly learnedVocabulary?: ReadonlyArray<string>;
+  readonly threadId?: ThreadId;
 }) =>
   Effect.gen(function* () {
     const service = yield* VoiceTranscription.make(() => input.provider);
-    return yield* service.transcribe(new Uint8Array([1, 2, 3]));
-  }).pipe(
-    Effect.provide(
-      ServerSettings.layerTest({
-        dictation: { apiKey: input.apiKey ?? "test-key", vocabulary: input.vocabulary ?? "" },
-      }),
-    ),
-  );
+    return yield* service.transcribe({
+      audio: new Uint8Array([1, 2, 3]),
+      threadId: input.threadId,
+    });
+  }).pipe(Effect.provide(testLayer(input)));
 
 describe("VoiceTranscription", () => {
   it.effect("requires an API key before calling the provider", () =>
@@ -108,7 +136,8 @@ describe("VoiceTranscription", () => {
       });
 
       expect(text).toBe("T3 Code is ready.");
-      expect(transcriptionProviderOptions).toEqual({ mock: { prompt: "T3 Code, Effect." } });
+      // Whisper weighs the end of its prompt most, so the first-listed term goes last.
+      expect(transcriptionProviderOptions).toEqual({ mock: { prompt: "Effect, T3 Code." } });
       const [system, user] = cleanup.doGenerateCalls[0]?.prompt ?? [];
       assert(system?.role === "system" && user?.role === "user");
       expect(system.content).toContain("- T3 Code\n- Effect");
@@ -118,6 +147,71 @@ describe("VoiceTranscription", () => {
         }),
       );
     }),
+  );
+
+  it.effect("gives cleanup the thread's recent messages to spell code names", () =>
+    Effect.gen(function* () {
+      const transcription = mockTranscriber(async () =>
+        transcriptionResult("rename use composer voice input"),
+      );
+      const cleanup = new MockLanguageModelV4({
+        doGenerate: cleanupResult("Rename useComposerVoiceInput."),
+      });
+
+      yield* runTranscription({
+        threadId: ThreadId.make("thread-1"),
+        learnedVocabulary: ["TanStack"],
+        provider: makeTestProvider({ transcription, cleanup }),
+      });
+
+      const [system] = cleanup.doGenerateCalls[0]?.prompt ?? [];
+      assert(system?.role === "system");
+      expect(system.content).toContain("- TanStack");
+      expect(system.content).toContain(
+        "[assistant] I added `useComposerVoiceInput` to ChatComposer.tsx.",
+      );
+    }),
+  );
+
+  it.effect("drops a transcript that only repeats the vocabulary hint", () =>
+    Effect.gen(function* () {
+      const transcription = mockTranscriber(async () => transcriptionResult("Effect, T3 Code."));
+      const cleanup = new MockLanguageModelV4({ doGenerate: cleanupResult("invented") });
+
+      const text = yield* runTranscription({
+        vocabulary: "T3 Code\nEffect",
+        provider: makeTestProvider({ transcription, cleanup }),
+      });
+
+      expect(text).toBe("");
+      expect(cleanup.doGenerateCalls).toHaveLength(0);
+    }),
+  );
+
+  it.effect("learns reviewed spelling fixes and never relearns forgotten ones", () =>
+    Effect.gen(function* () {
+      const reviewer = new MockLanguageModelV4({
+        doGenerate: cleanupResult("TanStack\n- Vercel\nInvented"),
+      });
+      const service = yield* VoiceTranscription.make(() =>
+        makeTestProvider({
+          transcription: mockTranscriber(async () => transcriptionResult("")),
+          cleanup: reviewer,
+        }),
+      );
+
+      const learned = yield* service.learnCorrections([
+        { dictated: "tan stack", corrected: "TanStack" },
+        { dictated: "for sell", corrected: "Vercel" },
+        { dictated: "make it quick", corrected: "make it fast" },
+      ]);
+
+      expect(learned).toEqual(["TanStack"]);
+      const settings = yield* (yield* ServerSettings.ServerSettingsService).getSettings;
+      expect(settings.dictation.learnedVocabulary).toEqual(["TanStack", "Groq"]);
+    }).pipe(
+      Effect.provide(testLayer({ learnedVocabulary: ["Groq"], forgottenVocabulary: ["vercel"] })),
+    ),
   );
 
   it.effect("skips cleanup when nothing was said", () =>

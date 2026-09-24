@@ -1081,6 +1081,7 @@ const buildAppUnderTest = (options?: {
           Layer.mock(VoiceTranscription.VoiceTranscription)({
             isConfigured: Effect.succeed(false),
             transcribe: () => Effect.succeed(""),
+            learnCorrections: () => Effect.succeed([]),
             ...options?.layers?.voiceTranscription,
           }),
         ),
@@ -5724,12 +5725,12 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
         layers: {
           voiceTranscription: {
             isConfigured: Effect.succeed(true),
-            transcribe: (audio) =>
+            transcribe: ({ audio, threadId }) =>
               audio[0] === 0
                 ? Effect.fail(
                     new VoiceTranscription.VoiceTranscriptionFailure({ reason: "rate-limited" }),
                   )
-                : Effect.succeed(`heard ${audio.byteLength} bytes`),
+                : Effect.succeed(`heard ${audio.byteLength} bytes in ${threadId ?? "a draft"}`),
           },
         },
       });
@@ -5741,6 +5742,7 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
             const issued = yield* client[WS_METHODS.voiceCreateTranscriptionUrl]({
               mimeType: "audio/webm",
               sizeBytes: 4,
+              threadId: ThreadId.make("thread-voice"),
             });
             const short = yield* HttpClient.post(issued.relativeUrl, {
               body: HttpBody.uint8Array(new Uint8Array([1, 2, 3]), "audio/webm"),
@@ -5756,7 +5758,7 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
             });
             assert.equal(response.status, 200);
             assertBrowserApiCorsResponseHeaders(response.headers);
-            assert.deepEqual(yield* response.json, { text: "heard 4 bytes" });
+            assert.deepEqual(yield* response.json, { text: "heard 4 bytes in thread-voice" });
 
             const limited = yield* HttpClient.post(issued.relativeUrl, {
               body: HttpBody.uint8Array(new Uint8Array([0, 0, 0, 0]), "audio/webm"),
@@ -5771,6 +5773,28 @@ it.layer(NodeServices.layer)("server router seam", (it) => {
           }),
         ),
       );
+    }).pipe(Effect.provide(NodeHttpServer.layerTest)),
+  );
+
+  it.effect("learns respelled words through websocket rpc", () =>
+    Effect.gen(function* () {
+      yield* buildAppUnderTest({
+        layers: {
+          voiceTranscription: {
+            learnCorrections: (corrections) =>
+              Effect.succeed(corrections.map((correction) => correction.corrected)),
+          },
+        },
+      });
+      const wsUrl = yield* getWsServerUrl("/ws");
+      const result = yield* Effect.scoped(
+        withWsRpcClient(wsUrl, (client) =>
+          client[WS_METHODS.voiceLearnCorrections]({
+            corrections: [{ dictated: "tan stack", corrected: "TanStack" }],
+          }),
+        ),
+      );
+      assert.deepEqual(result, { learned: ["TanStack"] });
     }).pipe(Effect.provide(NodeHttpServer.layerTest)),
   );
 

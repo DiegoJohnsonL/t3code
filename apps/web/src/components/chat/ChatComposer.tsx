@@ -2119,6 +2119,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const voice = useComposerVoiceInput({
     environmentId,
     ownerKey: composerTargetKey(composerDraftTarget),
+    threadId: activeThreadId,
     insertTranscript: (text) => insertVoiceTranscriptRef.current(text),
     keybindings,
     shortcutContext: () => ({
@@ -3829,8 +3830,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         });
         return;
       }
+      const sentPrompt = promptRef.current;
       const submission = submitComposerDraft({
-        prompt: promptRef.current,
+        prompt: sentPrompt,
         submissionTarget: activePendingProgress ? "pending-user-input" : "provider-turn",
         event,
         onSend: (sendEvent) => {
@@ -3843,6 +3845,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       });
       setComposerSubmissionError(submission.validationMessage);
       if (!submission.didDispatch) return;
+      voice.messageSent(sentPrompt);
       if (shouldBlurMobileComposerOnSubmit()) {
         blurMobileComposerAfterSend();
       }
@@ -3852,6 +3855,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
       activePendingProgress,
       attachmentTargetKey,
       blurMobileComposerAfterSend,
+      voice,
       isSendDisabled,
       noProviderAvailable,
       onSend,

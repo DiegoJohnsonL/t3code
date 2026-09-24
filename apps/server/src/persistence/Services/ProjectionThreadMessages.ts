@@ -48,6 +48,19 @@ export const ListProjectionThreadMessagesInput = Schema.Struct({
 });
 export type ListProjectionThreadMessagesInput = typeof ListProjectionThreadMessagesInput.Type;
 
+export const ListRecentProjectionThreadMessagesInput = Schema.Struct({
+  threadId: ThreadId,
+  limit: Schema.Int,
+});
+export type ListRecentProjectionThreadMessagesInput =
+  typeof ListRecentProjectionThreadMessagesInput.Type;
+
+export const RecentProjectionThreadMessage = Schema.Struct({
+  role: OrchestrationMessageRole,
+  text: Schema.String,
+});
+export type RecentProjectionThreadMessage = typeof RecentProjectionThreadMessage.Type;
+
 export const GetProjectionThreadMessageInput = Schema.Struct({
   messageId: MessageId,
 });
@@ -106,6 +119,11 @@ export interface ProjectionThreadMessageRepositoryShape {
   readonly listByThreadId: (
     input: ListProjectionThreadMessagesInput,
   ) => Effect.Effect<ReadonlyArray<ProjectionThreadMessage>, ProjectionRepositoryError>;
+
+  /** The last `limit` messages' role and text, in ascending creation order. */
+  readonly listRecentByThreadId: (
+    input: ListRecentProjectionThreadMessagesInput,
+  ) => Effect.Effect<ReadonlyArray<RecentProjectionThreadMessage>, ProjectionRepositoryError>;
 
   /** Read the latest user-message timestamp without loading message bodies. */
   readonly getLatestUserMessageAt: (

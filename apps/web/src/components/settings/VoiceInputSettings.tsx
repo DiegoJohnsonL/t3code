@@ -1,7 +1,8 @@
 import type { DesktopFnKeySetup } from "@t3tools/contracts";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -162,6 +163,42 @@ export function VoiceInputSettingsSection() {
             placeholder={"T3 Code\nEffect\nTanStack Router"}
             aria-label="Voice input vocabulary"
           />
+        </div>
+      </SettingsRow>
+      <SettingsRow
+        serverScoped
+        settingKeys={["dictation"]}
+        {...searchableSetting("voice-input-learned-words")}
+        description="Spellings voice input learned when you fixed a dictated word before sending. Removed words are never learned again."
+      >
+        <div className="mt-3 flex max-w-2xl flex-wrap gap-1.5 pb-3.5">
+          {dictation.learnedVocabulary.length === 0 ? (
+            <span className="text-sm text-muted-foreground">
+              Nothing learned yet. Fix a misheard word before sending and it shows up here.
+            </span>
+          ) : (
+            dictation.learnedVocabulary.map((term) => (
+              <Badge key={term} variant="secondary">
+                {term}
+                <button
+                  type="button"
+                  aria-label={`Forget ${term}`}
+                  onClick={() =>
+                    updateSettings({
+                      dictation: {
+                        learnedVocabulary: dictation.learnedVocabulary.filter(
+                          (learned) => learned !== term,
+                        ),
+                        forgottenVocabulary: [...dictation.forgottenVocabulary, term],
+                      },
+                    })
+                  }
+                >
+                  <XIcon />
+                </button>
+              </Badge>
+            ))
+          )}
         </div>
       </SettingsRow>
     </SettingsSection>

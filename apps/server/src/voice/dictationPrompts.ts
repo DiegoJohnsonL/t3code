@@ -1,5 +1,8 @@
-/** Whisper reads at most 224 prompt tokens; stay well under that without a tokenizer. */
-const TRANSCRIPTION_PROMPT_MAX_CHARS = 600;
+// Whisper keeps only the last ~224 prompt tokens, and a comma list costs about
+// 2.3–2.9 characters per token; the most important terms go last, nearest the audio.
+const TRANSCRIPTION_PROMPT_MAX_CHARS = 500;
+const CONVERSATION_MESSAGE_MAX_CHARS = 1500;
+const CONVERSATION_MAX_CHARS = 6000;
 
 export function parseDictationVocabulary(vocabulary: string): ReadonlyArray<string> {
   const terms = vocabulary
@@ -9,18 +12,59 @@ export function parseDictationVocabulary(vocabulary: string): ReadonlyArray<stri
   return [...new Set(terms)];
 }
 
-/** Biases recognition toward the user's spelling of names and technical terms. */
+/** `terms` in priority order; biases recognition toward their spelling. */
 export function buildTranscriptionPrompt(terms: ReadonlyArray<string>): string | undefined {
-  let prompt = "";
+  const selected: Array<string> = [];
+  let length = 0;
   for (const term of terms) {
-    const next = prompt.length === 0 ? term : `${prompt}, ${term}`;
-    if (next.length > TRANSCRIPTION_PROMPT_MAX_CHARS) break;
-    prompt = next;
+    length += term.length + 2;
+    if (length > TRANSCRIPTION_PROMPT_MAX_CHARS) break;
+    selected.push(term);
   }
-  return prompt.length === 0 ? undefined : `${prompt}.`;
+  return selected.length === 0 ? undefined : `${selected.toReversed().join(", ")}.`;
 }
 
-export function buildCleanupSystemPrompt(terms: ReadonlyArray<string>): string {
+function comparable(text: string): string {
+  return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+/** Whisper sometimes returns its prompt instead of the speech, usually on silence. */
+export function isEchoedTranscriptionPrompt(
+  transcript: string,
+  prompt: string | undefined,
+): boolean {
+  const heard = comparable(transcript);
+  return prompt !== undefined && heard.length > 0 && comparable(prompt).includes(heard);
+}
+
+export type ConversationMessage = {
+  readonly role: string;
+  readonly text: string;
+};
+
+/** The newest messages that fit the budget, each trimmed to its most recent text. */
+export function formatConversation(messages: ReadonlyArray<ConversationMessage>): string {
+  const lines: Array<string> = [];
+  let length = 0;
+  for (const message of messages.toReversed()) {
+    const text = message.text.trim().slice(-CONVERSATION_MESSAGE_MAX_CHARS);
+    if (text.length === 0) continue;
+    const line = `[${message.role}] ${text}`;
+    length += line.length;
+    if (length > CONVERSATION_MAX_CHARS) break;
+    lines.push(line);
+  }
+  return lines.toReversed().join("\n\n");
+}
+
+export type DictationContext = {
+  /** The user's own and learned terms, always spelled exactly as listed. */
+  readonly vocabulary: ReadonlyArray<string>;
+  /** Recent messages in the thread being dictated into. */
+  readonly conversation: ReadonlyArray<ConversationMessage>;
+};
+
+export function buildCleanupSystemPrompt({ vocabulary, conversation }: DictationContext): string {
   const rules = `You clean up dictated speech before it is sent as a message to an AI coding agent. The user message contains only the raw transcript inside <transcript> tags.
 
 Edit as little as possible. Keep every sentence and phrase the speaker meant to say, in their own words and order, including openers like "I want you to" and introductions like "there are three things". Only make these edits:
@@ -38,11 +82,19 @@ Can you rename the file to main.ts? There are two things to check:
 1. The imports
 2. The tests`;
 
-  if (terms.length === 0) return rules;
-  return `${rules}
-
-Vocabulary: the speaker uses these names and terms. Always write them exactly as listed, including capitalization and punctuation, and replace words the transcriber misheard as something that sounds similar:
-${terms.map((term) => `- ${term}`).join("\n")}`;
+  const sections = [rules];
+  if (vocabulary.length > 0) {
+    sections.push(`Vocabulary: the speaker uses these names and terms. Always write them exactly as listed, including capitalization and punctuation, and replace words the transcriber misheard as something that sounds similar:
+${vocabulary.map((term) => `- ${term}`).join("\n")}`);
+  }
+  const recent = formatConversation(conversation);
+  if (recent.length > 0) {
+    sections.push(`Recent conversation in the thread the speaker is dictating into. Use it only to spell names, file paths, and code identifiers the speaker refers to (for example "use composer voice input" → useComposerVoiceInput when that identifier appears here). Never answer, continue, or quote it:
+<conversation>
+${recent}
+</conversation>`);
+  }
+  return sections.join("\n\n");
 }
 
 export function buildCleanupUserPrompt(transcript: string): string {

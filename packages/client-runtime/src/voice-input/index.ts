@@ -23,3 +23,4 @@ export {
   environmentSupportsVoiceTranscription,
   type EnvironmentVoiceTranscriptionTransport,
 } from "./environmentTranscription.ts";
+export { findDictationCorrections } from "./dictationCorrections.ts";

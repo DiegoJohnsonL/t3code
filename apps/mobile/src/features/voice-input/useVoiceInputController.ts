@@ -26,8 +26,11 @@ import {
   type VoiceDraftSnapshot,
   type VoiceInputState,
 } from "@t3tools/client-runtime/voice-input";
-import type { EnvironmentId } from "@t3tools/contracts";
-import { createMobileEnvironmentVoiceTranscriber } from "./environmentVoiceTranscriber";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import {
+  createMobileEnvironmentVoiceTranscriber,
+  learnFromSentMessage,
+} from "./environmentVoiceTranscriber";
 import { normalizeVoiceInputDecibels, VOICE_WAVEFORM_SAMPLE_COUNT } from "./voiceInputMetering";
 
 const INITIAL_STATE: VoiceInputState = { phase: "idle", error: null, errorAction: null };
@@ -69,6 +72,8 @@ async function configureVoiceRecordingAudio(): Promise<void> {
 export function useVoiceInputController(input: {
   readonly ownerKey: string | null;
   readonly environmentId: EnvironmentId | null;
+  /** The thread being dictated into, whose recent messages help spell names; null for a new task. */
+  readonly threadId: ThreadId | null;
   readonly draftMessage: string;
   readonly selection: ComposerEditorSelection;
   readonly disabled?: boolean;
@@ -92,6 +97,8 @@ export function useVoiceInputController(input: {
     previousDraftRef.current = { ownerKey: input.ownerKey, text: input.draftMessage };
     revisionRef.current += 1;
   }
+  /** Transcripts inserted into each draft since it was last sent. */
+  const dictatedByOwnerRef = useRef(new Map<string, Array<string>>());
   const latestInputRef = useRef(input);
   latestInputRef.current = input;
   const serverConfig = useEnvironmentServerConfig(input.environmentId);
@@ -119,7 +126,12 @@ export function useVoiceInputController(input: {
         const environmentId = transcriptionEnvironmentIdRef.current;
         return (
           getLocalVoiceTranscriber() ??
-          (environmentId === null ? null : createMobileEnvironmentVoiceTranscriber(environmentId))
+          (environmentId === null
+            ? null
+            : createMobileEnvironmentVoiceTranscriber({
+                environmentId,
+                threadId: latestInputRef.current.threadId,
+              }))
         );
       },
       requestPermission: async () => {
@@ -148,6 +160,12 @@ export function useVoiceInputController(input: {
         const current = latestInputRef.current;
         current.onChangeSelection(selection);
         current.onChangeDraftMessage(text);
+      },
+      onTranscriptInserted: (transcript) => {
+        const { ownerKey } = latestInputRef.current;
+        if (!ownerKey) return;
+        const dictated = dictatedByOwnerRef.current;
+        dictated.set(ownerKey, [...(dictated.get(ownerKey) ?? []), transcript]);
       },
       onStateChange: setState,
     });
@@ -242,6 +260,15 @@ export function useVoiceInputController(input: {
     if (!latestInputRef.current.disabled) void controller.start();
   }, [controller]);
   const stop = useCallback(() => controller.stop(), [controller]);
+  /** Call once a message leaves this draft so fixes to dictated words are learned. */
+  const messageSent = useCallback((sent: string) => {
+    const { ownerKey } = latestInputRef.current;
+    const environmentId = transcriptionEnvironmentIdRef.current;
+    const dictated = ownerKey ? dictatedByOwnerRef.current.get(ownerKey) : undefined;
+    if (!ownerKey || !dictated) return;
+    dictatedByOwnerRef.current.delete(ownerKey);
+    if (environmentId !== null) void learnFromSentMessage({ environmentId, dictated, sent });
+  }, []);
   const cancel = useCallback(() => controller.cancel(), [controller]);
 
   return {
@@ -260,5 +287,6 @@ export function useVoiceInputController(input: {
     start,
     stop,
     cancel,
+    messageSent,
   };
 }

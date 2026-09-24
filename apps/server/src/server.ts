@@ -67,6 +67,7 @@ import * as GitLabCli from "./sourceControl/GitLabCli.ts";
 import * as ForgejoCli from "./sourceControl/ForgejoCli.ts";
 import * as TextGeneration from "./textGeneration/TextGeneration.ts";
 import * as VoiceTranscription from "./voice/VoiceTranscription.ts";
+import { ProjectionThreadMessageRepositoryLive } from "./persistence/Layers/ProjectionThreadMessages.ts";
 import { ProviderInstanceRegistryHydrationLive } from "./provider/Layers/ProviderInstanceRegistryHydration.ts";
 import * as TerminalManager from "./terminal/Manager.ts";
 import * as McpHttpServer from "./mcp/McpHttpServer.ts";
@@ -211,9 +212,6 @@ const BackgroundLayerLive = BackgroundPolicy.layer.pipe(
 );
 
 const UsageLayerLive = UsageService.layer.pipe(Layer.provide(ServerSettingsLayerLive));
-const VoiceTranscriptionLayerLive = VoiceTranscription.layer.pipe(
-  Layer.provide(ServerSettingsLayerLive),
-);
 
 const ServeModeLayerLive = ServeMode.layer.pipe(Layer.provide(ServerSettingsLayerLive));
 
@@ -281,6 +279,12 @@ const ProviderLayerLive = ProviderServiceLive.pipe(
 );
 
 const PersistenceLayerLive = Layer.empty.pipe(Layer.provideMerge(SqlitePersistenceLayerLive));
+
+const VoiceTranscriptionLayerLive = VoiceTranscription.layer.pipe(
+  Layer.provide(ProjectionThreadMessageRepositoryLive),
+  Layer.provide(ServerSettingsLayerLive),
+  Layer.provide(PersistenceLayerLive),
+);
 
 const VcsDriverRegistryLayerLive = VcsDriverRegistry.layer.pipe(
   Layer.provide(VcsProjectConfig.layer),

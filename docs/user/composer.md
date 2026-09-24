@@ -137,8 +137,12 @@ way you wrote it. The text lands in your draft for you to review before sending.
 
 To set it up for web, desktop, and Android, open **Settings → General → Voice
 input** and paste a Groq API key (free at [console.groq.com/keys](https://console.groq.com/keys)).
-Add names and terms you use under **Vocabulary**, one per line. Both are stored on
-the environment, so every device connected to it can dictate.
+Add names and terms you use under **Vocabulary**, one per line. Voice input also
+learns on its own: when you fix a misheard word in dictated text before sending
+("tan stack" → "TanStack"), it remembers the spelling and lists it under **Learned
+words**, where you can remove it for good. While you dictate into a thread, it also
+reads that thread's recent messages to spell the files and code names in it. All of
+this is stored on the environment, so every device connected to it benefits.
 
 - **Desktop and web:** hold `Option+Space` (`Alt+Space` on Windows and Linux)
   while you speak and release to insert, or click the microphone. Double-tap the
@@ -157,8 +161,8 @@ the environment, so every device connected to it can dictate.
 Recordings can be up to five minutes long. Canceling, leaving the screen, or an
 audio interruption discards the recording and preserves your existing draft.
 
-With environment transcription, the recording goes to your environment and then
-to Groq for transcription and cleanup. Groq doesn't retain it by default
+With environment transcription, the recording and the thread's last few messages go
+to your environment and then to Groq for transcription and cleanup. Groq doesn't retain it by default
 ([data policy](https://console.groq.com/docs/your-data)). T3 Code deletes the
 temporary audio after transcription or cancellation; only the message text is
 sent when you submit.

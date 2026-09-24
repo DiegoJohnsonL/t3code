@@ -319,7 +319,12 @@ it.layer(NodeServices.layer)("server settings", (it) => {
           "gsk_secret",
         );
         const settings = yield* serverSettings.getSettings;
-        assert.deepStrictEqual(settings.dictation, { apiKey: "gsk_secret", vocabulary: "T3 Code" });
+        assert.deepStrictEqual(settings.dictation, {
+          apiKey: "gsk_secret",
+          vocabulary: "T3 Code",
+          learnedVocabulary: [],
+          forgottenVocabulary: [],
+        });
         const redacted = ServerSettingsModule.redactServerSettingsForClient(settings);
         assert.notEqual(redacted.dictation.apiKey, "gsk_secret");
         assert.isAbove(redacted.dictation.apiKey.length, 0);

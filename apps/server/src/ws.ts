@@ -3167,6 +3167,21 @@ const makeWsRpcLayer = (
             }),
             { "rpc.aggregate": "workspace" },
           ),
+        [WS_METHODS.voiceLearnCorrections]: ({ corrections }) =>
+          observeRpcEffect(
+            WS_METHODS.voiceLearnCorrections,
+            voiceTranscription.learnCorrections(corrections).pipe(
+              Effect.map((learned) => ({ learned })),
+              Effect.catchTag("VoiceTranscriptionFailure", (failure) =>
+                failure.reason === "not-configured"
+                  ? Effect.fail(new VoiceTranscriptionNotConfiguredError())
+                  : Effect.logWarning("Could not learn from dictation corrections.", {
+                      reason: failure.reason,
+                    }).pipe(Effect.as({ learned: [] })),
+              ),
+            ),
+            { "rpc.aggregate": "workspace" },
+          ),
         [WS_METHODS.attachmentsDelete]: (input) =>
           observeRpcEffect(
             WS_METHODS.attachmentsDelete,

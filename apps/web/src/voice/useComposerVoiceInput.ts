@@ -1,8 +1,10 @@
 import { useAtomValue } from "@effect/atom-react";
-import type { EnvironmentId, ResolvedKeybindingsConfig } from "@t3tools/contracts";
+import type { EnvironmentId, ResolvedKeybindingsConfig, ThreadId } from "@t3tools/contracts";
+import { runAtomCommand } from "@t3tools/client-runtime/state/runtime";
 import {
   createEnvironmentVoiceTranscriber,
   environmentSupportsVoiceTranscription,
+  findDictationCorrections,
   VoiceInputController,
   type VoiceInputState,
 } from "@t3tools/client-runtime/voice-input";
@@ -12,6 +14,7 @@ import { toastManager } from "../components/ui/toast";
 import { resolveShortcutCommand, type ShortcutEventLike } from "../keybindings";
 import { appAtomRegistry } from "../rpc/atomRegistry";
 import { serverEnvironment } from "../state/server";
+import { voiceEnvironment } from "../state/voice";
 import { makeEnvironmentVoiceTranscriptionTransport } from "./environmentVoiceTranscription";
 import { createPushToTalkGesture, type PushToTalkGesture } from "./pushToTalkGesture";
 import { canRecordVoice, requestMicrophonePermission, WebVoiceRecorder } from "./webVoiceRecorder";
@@ -22,6 +25,8 @@ type ComposerVoiceInputOptions = {
   readonly environmentId: EnvironmentId;
   /** Identifies the draft; a transcript never lands in a draft other than the one it started in. */
   readonly ownerKey: string;
+  /** The thread being dictated into, whose recent messages help spell names; null for a new draft. */
+  readonly threadId: ThreadId | null;
   /** Inserts at the caret; returns false when the composer cannot take text right now. */
   readonly insertTranscript: (text: string) => boolean;
   readonly keybindings: ResolvedKeybindingsConfig;
@@ -31,6 +36,8 @@ type ComposerVoiceInputOptions = {
 type ComposerVoiceSession = {
   readonly controller: VoiceInputController;
   readonly gesture: PushToTalkGesture;
+  /** Transcripts inserted into each draft since it was last sent. */
+  readonly dictatedByOwner: Map<string, Array<string>>;
 };
 
 function supportsVoiceInput(environmentId: EnvironmentId): boolean {
@@ -61,16 +68,18 @@ function createComposerVoiceSession(input: {
   readonly readOptions: () => ComposerVoiceInputOptions;
   readonly onStateChange: (state: VoiceInputState) => void;
 }): ComposerVoiceSession {
+  const dictatedByOwner = new Map<string, Array<string>>();
   const recorder = new WebVoiceRecorder((status) => {
     void controller.handleRecorderStatus(status);
   });
   const controller: VoiceInputController = new VoiceInputController({
     recorder,
     getTranscriber: () => {
-      const { environmentId } = input.readOptions();
+      const { environmentId, threadId } = input.readOptions();
       if (!supportsVoiceInput(environmentId)) return null;
       return createEnvironmentVoiceTranscriber({
         locale: navigator.language,
+        threadId,
         transport: makeEnvironmentVoiceTranscriptionTransport(environmentId),
       });
     },
@@ -87,7 +96,11 @@ function createComposerVoiceSession(input: {
       revision: 0,
     }),
     commitDraft: (text) => {
-      if (input.readOptions().insertTranscript(text)) return;
+      const { ownerKey, insertTranscript } = input.readOptions();
+      if (insertTranscript(text)) {
+        dictatedByOwner.set(ownerKey, [...(dictatedByOwner.get(ownerKey) ?? []), text]);
+        return;
+      }
       void navigator.clipboard.writeText(text);
       toastManager.add({
         type: "info",
@@ -121,7 +134,29 @@ function createComposerVoiceSession(input: {
       return () => window.clearTimeout(timer);
     },
   });
-  return { controller, gesture };
+  return { controller, gesture, dictatedByOwner };
+}
+
+/** Sends the words the user respelled in dictated text so the environment can learn them. */
+async function learnFromSentMessage(input: {
+  readonly environmentId: EnvironmentId;
+  readonly dictated: ReadonlyArray<string>;
+  readonly sent: string;
+}): Promise<void> {
+  const corrections = findDictationCorrections({ dictated: input.dictated, sent: input.sent });
+  if (corrections.length === 0) return;
+  const result = await runAtomCommand(
+    appAtomRegistry,
+    voiceEnvironment.learnCorrections,
+    { environmentId: input.environmentId, input: { corrections } },
+    { reportFailure: false },
+  );
+  if (result._tag !== "Success" || result.value.learned.length === 0) return;
+  toastManager.add({
+    type: "info",
+    title: "Voice input learned new words",
+    description: `${result.value.learned.join(", ")}. Manage them in Settings → General → Voice input.`,
+  });
 }
 
 export function useComposerVoiceInput(options: ComposerVoiceInputOptions) {
@@ -227,6 +262,14 @@ export function useComposerVoiceInput(options: ComposerVoiceInputOptions) {
     isAvailable,
     state,
     recordingStartedAt,
+    /** Call once a message leaves this draft so fixes to dictated words are learned. */
+    messageSent: (sent: string) => {
+      const { environmentId, ownerKey } = latestOptions.current;
+      const dictated = session.dictatedByOwner.get(ownerKey);
+      if (!dictated) return;
+      session.dictatedByOwner.delete(ownerKey);
+      void learnFromSentMessage({ environmentId, dictated, sent });
+    },
     toggle: () => session.gesture.toggle(),
     cancel: () => {
       session.gesture.reset();

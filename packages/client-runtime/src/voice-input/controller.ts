@@ -58,6 +58,8 @@ export type VoiceInputControllerDependencies = {
     text: string,
     selection: { readonly start: number; readonly end: number },
   ) => void;
+  /** Receives each transcript after it lands in the draft. */
+  readonly onTranscriptInserted?: (transcript: string) => void;
   readonly onStateChange: (state: VoiceInputState) => void;
 };
 
@@ -409,6 +411,7 @@ export class VoiceInputController {
       }
 
       this.dependencies.commitDraft(result.text, result.selection);
+      this.dependencies.onTranscriptInserted?.(transcript.trim());
       this.setState(IDLE_STATE);
     } catch {
       if (this.isCurrent(operationToken)) {

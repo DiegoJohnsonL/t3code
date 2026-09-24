@@ -1,3 +1,4 @@
+import { ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -19,7 +20,11 @@ function makeTransport(
 
 async function transcribe(transport: EnvironmentVoiceTranscriptionTransport, signal?: AbortSignal) {
   const controller = new AbortController();
-  const prepared = await createEnvironmentVoiceTranscriber({ locale: "en-US", transport }).prepare({
+  const prepared = await createEnvironmentVoiceTranscriber({
+    locale: "en-US",
+    threadId: ThreadId.make("thread-1"),
+    transport,
+  }).prepare({
     signal: controller.signal,
   });
   return prepared.transcribe("blob:recording", { signal: signal ?? controller.signal });
@@ -36,8 +41,16 @@ async function rejection(promise: Promise<unknown>): Promise<VoiceTranscriptionE
 }
 
 describe("createEnvironmentVoiceTranscriber", () => {
-  it("returns the environment's cleaned transcript", async () => {
-    await expect(transcribe(makeTransport())).resolves.toBe("Fix the flaky test.");
+  it("returns the environment's cleaned transcript for the thread", async () => {
+    const requested: Array<unknown> = [];
+    const transport = makeTransport({
+      createUploadUrl: async (input) => {
+        requested.push(input);
+        return "https://environment.test/api/voice/transcriptions/token";
+      },
+    });
+    await expect(transcribe(transport)).resolves.toBe("Fix the flaky test.");
+    expect(requested).toEqual([{ mimeType: "audio/webm", sizeBytes: 4, threadId: "thread-1" }]);
   });
 
   it("shows the environment's reason when it refuses the recording", async () => {

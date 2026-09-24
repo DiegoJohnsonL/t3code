@@ -16,6 +16,8 @@ import {
   type ProjectionThreadMessageRepositoryShape,
   DeleteProjectionThreadMessagesInput,
   ListProjectionThreadMessagesInput,
+  ListRecentProjectionThreadMessagesInput,
+  RecentProjectionThreadMessage,
   ProjectionThreadMessage,
 } from "../Services/ProjectionThreadMessages.ts";
 
@@ -226,6 +228,22 @@ const makeProjectionThreadMessageRepository = Effect.gen(function* () {
       `,
   });
 
+  const listRecentProjectionThreadMessageRows = SqlSchema.findAll({
+    Request: ListRecentProjectionThreadMessagesInput,
+    Result: RecentProjectionThreadMessage,
+    execute: ({ threadId, limit }) =>
+      sql`
+        SELECT role, text FROM (
+          SELECT role, text, created_at, message_id
+          FROM projection_thread_messages
+          WHERE thread_id = ${threadId}
+          ORDER BY created_at DESC, message_id DESC
+          LIMIT ${limit}
+        )
+        ORDER BY created_at ASC, message_id ASC
+      `,
+  });
+
   const getLatestUserMessageAtRow = SqlSchema.findOne({
     Request: ListProjectionThreadMessagesInput,
     Result: Schema.Struct({
@@ -287,6 +305,15 @@ const makeProjectionThreadMessageRepository = Effect.gen(function* () {
       Effect.map((rows) => rows.map(toProjectionThreadMessage)),
     );
 
+  const listRecentByThreadId: ProjectionThreadMessageRepositoryShape["listRecentByThreadId"] = (
+    input,
+  ) =>
+    listRecentProjectionThreadMessageRows(input).pipe(
+      Effect.mapError(
+        toPersistenceSqlError("ProjectionThreadMessageRepository.listRecentByThreadId:query"),
+      ),
+    );
+
   const getLatestUserMessageAt: ProjectionThreadMessageRepositoryShape["getLatestUserMessageAt"] = (
     input,
   ) =>
@@ -310,6 +337,7 @@ const makeProjectionThreadMessageRepository = Effect.gen(function* () {
     getByMessageId,
     hasAssistantMessageForTurn,
     listByThreadId,
+    listRecentByThreadId,
     getLatestUserMessageAt,
     deleteByThreadId,
   } satisfies ProjectionThreadMessageRepositoryShape;

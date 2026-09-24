@@ -393,6 +393,7 @@ export const ThreadComposer = memo(function ThreadComposer(props: ThreadComposer
   const voiceInput = useVoiceInputController({
     ownerKey: composerOwnerKey,
     environmentId: props.environmentId,
+    threadId: props.selectedThread.id,
     draftMessage: props.draftMessage,
     selection: composerMenu.selection,
     onChangeDraftMessage: props.onChangeDraftMessage,
@@ -488,11 +489,13 @@ export const ThreadComposer = memo(function ThreadComposer(props: ThreadComposer
     const threadKey = scopedThreadKey(props.environmentId, props.selectedThread.id);
     if (inFlightThreadIdsRef.current.has(threadKey)) return;
     inFlightThreadIdsRef.current.add(threadKey);
+    const sentMessage = props.draftMessage;
     try {
       const messageId = await onSendMessage();
       if (messageId === null) {
         return;
       }
+      voiceInput.messageSent(sentMessage);
       // Sending a prompt starts agent work: arm the lock-screen card while the
       // app is foregrounded and the activity token can be registered. Armed
       // after the send so its preference read and native Activity start don't

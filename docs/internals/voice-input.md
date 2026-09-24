@@ -44,6 +44,26 @@ providers means adding a factory there. The API key lives in the server secret
 store and reaches clients only as a redaction marker, which clients read as
 "configured".
 
+## Vocabulary
+
+Words reach the models from three places, and nothing runs on a schedule:
+
+- The user's list and the spellings learned from their fixes, stored in
+  `dictation` settings. Whisper keeps only the last ~224 tokens of its prompt, so
+  [`buildTranscriptionPrompt`](../../apps/server/src/voice/dictationPrompts.ts)
+  trims to a budget itself and puts the most important terms last. Cleanup sees
+  the whole list.
+- The last few messages of the thread being dictated into, read per request and
+  given only to cleanup, so names the agent just wrote are spelled right.
+- Learning happens on send. Clients remember the transcripts they inserted into a
+  draft and, when it is sent,
+  [`findDictationCorrections`](../../packages/client-runtime/src/voice-input/dictationCorrections.ts)
+  diffs them against the sent text. The environment asks the cleanup model which
+  replacements fixed a misheard name rather than rewording, and only keeps terms
+  the user actually typed. Removed words move to `forgottenVocabulary` and are
+  never learned again. The client owns the composer, so it needs none of the
+  accessibility-based text-field watching desktop dictation apps rely on.
+
 ## The fn key
 
 Chromium drops fn (Globe) key events before web content or `before-input-event`

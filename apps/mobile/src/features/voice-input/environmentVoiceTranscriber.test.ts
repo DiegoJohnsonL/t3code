@@ -53,7 +53,12 @@ const recordingUri = "file:///cache/Audio/recording.m4a";
 
 async function transcribe(): Promise<string> {
   const { signal } = new AbortController();
-  const prepared = await createMobileEnvironmentVoiceTranscriber(environmentId).prepare({ signal });
+  const prepared = await createMobileEnvironmentVoiceTranscriber({
+    environmentId,
+    threadId: null,
+  }).prepare({
+    signal,
+  });
   return prepared.transcribe(recordingUri, { signal });
 }
 

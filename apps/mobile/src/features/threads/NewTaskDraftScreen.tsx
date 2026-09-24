@@ -463,6 +463,7 @@ export function NewTaskDraftScreen(props: {
   const voiceInput = useVoiceInputController({
     ownerKey: flow.draftKey,
     environmentId: selectedProject?.environmentId ?? null,
+    threadId: null,
     draftMessage: flow.prompt,
     selection: composerMenu.selection,
     disabled: isIncomingShareTransferPending || isImportingShare || flow.submitting,
@@ -1290,6 +1291,7 @@ export function NewTaskDraftScreen(props: {
     } finally {
       flow.setSubmitting(false);
     }
+    voiceInput.messageSent(initialMessageText);
     const draftSnapshot = getComposerDraftSnapshot(draftKey);
     if (editingPendingTask) {
       flow.finishEditingPendingTask();
