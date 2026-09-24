@@ -5,7 +5,7 @@ const MAX_LEARNED_TERM_LENGTH = 60;
 export const CORRECTION_REVIEW_SYSTEM_PROMPT = `A user dictated text with speech-to-text, then edited it before sending. You receive pairs of what was dictated and what the user changed it to. Decide which pairs fix a word or name the transcriber got wrong, so the corrected spelling can be remembered.
 
 Keep a pair only when both hold:
-- The dictated words sound like the corrected ones, or differ only in spelling, spacing, or capitalization ("tan stack" → "TanStack", "tea three code" → "T3 Code", "use state" → "useState").
+- Read aloud, the dictated words sound like the corrected ones, even when they are spelled very differently, or they differ only in spelling, spacing, or capitalization ("tan stack" → "TanStack", "for sell" → "Vercel", "grok" → "Groq", "tea three code" → "T3 Code", "use state" → "useState").
 - The corrected text is a name, product, library, service, technical term, or code identifier, not a common word.
 
 Reject rewording, synonyms, added or removed ideas, grammar fixes, and common words. Reply with the corrected terms to remember, one per line, exactly as the user wrote them. Reply with nothing if no pair qualifies.`;

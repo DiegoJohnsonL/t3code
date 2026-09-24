@@ -19,6 +19,7 @@ import {
   buildTranscriptionPrompt,
   isEchoedTranscriptionPrompt,
   parseDictationVocabulary,
+  threadNames,
 } from "./dictationPrompts.ts";
 import {
   buildCorrectionReviewPrompt,
@@ -116,6 +117,7 @@ const generateWithProvider = (input: {
         system: input.system,
         prompt: input.prompt,
         providerOptions: input.provider.cleanupOptions,
+        temperature: 0,
         maxRetries: PROVIDER_CALL_MAX_RETRIES,
         abortSignal,
       }),
@@ -155,17 +157,20 @@ export const make = (makeProvider: MakeDictationProvider) =>
     }) {
       const dictation = yield* readConfiguredDictation;
       const provider = makeProvider({ apiKey: dictation.apiKey });
+      const conversation = yield* readConversation(threadId);
       const vocabulary = [
         ...new Set([
           ...parseDictationVocabulary(dictation.vocabulary),
           ...dictation.learnedVocabulary,
         ]),
       ];
-      const vocabularyPrompt = buildTranscriptionPrompt(vocabulary);
-      const [transcript, conversation] = yield* Effect.all(
-        [transcribeWithProvider({ provider, audio, vocabularyPrompt }), readConversation(threadId)],
-        { concurrency: "unbounded" },
-      );
+      const namesInThread = threadNames(conversation).filter((name) => !vocabulary.includes(name));
+      const vocabularyPrompt = buildTranscriptionPrompt([
+        ...parseDictationVocabulary(dictation.vocabulary),
+        ...namesInThread,
+        ...dictation.learnedVocabulary,
+      ]);
+      const transcript = yield* transcribeWithProvider({ provider, audio, vocabularyPrompt });
       if (transcript.length === 0 || isEchoedTranscriptionPrompt(transcript, vocabularyPrompt)) {
         return "";
       }
@@ -173,7 +178,7 @@ export const make = (makeProvider: MakeDictationProvider) =>
       // A failed cleanup still leaves the speaker's words, which beats losing the recording.
       return yield* generateWithProvider({
         provider,
-        system: buildCleanupSystemPrompt({ vocabulary, conversation }),
+        system: buildCleanupSystemPrompt({ vocabulary, threadNames: namesInThread }),
         prompt: buildCleanupUserPrompt(transcript),
       }).pipe(
         Effect.catch((failure) =>

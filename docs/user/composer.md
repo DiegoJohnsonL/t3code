@@ -161,8 +161,9 @@ this is stored on the environment, so every device connected to it benefits.
 Recordings can be up to five minutes long. Canceling, leaving the screen, or an
 audio interruption discards the recording and preserves your existing draft.
 
-With environment transcription, the recording and the thread's last few messages go
-to your environment and then to Groq for transcription and cleanup. Groq doesn't retain it by default
+With environment transcription, the recording and the code and file names from the
+thread's last few messages go to your environment and then to Groq for transcription
+and cleanup. Groq doesn't retain it by default
 ([data policy](https://console.groq.com/docs/your-data)). T3 Code deletes the
 temporary audio after transcription or cancellation; only the message text is
 sent when you submit.

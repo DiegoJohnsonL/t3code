@@ -53,8 +53,10 @@ Words reach the models from three places, and nothing runs on a schedule:
   [`buildTranscriptionPrompt`](../../apps/server/src/voice/dictationPrompts.ts)
   trims to a budget itself and puts the most important terms last. Cleanup sees
   the whole list.
-- The last few messages of the thread being dictated into, read per request and
-  given only to cleanup, so names the agent just wrote are spelled right.
+- Code identifiers and file names from the last few messages of the thread being
+  dictated into, read per request. Passing names rather than the raw conversation
+  keeps the prompt short and gives cleanup a list to match against, which is what
+  made "use composer voice input" come back as `useComposerVoiceInput`.
 - Learning happens on send. Clients remember the transcripts they inserted into a
   draft and, when it is sent,
   [`findDictationCorrections`](../../packages/client-runtime/src/voice-input/dictationCorrections.ts)

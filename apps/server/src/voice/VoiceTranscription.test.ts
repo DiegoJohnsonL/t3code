@@ -149,7 +149,7 @@ describe("VoiceTranscription", () => {
     }),
   );
 
-  it.effect("gives cleanup the thread's recent messages to spell code names", () =>
+  it.effect("spells code names from the thread being dictated into", () =>
     Effect.gen(function* () {
       const transcription = mockTranscriber(async () =>
         transcriptionResult("rename use composer voice input"),
@@ -167,9 +167,9 @@ describe("VoiceTranscription", () => {
       const [system] = cleanup.doGenerateCalls[0]?.prompt ?? [];
       assert(system?.role === "system");
       expect(system.content).toContain("- TanStack");
-      expect(system.content).toContain(
-        "[assistant] I added `useComposerVoiceInput` to ChatComposer.tsx.",
-      );
+      expect(system.content).toContain("Names in this thread");
+      expect(system.content).toContain("- useComposerVoiceInput");
+      expect(system.content).toContain("- ChatComposer.tsx\n- ChatComposer");
     }),
   );
 

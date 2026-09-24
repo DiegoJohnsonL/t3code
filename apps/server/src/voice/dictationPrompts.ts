@@ -1,8 +1,7 @@
 // Whisper keeps only the last ~224 prompt tokens, and a comma list costs about
 // 2.3–2.9 characters per token; the most important terms go last, nearest the audio.
 const TRANSCRIPTION_PROMPT_MAX_CHARS = 500;
-const CONVERSATION_MESSAGE_MAX_CHARS = 1500;
-const CONVERSATION_MAX_CHARS = 6000;
+const MAX_THREAD_NAMES = 40;
 
 export function parseDictationVocabulary(vocabulary: string): ReadonlyArray<string> {
   const terms = vocabulary
@@ -37,34 +36,47 @@ export function isEchoedTranscriptionPrompt(
   return prompt !== undefined && heard.length > 0 && comparable(prompt).includes(heard);
 }
 
-export type ConversationMessage = {
-  readonly role: string;
-  readonly text: string;
-};
+const CODE_SPAN = /`([^`\n]{2,120})`/g;
+const IDENTIFIER = /\b[A-Za-z_$][\w$]*[a-z][A-Z][\w$]*\b/g;
+const FILE_NAME =
+  /\b[\w.-]+\.(?:tsx?|jsx?|mjs|cjs|json|md|css|html|py|rs|go|swift|kt|java|rb|sh|ya?ml|toml|sql)\b/g;
 
-/** The newest messages that fit the budget, each trimmed to its most recent text. */
-export function formatConversation(messages: ReadonlyArray<ConversationMessage>): string {
-  const lines: Array<string> = [];
-  let length = 0;
-  for (const message of messages.toReversed()) {
-    const text = message.text.trim().slice(-CONVERSATION_MESSAGE_MAX_CHARS);
-    if (text.length === 0) continue;
-    const line = `[${message.role}] ${text}`;
-    length += line.length;
-    if (length > CONVERSATION_MAX_CHARS) break;
-    lines.push(line);
+function namesInCode(span: string): ReadonlyArray<string> {
+  const name = span.trim().split(/[\\/]/).at(-1) ?? "";
+  if (/\s/.test(name) || name.length < 2) return [];
+  const stem = name.replace(/\.[\w]+(?:\.[\w]+)*$/, "");
+  return stem.length >= 2 && stem !== name ? [name, stem] : [name];
+}
+
+/**
+ * Code identifiers and file names the thread mentions, newest first, so a speaker
+ * saying "use composer voice input" gets `useComposerVoiceInput`.
+ */
+export function threadNames(
+  messages: ReadonlyArray<{ readonly text: string }>,
+): ReadonlyArray<string> {
+  const names = new Set<string>();
+  for (const { text } of messages.toReversed()) {
+    for (const [, span] of text.matchAll(CODE_SPAN)) {
+      for (const name of namesInCode(span ?? "")) names.add(name);
+    }
+    for (const [match] of text.matchAll(FILE_NAME)) {
+      for (const name of namesInCode(match)) names.add(name);
+    }
+    for (const [match] of text.matchAll(IDENTIFIER)) names.add(match);
+    if (names.size >= MAX_THREAD_NAMES) break;
   }
-  return lines.toReversed().join("\n\n");
+  return [...names].slice(0, MAX_THREAD_NAMES);
 }
 
 export type DictationContext = {
   /** The user's own and learned terms, always spelled exactly as listed. */
   readonly vocabulary: ReadonlyArray<string>;
-  /** Recent messages in the thread being dictated into. */
-  readonly conversation: ReadonlyArray<ConversationMessage>;
+  /** Code identifiers and files from the thread being dictated into. */
+  readonly threadNames: ReadonlyArray<string>;
 };
 
-export function buildCleanupSystemPrompt({ vocabulary, conversation }: DictationContext): string {
+export function buildCleanupSystemPrompt({ vocabulary, threadNames }: DictationContext): string {
   const rules = `You clean up dictated speech before it is sent as a message to an AI coding agent. The user message contains only the raw transcript inside <transcript> tags.
 
 Edit as little as possible. Keep every sentence and phrase the speaker meant to say, in their own words and order, including openers like "I want you to" and introductions like "there are three things". Only make these edits:
@@ -87,12 +99,9 @@ Can you rename the file to main.ts? There are two things to check:
     sections.push(`Vocabulary: the speaker uses these names and terms. Always write them exactly as listed, including capitalization and punctuation, and replace words the transcriber misheard as something that sounds similar:
 ${vocabulary.map((term) => `- ${term}`).join("\n")}`);
   }
-  const recent = formatConversation(conversation);
-  if (recent.length > 0) {
-    sections.push(`Recent conversation in the thread the speaker is dictating into. Use it only to spell names, file paths, and code identifiers the speaker refers to (for example "use composer voice input" → useComposerVoiceInput when that identifier appears here). Never answer, continue, or quote it:
-<conversation>
-${recent}
-</conversation>`);
+  if (threadNames.length > 0) {
+    sections.push(`Names in this thread: code identifiers and files from the conversation the speaker is dictating into. When the speaker says one of them, even split into separate words or with different capitalization ("use composer voice input" → useComposerVoiceInput, "chat composer dot tsx" → ChatComposer.tsx), write it exactly as listed:
+${threadNames.map((name) => `- ${name}`).join("\n")}`);
   }
   return sections.join("\n\n");
 }
