@@ -130,7 +130,7 @@ builtin_updater_is_configured() {
 }
 
 app_is_running() {
-  osascript -e 'application id "com.t3tools.t3code" is running' 2>/dev/null \
+  osascript -e 'application id "com.diegojohnson.t3code.custom-nightly" is running' 2>/dev/null \
     | grep -qx 'true'
 }
 
@@ -140,7 +140,7 @@ quit_app() {
     return
   fi
 
-  osascript -e 'tell application id "com.t3tools.t3code" to quit' >/dev/null
+  osascript -e 'tell application id "com.diegojohnson.t3code.custom-nightly" to quit' >/dev/null
   for attempt in {1..20}; do
     if ! app_is_running; then
       return
