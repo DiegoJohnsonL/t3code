@@ -188,12 +188,19 @@ html[data-theme-id]:not([data-theme-id=""]) {
   mask-image: none;
 }
 
-/* Dark themes outline the composer in an opaque mix of the background, which
-   reads as a black ring over a picture. Match the context strip's white/7
-   edge instead. Unlayered so it beats the shell's theme utilities. */
-[data-chat-background-pane]:has(> [data-chat-backdrop="source"]) [data-slot="composer-shell"] {
+/* Dark themes draw the composer outline and the timeline's turn dividers in
+   opaque near-background colors, which read as black lines over a picture.
+   Use the context strip's white/7 edge instead. Unlayered so it beats the
+   theme utilities. */
+[data-chat-background-pane]:has(> [data-chat-backdrop="source"]) {
   @variant dark {
-    --chat-composer-outline: color-mix(in srgb, var(--color-white) 7%, transparent);
+    & [data-slot="composer-shell"] {
+      --chat-composer-outline: color-mix(in srgb, var(--color-white) 7%, transparent);
+    }
+
+    & [data-timeline-divider] {
+      border-color: color-mix(in srgb, var(--color-white) 7%, transparent);
+    }
   }
 }
 
