@@ -18,6 +18,7 @@ import {
 import { getMobileUniwindThemeName } from "../../../../lib/mobileThemeRuntime";
 import { cn } from "../../../../lib/cn";
 import { useAppearancePreferences } from "../AppearancePreferencesProvider";
+import { PhoneThemeGrid } from "../../../phone-background/PhoneThemeGrid";
 
 const APPEARANCE_MODES: ReadonlyArray<{
   readonly id: MobileThemeMode;
@@ -316,7 +317,7 @@ export function ThemeAppearanceSection() {
 
       <View className="gap-3">
         <SectionLabel>Themes</SectionLabel>
-        <View className="flex-row flex-wrap gap-3">
+        <PhoneThemeGrid>
           {MOBILE_THEME_OPTIONS.filter(
             (theme) => theme.id !== "material-you" || systemColorsAvailable,
           ).map((theme) => (
@@ -331,7 +332,7 @@ export function ThemeAppearanceSection() {
               themeId={theme.id}
             />
           ))}
-        </View>
+        </PhoneThemeGrid>
       </View>
     </View>
   );

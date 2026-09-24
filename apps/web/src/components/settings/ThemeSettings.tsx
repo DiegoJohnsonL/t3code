@@ -1,3 +1,4 @@
+import { PictureColorsThemeGate } from "../background/PictureColorsThemeGate";
 import {
   CheckIcon,
   CopyIcon,
@@ -914,7 +915,7 @@ export function ThemeLibrary({
           </Button>
         </div>
       </div>
-      {renderPairGrid()}
+      <PictureColorsThemeGate>{renderPairGrid()}</PictureColorsThemeGate>
       <ThemeImportDialog
         onImportedMany={(importedThemes, { updated }) => {
           // Re-apply after collection updates. The update may remove the

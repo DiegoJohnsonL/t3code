@@ -79,6 +79,9 @@ translucent bubble so it stays readable over bright pictures; it starts on, and 
 opacity** tunes it. **Colors from pictures** themes the app from the picture showing, and **Show
 behind home and threads** hides the background without deleting it.
 
+While a picture's colors theme the app, on the phone or the desktop, the theme cards are hidden,
+since no theme choice would show. Turn off the picture colors to pick a theme again.
+
 ## New chats and conversations
 
 While custom backgrounds are enabled, the selected background appears on new chats and
