@@ -130,12 +130,13 @@ afterEach(async () => {
 });
 
 it("preserves both persisted and pending edits when encoding finishes", async () => {
+  act(() => renderer.root.findByProps({ "aria-label": "Rename playlist" }).props.onClick());
   act(() => {
     renderer.root
-      .findByProps({ "aria-label": "Background name" })
+      .findByProps({ "aria-label": "Playlist name" })
       .props.onChange({ currentTarget: { value: "Renamed" } });
   });
-  act(() => renderer.root.findByProps({ "aria-label": "Background name" }).props.onBlur());
+  act(() => renderer.root.findByProps({ "aria-label": "Playlist name" }).props.onBlur());
   act(() => vi.advanceTimersByTime(150));
   act(() => renderer.root.findAllByType(RangeControl)[0]!.props.onChange(35));
   await act(async () => finishUpload());

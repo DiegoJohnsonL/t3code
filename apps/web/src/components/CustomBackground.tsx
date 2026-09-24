@@ -31,7 +31,6 @@ export const CustomBackground = memo(function CustomBackground({
 }) {
   const selected = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
-  const textGlow = useClientSettings((settings) => settings.customBackgroundTextGlow);
   const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
   const editing = useBackgroundStudioOpen();
   const preview = useBackgroundStudioStore((store) => store.preview);
@@ -64,7 +63,6 @@ export const CustomBackground = memo(function CustomBackground({
   return (
     <div
       data-chat-backdrop="source"
-      data-text-glow={textGlow || undefined}
       data-agent-bubbles={agentBubbles || undefined}
       className="pointer-events-none absolute inset-0 -z-10"
     >

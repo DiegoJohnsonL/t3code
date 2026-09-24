@@ -46,11 +46,10 @@ the chat text fades under the header. **Fade softness** is how long that ease is
 give a crisp edge, high values start easing lower down for a gentler fade. **Image opacity**
 sets how much of the picture shows over your theme's background at all.
 
-**Glow behind text** draws a soft halo in your theme's background color around chat text, and
-**Bubbles behind agent replies** sets the text of agent replies on a translucent bubble, like
-your own messages. Both switches are at the top of the studio and in **Settings → Appearance**.
-In the studio, **Bubble opacity** and **Bubble blur** tune the bubble; blur costs some scrolling
-smoothness, so it starts off.
+**Bubbles behind agent replies**, under **Theme and chats** at the bottom of the panel, sets
+the text of agent replies on a translucent bubble, like your own messages. **Bubble opacity**
+and **Bubble blur** tune it; blur costs some scrolling smoothness, so it starts off. The pencil
+next to the playlist renames it.
 
 ## Images
 

@@ -59,21 +59,6 @@ html[data-theme-id]:not([data-theme-id=""]) {
     z-index: 10;
   }
 
-  /* A soft halo in the theme background color keeps text readable over busy
-     pictures without dimming them. text-shadow inherits, so the pane's rule
-     reaches every line; opaque surfaces reset it. */
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow]) {
-    text-shadow:
-      0 0 1px color-mix(in srgb, var(--background) 95%, transparent),
-      0 0 4px color-mix(in srgb, var(--background) 85%, transparent),
-      0 0 14px color-mix(in srgb, var(--background) 65%, transparent);
-  }
-
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-text-glow])
-    :is([data-chat-composer-stack], [data-slot="button"]) {
-    text-shadow: none;
-  }
-
   /* Only the reply's text sits on the bubble, not its copy button or timestamp.
      Blur is off by default: backdrop blur on every reply re-samples the
      picture on each scrolled frame. BackgroundThemeSync sets both variables. */

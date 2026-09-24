@@ -328,8 +328,6 @@ export const ClientSettingsSchema = Schema.Struct({
   customBackgroundDynamicTheme: Schema.Boolean.pipe(
     Schema.withDecodingDefault(Effect.succeed(false)),
   ),
-  /** Draws a soft theme-colored glow around chat text over a background. */
-  customBackgroundTextGlow: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   /** Sets agent replies on a translucent bubble over a background, like user messages. */
   customBackgroundAgentBubbles: Schema.Boolean.pipe(
     Schema.withDecodingDefault(Effect.succeed(false)),
@@ -1621,7 +1619,6 @@ export const ClientSettingsPatch = Schema.Struct({
   customBackgroundEnabled: Schema.optionalKey(Schema.Boolean),
   activeCustomBackgroundId: Schema.optionalKey(Schema.NullOr(CustomBackgroundId)),
   customBackgroundDynamicTheme: Schema.optionalKey(Schema.Boolean),
-  customBackgroundTextGlow: Schema.optionalKey(Schema.Boolean),
   customBackgroundAgentBubbles: Schema.optionalKey(Schema.Boolean),
   customBackgroundAgentBubbleOpacity: Schema.optionalKey(AgentBubbleOpacity),
   customBackgroundAgentBubbleBlur: Schema.optionalKey(AgentBubbleBlur),

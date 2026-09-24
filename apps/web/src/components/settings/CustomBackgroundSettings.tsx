@@ -10,9 +10,6 @@ import { MonitorCog } from "lucide-react";
 export function CustomBackgroundSettings() {
   const active = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
-  const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
-  const textGlow = useClientSettings((settings) => settings.customBackgroundTextGlow);
-  const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
   const libraryCount = useClientSettings((settings) => settings.customBackgrounds.length);
   const updateSettings = useUpdateClientSettings();
 
@@ -20,7 +17,7 @@ export function CustomBackgroundSettings() {
     <SettingsSection id="appearance-background" title="Background">
       <SettingsRow
         {...searchableSetting("custom-background")}
-        description="Put your own pictures behind your chats, with filters and rotation. Saved only on this client."
+        description="Put your own pictures behind your chats, with filters, rotation, image colors, and reply bubbles. Saved only on this client."
         status={
           active
             ? `Selected: “${active.name}”`
@@ -49,45 +46,6 @@ export function CustomBackgroundSettings() {
               aria-label="Enable custom background"
             />
           </div>
-        }
-      />
-      <SettingsRow
-        {...searchableSetting("background-dynamic-theme")}
-        description="Repaint the app from the colors of whichever picture is showing. Each image in a playlist brings its own palette."
-        control={
-          <Switch
-            checked={dynamicTheme}
-            onCheckedChange={(checked) =>
-              updateSettings({ customBackgroundDynamicTheme: Boolean(checked) })
-            }
-            aria-label="Theme from image colors"
-          />
-        }
-      />
-      <SettingsRow
-        {...searchableSetting("background-text-glow")}
-        description="Draw a soft halo in your theme's background color around chat text, so it reads over busy pictures."
-        control={
-          <Switch
-            checked={textGlow}
-            onCheckedChange={(checked) =>
-              updateSettings({ customBackgroundTextGlow: Boolean(checked) })
-            }
-            aria-label="Glow behind text"
-          />
-        }
-      />
-      <SettingsRow
-        {...searchableSetting("background-agent-bubbles")}
-        description="Set the text of agent replies on a translucent bubble, like your own messages."
-        control={
-          <Switch
-            checked={agentBubbles}
-            onCheckedChange={(checked) =>
-              updateSettings({ customBackgroundAgentBubbles: Boolean(checked) })
-            }
-            aria-label="Bubbles behind agent replies"
-          />
         }
       />
     </SettingsSection>
