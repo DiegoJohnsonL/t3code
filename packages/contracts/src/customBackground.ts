@@ -208,6 +208,12 @@ export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
 
+/**
+ * How strongly each picture's own lightness pulls its opacity down and its
+ * fade up, 0 to 100. At 0 every picture shows at the chosen values.
+ */
+export const CustomBackgroundBrightnessAdapt = CustomBackgroundFade;
+
 export const MAX_CUSTOM_BACKGROUND_BLUR = 40;
 /** Blur of the picture itself, in pixels. */
 export const CustomBackgroundBlur = Schema.Int.check(
@@ -433,6 +439,9 @@ export const CustomBackgroundRecord = Schema.Struct({
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_OPACITY)),
   ),
   blur: CustomBackgroundBlur.pipe(Schema.withDecodingDefault(Effect.succeed(0))),
+  brightnessAdapt: CustomBackgroundBrightnessAdapt.pipe(
+    Schema.withDecodingDefault(Effect.succeed(0)),
+  ),
   createdAt: Schema.String,
 });
 export type CustomBackgroundRecord = typeof CustomBackgroundRecord.Type;

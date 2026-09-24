@@ -23,7 +23,9 @@ vi.mock("~/customBackground/backgroundStudioStore", () => ({
 vi.mock("~/customBackground/imageStore", () => ({
   useBackgroundImageUrl: () => false,
   useBackgroundImageSourceColor: () => false,
+  useBackgroundImageLightness: () => false,
 }));
+vi.mock("~/hooks/useTheme", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 vi.mock("~/customBackground/webgl", () => ({ isWebGlAvailable: () => true }));
 vi.mock("./background/BackgroundRenderer", () => ({
   BackgroundRenderer: () => <div>Rendered background</div>,
@@ -47,6 +49,7 @@ it("draws nothing while the photo is missing, whatever the filter", async () => 
     fadeSoftness: 30,
     opacity: 100,
     blur: 0,
+    brightnessAdapt: 0,
     source: {
       kind: "image",
       imageIds: ["a".repeat(64)],

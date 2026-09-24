@@ -1,0 +1,73 @@
+import { useState } from "react";
+
+import type { BackgroundRendererProps } from "~/components/background/BackgroundRenderer";
+import { useClientSettings } from "~/hooks/useSettings";
+import { useTheme } from "~/hooks/useTheme";
+
+import { useBackgroundStudioOpen, useBackgroundStudioStore } from "./backgroundStudioStore";
+import { adaptToBrightness } from "./brightnessAdapt";
+import { useBackgroundImageLightness, useBackgroundImageUrl } from "./imageStore";
+import {
+  type CustomBackgroundRouteKind,
+  backgroundDrawMode,
+  backgroundIsRenderable,
+  resolveDisplayedBackground,
+} from "./records";
+import { useRotatingBackgroundImage } from "./rotation";
+import { useActiveBackground } from "./useActiveBackground";
+import { isWebGlAvailable } from "./webgl";
+
+const NO_SOURCE = { kind: "none" } as const;
+
+/** What the chat pane's background draws right now, or null when it draws nothing. */
+export function useChatBackdrop(
+  routeKind: CustomBackgroundRouteKind,
+): BackgroundRendererProps | null {
+  const selected = useActiveBackground();
+  const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const editing = useBackgroundStudioOpen();
+  const preview = useBackgroundStudioStore((store) => store.preview);
+  const { resolvedTheme } = useTheme();
+  const record = resolveDisplayedBackground({
+    selected,
+    preview,
+    enabled,
+    editing,
+    routeKind,
+  });
+  const filtersAvailable = isWebGlAvailable();
+  const source = record?.source ?? NO_SOURCE;
+  const { current: imageId, upcoming } = useRotatingBackgroundImage(source);
+  // Only the plain <img> path can show 4K pixels; the shader draws a fraction
+  // of them and uploads whatever it is given as a full-size GPU texture.
+  const variant =
+    record !== null &&
+    backgroundDrawMode({ filter: record.filter, hasImage: true, filtersAvailable }) === "shader"
+      ? "shader"
+      : "full";
+  const image = useBackgroundImageUrl(imageId, variant);
+  useBackgroundImageUrl(upcoming, variant);
+  const lightness = useBackgroundImageLightness(imageId);
+  // Measured ahead so the next picture arrives with its own look already known.
+  useBackgroundImageLightness(upcoming);
+  // Hold the previous picture while the next one decodes so a rotation never
+  // flashes the bare theme between images.
+  const [lastImage, setLastImage] = useState<string | null>(null);
+  if (typeof image === "string" && image !== lastImage) setLastImage(image);
+  const shownImage = typeof image === "string" ? image : image === null ? lastImage : null;
+  if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
+  if (imageId !== null && shownImage === null) return null;
+  const look =
+    typeof lightness === "number"
+      ? adaptToBrightness({ ...record, lightness, appearance: resolvedTheme })
+      : record;
+  return {
+    filter: record.filter,
+    image: shownImage,
+    transition: source.kind === "image" ? source.transition : "cut",
+    fade: { fade: look.fade, fadeHeight: record.fadeHeight, fadeSoftness: record.fadeSoftness },
+    opacity: look.opacity,
+    blur: record.blur,
+    filtersAvailable,
+  };
+}

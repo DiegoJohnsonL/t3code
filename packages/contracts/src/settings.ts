@@ -337,6 +337,10 @@ export const ClientSettingsSchema = Schema.Struct({
   customBackgroundAgentBubbleBlur: AgentBubbleBlur.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_AGENT_BUBBLE_BLUR)),
   ),
+  /** Outlines agent reply text in the theme background color over a background. */
+  customBackgroundReplyTextShadow: Schema.Boolean.pipe(
+    Schema.withDecodingDefault(Effect.succeed(false)),
+  ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
   ),
@@ -1616,6 +1620,7 @@ export const ClientSettingsPatch = Schema.Struct({
   customBackgroundAgentBubbles: Schema.optionalKey(Schema.Boolean),
   customBackgroundAgentBubbleOpacity: Schema.optionalKey(AgentBubbleOpacity),
   customBackgroundAgentBubbleBlur: Schema.optionalKey(AgentBubbleBlur),
+  customBackgroundReplyTextShadow: Schema.optionalKey(Schema.Boolean),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

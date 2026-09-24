@@ -40,6 +40,7 @@ export function createEmptyBackground(input: {
     fadeSoftness: DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
     opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
     blur: 0,
+    brightnessAdapt: 0,
     createdAt: input.createdAt,
   };
 }

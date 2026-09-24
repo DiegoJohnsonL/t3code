@@ -1,4 +1,4 @@
-import { QuantizerCelebi, Score } from "@material/material-color-utilities";
+import { QuantizerCelebi, Score, lstarFromArgb } from "@material/material-color-utilities";
 
 import { createCanvas } from "~/lib/imageCompression";
 
@@ -22,12 +22,8 @@ function opaquePixels(data: Uint8ClampedArray): number[] {
   return pixels;
 }
 
-/**
- * The ARGB seed Material builds a scheme from, seen through the same quantize
- * and score pass Android runs on a wallpaper. Returns null when the picture
- * cannot be decoded or scores nothing, which leaves the selected theme alone.
- */
-export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
+/** The picture's opaque pixels as ARGB, downscaled; null when it cannot be decoded. */
+async function samplePixels(blob: Blob): Promise<number[] | null> {
   if (typeof createImageBitmap !== "function") return null;
   let bitmap: ImageBitmap;
   try {
@@ -44,11 +40,30 @@ export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
     if (!target) return null;
     target.context.drawImage(bitmap, 0, 0, width, height);
     const pixels = opaquePixels(target.context.getImageData(0, 0, width, height).data);
-    if (pixels.length === 0) return null;
-    return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE_BUCKETS))[0] ?? null;
+    return pixels.length === 0 ? null : pixels;
   } catch {
     return null;
   } finally {
     bitmap.close();
   }
+}
+
+/**
+ * The ARGB seed Material builds a scheme from, seen through the same quantize
+ * and score pass Android runs on a wallpaper. Returns null when the picture
+ * cannot be decoded or scores nothing, which leaves the selected theme alone.
+ */
+export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
+  const pixels = await samplePixels(blob);
+  if (!pixels) return null;
+  return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE_BUCKETS))[0] ?? null;
+}
+
+/** Mean perceptual lightness (CIE L*) of the picture, 0 to 1; null when it cannot be decoded. */
+export async function lightnessFromImage(blob: Blob): Promise<number | null> {
+  const pixels = await samplePixels(blob);
+  if (!pixels) return null;
+  let total = 0;
+  for (const pixel of pixels) total += lstarFromArgb(pixel);
+  return total / pixels.length / 100;
 }

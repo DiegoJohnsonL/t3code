@@ -29,8 +29,9 @@ import {
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
-import { storeBackgroundImage } from "~/customBackground/imageStore";
-import { stepBackgroundImage } from "~/customBackground/rotation";
+import { adaptToBrightness } from "~/customBackground/brightnessAdapt";
+import { storeBackgroundImage, useBackgroundImageLightness } from "~/customBackground/imageStore";
+import { stepBackgroundImage, useRotatingBackgroundImage } from "~/customBackground/rotation";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
   type CustomBackgroundLibrary,
@@ -46,6 +47,7 @@ import {
   withFilterKind,
 } from "~/customBackground/records";
 import { getClientSettings, useClientSettings, useUpdateClientSettings } from "~/hooks/useSettings";
+import { useTheme } from "~/hooks/useTheme";
 import { cn, randomUUID } from "~/lib/utils";
 import { ensureLocalApi } from "~/localApi";
 import { Button } from "../ui/button";
@@ -209,6 +211,44 @@ function DitheringPresetRow({
         })}
       </div>
     </StudioField>
+  );
+}
+
+/** The adapt slider, plus what it does to the picture showing right now. */
+function BrightnessAdaptControl({
+  record,
+  onChange,
+}: {
+  record: CustomBackgroundRecord;
+  onChange: (brightnessAdapt: number) => void;
+}) {
+  const { current } = useRotatingBackgroundImage(record.source);
+  const lightness = useBackgroundImageLightness(current);
+  const { resolvedTheme } = useTheme();
+  const look =
+    typeof lightness === "number"
+      ? adaptToBrightness({ ...record, lightness, appearance: resolvedTheme })
+      : null;
+  return (
+    <>
+      <RangeControl
+        label="Brightness adapt"
+        min={MIN_CUSTOM_BACKGROUND_FADE}
+        max={MAX_CUSTOM_BACKGROUND_FADE}
+        step={1}
+        value={record.brightnessAdapt}
+        format={(value) => `${Math.round(value)}%`}
+        onChange={(value) => onChange(Math.round(value))}
+      />
+      {typeof lightness === "number" && look ? (
+        <StudioField label="This picture">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {Math.round(lightness * 100)}% lightness, shows at {look.opacity}% opacity and{" "}
+            {look.fade}% fade
+          </span>
+        </StudioField>
+      ) : null}
+    </>
   );
 }
 
@@ -500,6 +540,7 @@ export function BackgroundStudioPanel() {
     (settings) => settings.customBackgroundAgentBubbleOpacity,
   );
   const bubbleBlur = useClientSettings((settings) => settings.customBackgroundAgentBubbleBlur);
+  const replyTextShadow = useClientSettings((settings) => settings.customBackgroundReplyTextShadow);
   const updateSettings = useUpdateClientSettings();
 
   const selectedId = activeId;
@@ -847,6 +888,10 @@ export function BackgroundStudioPanel() {
                 }
               />
             ))}
+            <BrightnessAdaptControl
+              record={record}
+              onChange={(brightnessAdapt) => commitRecord({ ...record, brightnessAdapt })}
+            />
             <RangeControl
               label="Background blur"
               min={0}
@@ -900,6 +945,15 @@ export function BackgroundStudioPanel() {
             />
           </>
         ) : null}
+        <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          Shadow under reply text
+          <Switch
+            checked={replyTextShadow}
+            onCheckedChange={(checked) =>
+              updateSettings({ customBackgroundReplyTextShadow: checked })
+            }
+          />
+        </label>
       </StudioSection>
     </div>
   );

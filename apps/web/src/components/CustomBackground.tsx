@@ -1,20 +1,8 @@
-import { lazy, memo, Suspense, useState } from "react";
+import { lazy, memo, Suspense, useLayoutEffect, useState } from "react";
 
-import {
-  useBackgroundStudioOpen,
-  useBackgroundStudioStore,
-} from "~/customBackground/backgroundStudioStore";
 import { useClientSettings } from "~/hooks/useSettings";
-import { useBackgroundImageUrl } from "~/customBackground/imageStore";
-import {
-  type CustomBackgroundRouteKind,
-  backgroundDrawMode,
-  backgroundIsRenderable,
-  resolveDisplayedBackground,
-} from "~/customBackground/records";
-import { useRotatingBackgroundImage } from "~/customBackground/rotation";
-import { useActiveBackground } from "~/customBackground/useActiveBackground";
-import { isWebGlAvailable } from "~/customBackground/webgl";
+import type { CustomBackgroundRouteKind } from "~/customBackground/records";
+import { useChatBackdrop } from "~/customBackground/useChatBackdrop";
 
 // The shader library only loads once a client actually has a background
 // selected, so clients on the plain theme never pay for it at startup.
@@ -29,58 +17,71 @@ export const CustomBackground = memo(function CustomBackground({
 }: {
   routeKind: CustomBackgroundRouteKind;
 }) {
-  const selected = useActiveBackground();
-  const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
+  const backdrop = useChatBackdrop(routeKind);
   const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
-  const editing = useBackgroundStudioOpen();
-  const preview = useBackgroundStudioStore((store) => store.preview);
-  const record = resolveDisplayedBackground({
-    selected,
-    preview,
-    enabled,
-    editing,
-    routeKind,
-  });
-  const filtersAvailable = isWebGlAvailable();
-  const source = record?.source ?? ({ kind: "none" } as const);
-  const { current: imageId, upcoming } = useRotatingBackgroundImage(source);
-  // Only the plain <img> path can show 4K pixels; the shader draws a fraction
-  // of them and uploads whatever it is given as a full-size GPU texture.
-  const variant =
-    record !== null &&
-    backgroundDrawMode({ filter: record.filter, hasImage: true, filtersAvailable }) === "shader"
-      ? "shader"
-      : "full";
-  const image = useBackgroundImageUrl(imageId, variant);
-  useBackgroundImageUrl(upcoming, variant);
-  // Hold the previous picture while the next one decodes so a rotation never
-  // flashes the bare theme between images.
-  const [lastImage, setLastImage] = useState<string | null>(null);
-  if (typeof image === "string" && image !== lastImage) setLastImage(image);
-  const shownImage = typeof image === "string" ? image : image === null ? lastImage : null;
-  if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
-  if (imageId !== null && shownImage === null) return null;
+  const replyTextShadow = useClientSettings((settings) => settings.customBackgroundReplyTextShadow);
+  if (!backdrop) return null;
   return (
     <div
       data-chat-backdrop="source"
       data-agent-bubbles={agentBubbles || undefined}
+      data-reply-text-shadow={replyTextShadow || undefined}
       className="pointer-events-none absolute inset-0 -z-10"
     >
       <Suspense fallback={null}>
-        <BackgroundRenderer
-          filter={record.filter}
-          image={shownImage}
-          transition={source.kind === "image" ? source.transition : "cut"}
-          fade={{
-            fade: record.fade,
-            fadeHeight: record.fadeHeight,
-            fadeSoftness: record.fadeSoftness,
-          }}
-          opacity={record.opacity}
-          blur={record.blur}
-          filtersAvailable={filtersAvailable}
-        />
+        <BackgroundRenderer {...backdrop} />
       </Suspense>
+    </div>
+  );
+});
+
+interface PaneFrame {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Chromium's `backdrop-filter` only sees up to the nearest masked ancestor, so
+ * a mask fade on the timeline left reply bubbles and code blocks blurring an
+ * empty scroller. Over a background the timeline drops its mask (custom.css)
+ * and this strip repaints the pane's picture over the top edge instead, lined
+ * up with the pane, so the text still dissolves into it.
+ */
+export const ChatBackdropTopFade = memo(function ChatBackdropTopFade() {
+  const backdrop = useChatBackdrop("conversation");
+  const [strip, setStrip] = useState<HTMLDivElement | null>(null);
+  const [frame, setFrame] = useState<PaneFrame | null>(null);
+  useLayoutEffect(() => {
+    const pane = strip?.closest("[data-chat-background-pane]");
+    if (!strip || !pane) return;
+    const measure = () => {
+      const stripRect = strip.getBoundingClientRect();
+      const paneRect = pane.getBoundingClientRect();
+      setFrame({
+        top: paneRect.top - stripRect.top,
+        left: paneRect.left - stripRect.left,
+        width: paneRect.width,
+        height: paneRect.height,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(strip);
+    observer.observe(pane);
+    return () => observer.disconnect();
+  }, [strip]);
+  if (!backdrop) return null;
+  return (
+    <div ref={setStrip} aria-hidden="true" className="chat-backdrop-top-fade">
+      {frame ? (
+        <div className="absolute" style={frame}>
+          <Suspense fallback={null}>
+            <BackgroundRenderer {...backdrop} />
+          </Suspense>
+        </div>
+      ) : null}
     </div>
   );
 });

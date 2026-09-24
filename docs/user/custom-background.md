@@ -47,10 +47,17 @@ give a crisp edge, high values start easing lower down for a gentler fade. **Ima
 sets how much of the picture shows over your theme's background at all, and **Background blur**
 softens the picture itself so busy photos sit further back.
 
+**Brightness adapt** tunes each picture in a playlist on its own: the brighter a picture is
+(or the darker, with a light theme), the more it lowers the image opacity and raises the bottom
+fade, so a bright photo and a night sky can share one set of sliders. At 0% every picture shows
+at the values you set. The line under it shows the current picture's lightness and the opacity
+and fade it ends up with.
+
 **Bubbles behind agent replies**, under **Theme and chats** at the bottom of the panel, sets
 the text of agent replies on a translucent bubble, like your own messages. **Bubble opacity**
-and **Bubble blur** tune it; blur costs some scrolling smoothness, so it starts off. The pencil
-next to the playlist renames it.
+and **Bubble blur** tune it; blur costs some scrolling smoothness, so it starts off.
+**Shadow under reply text** outlines reply text in your theme's background color, which keeps
+it readable on a clear bubble or with no bubble at all. The pencil next to the playlist renames it.
 
 ## Images
 

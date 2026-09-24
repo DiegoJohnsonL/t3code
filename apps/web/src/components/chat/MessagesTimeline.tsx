@@ -168,6 +168,7 @@ import { MessageCopyButton } from "./MessageCopyButton";
 import { PierreEntryIcon } from "./PierreEntryIcon";
 import { inferEntryKindFromPath } from "../../pierre-icons";
 import { AssistantSelectionToolbar } from "./AssistantSelectionToolbar";
+import { ChatBackdropTopFade } from "../CustomBackground";
 import type { AssistantCitationSourceAnchor } from "~/lib/assistantTextSelection";
 import {
   AssistantCitationSource,
@@ -1324,6 +1325,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
             }
             ListFooterComponent={timelineListFooter}
           />
+          {topFadeEnabled ? <ChatBackdropTopFade /> : null}
           <TimelineMinimap
             items={minimapItems}
             hasPersistentGutter={minimapHasPersistentGutter}

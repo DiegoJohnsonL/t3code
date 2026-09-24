@@ -78,6 +78,41 @@ html[data-theme-id]:not([data-theme-id=""]) {
     backdrop-filter: var(--agent-bubble-backdrop, none);
   }
 
+  /* A halo in the theme background color, the opposite of the text color. */
+  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-reply-text-shadow])
+    [data-assistant-reply]
+    > [data-assistant-citation-source] {
+    text-shadow:
+      0 0 2px color-mix(in srgb, var(--background) 80%, transparent),
+      0 1px 3px color-mix(in srgb, var(--background) 50%, transparent);
+
+    & pre,
+    & code {
+      text-shadow: none;
+    }
+  }
+
+  /* Stands in for the timeline's top mask over a background; ChatBackdropTopFade
+     explains why. The mask's alpha, inverted: opaque picture at the top edge. */
+  .chat-backdrop-top-fade {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    inset-inline: 0 var(--app-scrollbar-width);
+    height: calc(var(--workspace-titlebar-scroll-fade-height) + 1px);
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      rgb(0 0 0 / 90%) 10%,
+      rgb(0 0 0 / 70%) 24%,
+      rgb(0 0 0 / 42%) 42%,
+      rgb(0 0 0 / 18%) 62%,
+      rgb(0 0 0 / 4%) 82%,
+      transparent 100%
+    );
+  }
+
   /* Wallpaper is painted at viewport width and shifted left by this amount so
      cover/center stays on the window. Mobile uses a sheet, so stay at 0. */
   [data-slot="sidebar-wrapper"] {
@@ -140,6 +175,16 @@ html[data-theme-id]:not([data-theme-id=""]) {
   & > :not([data-chat-backdrop]) {
     background-color: transparent;
   }
+}
+
+/* A mask here would hide the picture from every backdrop-filter in the
+   timeline; ChatBackdropTopFade paints the fade instead. Unlayered so it beats
+   the topbar-scroll-fade utility. */
+[data-chat-background-pane]:has(> [data-chat-backdrop="source"])
+  [data-assistant-citation-viewport]
+  .topbar-scroll-fade {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Over a wallpaper the header stays clear so the picture runs to the top edge;

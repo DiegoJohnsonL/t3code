@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 
 import { type ImageCompressionFailureReason, reencodeImage } from "~/lib/imageCompression";
 
-import { sourceColorFromImage } from "./sourceColor";
+import { lightnessFromImage, sourceColorFromImage } from "./sourceColor";
 
 const DATABASE_NAME = "t3code:custom-backgrounds";
 const DATABASE_VERSION = 3;
@@ -175,6 +175,7 @@ export async function deleteBackgroundImage(id: CustomBackgroundImageId): Promis
   await transactionDone(transaction);
   for (const variant of URL_VARIANTS) releaseUrl(id, variant);
   sourceColorStates.delete(id);
+  lightnessStates.delete(id);
   emitUrlChange();
   emitStoreChange();
 }
@@ -358,6 +359,45 @@ export function useBackgroundImageSourceColor(
       if (id === null) return false;
       const state = ensureSourceColor(id);
       return state.status === "ready" ? (state.sourceColor ?? false) : null;
+    },
+    () => null,
+  );
+}
+
+type LightnessState = { status: "loading" } | { status: "ready"; lightness: number | null };
+
+// Measured from the stored thumbnail on first use rather than at upload, so
+// pictures added before brightness adapt existed get a value too.
+const lightnessStates = new Map<CustomBackgroundImageId, LightnessState>();
+
+function ensureLightness(id: CustomBackgroundImageId): LightnessState {
+  const cached = lightnessStates.get(id);
+  if (cached) return cached;
+  const loading: LightnessState = { status: "loading" };
+  lightnessStates.set(id, loading);
+  const settle = (lightness: number | null) => {
+    // A delete that raced the read already cleared the slot; leave it.
+    if (lightnessStates.get(id) === loading) {
+      lightnessStates.set(id, { status: "ready", lightness });
+    }
+  };
+  void readBackgroundImage(id)
+    .then((image) => (image ? lightnessFromImage(image.thumbnail) : null))
+    .then(settle, () => settle(null))
+    .finally(emitUrlChange);
+  return loading;
+}
+
+/** The image's mean lightness, 0 to 1; `null` while it loads, `false` when it cannot be measured. */
+export function useBackgroundImageLightness(
+  id: CustomBackgroundImageId | null,
+): number | null | false {
+  return useSyncExternalStore(
+    subscribeUrls,
+    () => {
+      if (id === null) return false;
+      const state = ensureLightness(id);
+      return state.status === "ready" ? (state.lightness ?? false) : null;
     },
     () => null,
   );

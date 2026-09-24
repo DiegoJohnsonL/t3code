@@ -39,7 +39,11 @@ vi.mock("~/hooks/useSettings", async () => {
       ),
   };
 });
-vi.mock("~/customBackground/imageStore", () => ({ storeBackgroundImage: state.upload }));
+vi.mock("~/customBackground/imageStore", () => ({
+  storeBackgroundImage: state.upload,
+  useBackgroundImageLightness: () => null,
+}));
+vi.mock("~/hooks/useTheme", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 vi.mock("~/customBackground/webgl", () => ({
   isWebGlAvailable: () => state.filtersAvailable,
 }));
@@ -91,6 +95,7 @@ const original: CustomBackgroundRecord = {
   fadeSoftness: 30,
   opacity: 100,
   blur: 0,
+  brightnessAdapt: 0,
   source: { kind: "none" },
   filter: defaultCustomBackgroundFilter("none"),
 };
@@ -148,6 +153,7 @@ it("preserves both persisted and pending edits when encoding finishes", async ()
     fadeSoftness: 30,
     opacity: 100,
     blur: 0,
+    brightnessAdapt: 0,
     source: {
       kind: "image",
       imageIds: [uploadedId],
