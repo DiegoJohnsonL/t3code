@@ -91,6 +91,8 @@ export interface BackgroundRendererProps {
   fade: CustomBackgroundFadeLevels;
   /** Picture opacity, 0 to 100; the theme background shows through the rest. */
   opacity: number;
+  /** Picture blur in pixels; 0 applies no filter. */
+  blur: number;
   /** When false, skip Paper entirely and draw the photo if one is loaded. */
   filtersAvailable: boolean;
 }
@@ -101,6 +103,7 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
   transition,
   fade,
   opacity,
+  blur,
   filtersAvailable,
 }: BackgroundRendererProps) {
   const mode = backgroundDrawMode({
@@ -112,7 +115,15 @@ export const BackgroundRenderer = memo(function BackgroundRenderer({
   if (mode === "none") return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0" style={{ opacity: opacity / 100 }}>
+      {/* A blurred layer fades out at its edges, so it overhangs the clipped pane by the radius. */}
+      <div
+        className="absolute inset-0"
+        style={
+          blur === 0
+            ? { opacity: opacity / 100 }
+            : { opacity: opacity / 100, filter: `blur(${blur}px)`, inset: -blur }
+        }
+      >
         {slides.map((slide) => (
           <div
             key={slide.key}

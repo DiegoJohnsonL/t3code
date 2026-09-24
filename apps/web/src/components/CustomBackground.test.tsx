@@ -46,6 +46,7 @@ it("draws nothing while the photo is missing, whatever the filter", async () => 
     fadeHeight: 60,
     fadeSoftness: 30,
     opacity: 100,
+    blur: 0,
     source: {
       kind: "image",
       imageIds: ["a".repeat(64)],

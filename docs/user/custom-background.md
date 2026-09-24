@@ -44,7 +44,8 @@ the theme you picked. **Bottom fade** is how strong it is at the bottom edge; 10
 **Fade height** is where the fade has eased away completely; at 100% it reaches the top, where
 the chat text fades under the header. **Fade softness** is how long that ease is: low values
 give a crisp edge, high values start easing lower down for a gentler fade. **Image opacity**
-sets how much of the picture shows over your theme's background at all.
+sets how much of the picture shows over your theme's background at all, and **Background blur**
+softens the picture itself so busy photos sit further back.
 
 **Bubbles behind agent replies**, under **Theme and chats** at the bottom of the panel, sets
 the text of agent replies on a translucent bubble, like your own messages. **Bubble opacity**
@@ -74,11 +75,11 @@ The pictures stay on the phone, so the background works with any computer, or no
 behind home and threads, cropped to fill the screen.
 
 The same screen sets how often the pictures change, their order, and whether they fade or cut,
-plus the bottom fade and picture opacity. **Bubbles behind agent replies** sets each reply on a
+plus the bottom fade, picture opacity, and background blur. **Bubbles behind agent replies** sets each reply on a
 translucent bubble so it stays readable over bright pictures; it starts on, and **Bubble
 opacity** tunes it. **Colors from pictures** themes the app from the picture showing, and **Show
 behind home and threads** hides the background without deleting it. Turn on **Quick adjust
-button** to get a small button on home and threads that opens the fade and bubble
+button** to get a small button on home and threads that opens the fade, blur, and bubble
 controls in a drawer, so you see each change on the screen behind it.
 
 While a picture's colors theme the app, on the phone or the desktop, the theme cards are hidden,

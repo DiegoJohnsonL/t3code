@@ -1040,6 +1040,11 @@ describe("ClientSettings custom backgrounds", () => {
     expect(() => decodeClientSettingsPatch({ customBackgroundAgentBubbleBlur: 21 })).toThrow();
   });
 
+  it("gives playlists saved before background blur existed no blur", () => {
+    const settings = decodeClientSettings({ customBackgrounds: [record] });
+    expect(settings.customBackgrounds[0]?.blur).toBe(0);
+  });
+
   it("round-trips a library and its active entry", () => {
     const settings = decodeClientSettings({
       customBackgrounds: [record],
@@ -1059,7 +1064,7 @@ describe("ClientSettings custom backgrounds", () => {
       ],
       activeCustomBackgroundId: "bg-old",
     });
-    expect(settings.customBackgrounds).toEqual([record]);
+    expect(settings.customBackgrounds).toEqual([{ ...record, blur: 0 }]);
     expect(settings.activeCustomBackgroundId).toBe("bg-old");
   });
 

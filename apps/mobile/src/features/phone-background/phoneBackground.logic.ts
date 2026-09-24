@@ -142,6 +142,7 @@ export function phoneBackgroundWithPictures(
       fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
       fadeSoftness: DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
       opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
+      blur: 0,
       createdAt,
     },
     dynamicTheme: true,

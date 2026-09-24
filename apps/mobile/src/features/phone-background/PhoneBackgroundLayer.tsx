@@ -32,6 +32,7 @@ export function PhoneBackgroundLayer() {
         <Image
           source={{ uri: phonePictureFile(image.current).uri }}
           style={[StyleSheet.absoluteFill, { opacity: record.opacity / 100 }]}
+          blurRadius={record.blur}
           contentFit="cover"
           contentPosition="center"
           transition={

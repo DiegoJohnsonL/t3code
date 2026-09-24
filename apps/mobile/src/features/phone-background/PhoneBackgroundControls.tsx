@@ -1,5 +1,6 @@
 import {
   type CustomBackgroundRecord,
+  MAX_CUSTOM_BACKGROUND_BLUR,
   MAX_CUSTOM_BACKGROUND_FADE,
   MIN_CUSTOM_BACKGROUND_FADE,
   type PhoneBackground,
@@ -44,6 +45,16 @@ export function PhoneBackgroundLookSliders(props: { readonly record: CustomBackg
           onChange={(value) => setRecord({ [key]: value })}
         />
       ))}
+      <SliderRow
+        icon="circle"
+        label="Background blur"
+        min={0}
+        max={MAX_CUSTOM_BACKGROUND_BLUR}
+        step={2}
+        value={props.record.blur}
+        valueLabel={`${props.record.blur} px`}
+        onChange={(blur) => setRecord({ blur })}
+      />
     </>
   );
 }

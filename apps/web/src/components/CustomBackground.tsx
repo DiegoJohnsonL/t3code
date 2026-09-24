@@ -77,6 +77,7 @@ export const CustomBackground = memo(function CustomBackground({
             fadeSoftness: record.fadeSoftness,
           }}
           opacity={record.opacity}
+          blur={record.blur}
           filtersAvailable={filtersAvailable}
         />
       </Suspense>

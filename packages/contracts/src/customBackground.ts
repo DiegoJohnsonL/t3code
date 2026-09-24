@@ -208,6 +208,12 @@ export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
 
+export const MAX_CUSTOM_BACKGROUND_BLUR = 40;
+/** Blur of the picture itself, in pixels. */
+export const CustomBackgroundBlur = Schema.Int.check(
+  Schema.isBetween({ minimum: 0, maximum: MAX_CUSTOM_BACKGROUND_BLUR }),
+);
+
 /** Fill of the bubble behind agent replies, in percent of the message surface color. */
 export const AgentBubbleOpacity = Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 }));
 export type AgentBubbleOpacity = typeof AgentBubbleOpacity.Type;
@@ -426,6 +432,7 @@ export const CustomBackgroundRecord = Schema.Struct({
   opacity: CustomBackgroundFade.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CUSTOM_BACKGROUND_OPACITY)),
   ),
+  blur: CustomBackgroundBlur.pipe(Schema.withDecodingDefault(Effect.succeed(0))),
   createdAt: Schema.String,
 });
 export type CustomBackgroundRecord = typeof CustomBackgroundRecord.Type;

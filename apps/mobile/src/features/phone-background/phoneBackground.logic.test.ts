@@ -29,6 +29,7 @@ const background: PhoneBackground = {
     fadeHeight: 76,
     fadeSoftness: 30,
     opacity: 75,
+    blur: 0,
     createdAt: "2026-09-22T00:00:00.000Z",
   },
   dynamicTheme: true,

@@ -12,6 +12,7 @@ import {
   type CustomBackgroundFilterKind,
   type CustomBackgroundRecord,
   MAX_AGENT_BUBBLE_BLUR,
+  MAX_CUSTOM_BACKGROUND_BLUR,
   MAX_CUSTOM_BACKGROUND_FADE,
   MIN_CUSTOM_BACKGROUND_FADE,
   defaultCustomBackgroundFilter,
@@ -846,6 +847,15 @@ export function BackgroundStudioPanel() {
                 }
               />
             ))}
+            <RangeControl
+              label="Background blur"
+              min={0}
+              max={MAX_CUSTOM_BACKGROUND_BLUR}
+              step={1}
+              value={record.blur}
+              format={(value) => `${value}px`}
+              onChange={(value) => commitRecord({ ...record, blur: Math.round(value) })}
+            />
           </StudioSection>
         </>
       ) : (

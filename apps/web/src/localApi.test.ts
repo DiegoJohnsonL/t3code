@@ -172,6 +172,7 @@ describe("LocalApi", () => {
           fadeHeight: 60,
           fadeSoftness: 30,
           opacity: 100,
+          blur: 0,
           createdAt: "2026-09-08T00:00:00.000Z",
         },
       ],

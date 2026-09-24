@@ -34,6 +34,7 @@ const sunset: CustomBackgroundRecord = {
   fadeHeight: 60,
   fadeSoftness: 30,
   opacity: 100,
+  blur: 0,
   createdAt,
 };
 const mesh = createEmptyBackground({
