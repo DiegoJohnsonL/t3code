@@ -186,6 +186,11 @@ export const ExecutionEnvironmentCapabilities = Schema.Struct({
       `voice.createTranscriptionUrl`. Absent on older servers, so clients
       only offer environment-backed voice input when this is true. */
   voiceTranscription: Schema.optionalKey(Schema.Boolean),
+  /** macOS servers report whether the root helper from scripts/serve-mode is
+      installed. Without it, serve mode only stops idle sleep and closing the
+      lid still sleeps the Mac. Absent on other platforms and older servers,
+      so clients only warn on an explicit false. */
+  serveModeLidClosed: Schema.optionalKey(Schema.Boolean),
 });
 export type ExecutionEnvironmentCapabilities = typeof ExecutionEnvironmentCapabilities.Type;
 

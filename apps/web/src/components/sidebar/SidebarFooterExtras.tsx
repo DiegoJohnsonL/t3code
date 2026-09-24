@@ -70,6 +70,8 @@ function SidebarServeModeItem() {
   const serveMode = usePrimarySettings(selectServeMode);
   const updateSettings = useUpdatePrimarySettings();
   if (primaryConfig?.environment.platform.os !== "darwin") return null;
+  const sleepsWithLidClosed =
+    serveMode && primaryConfig.environment.capabilities.serveModeLidClosed === false;
   return (
     <SidebarMenuItem className="shrink-0">
       <Tooltip>
@@ -82,14 +84,20 @@ function SidebarServeModeItem() {
               onClick={() => updateSettings({ serveMode: !serveMode })}
               size="icon"
             >
-              {serveMode ? <CoffeeIcon /> : <MoonIcon />}
+              {serveMode ? (
+                <CoffeeIcon className={sleepsWithLidClosed ? "text-warning" : undefined} />
+              ) : (
+                <MoonIcon />
+              )}
             </SidebarMenuButton>
           }
         />
         <TooltipPopup side="top">
-          {serveMode
-            ? "Serve mode on: this Mac stays awake for agents and your phone"
-            : "Serve mode off: this Mac can sleep"}
+          {sleepsWithLidClosed
+            ? "Serve mode on, but closing the lid still sleeps this Mac. Run sudo scripts/serve-mode/install.sh to keep it running lid-closed."
+            : serveMode
+              ? "Serve mode on: this Mac stays awake for agents and your phone"
+              : "Serve mode off: this Mac can sleep"}
         </TooltipPopup>
       </Tooltip>
     </SidebarMenuItem>

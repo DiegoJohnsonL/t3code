@@ -211,6 +211,10 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
   const allMacServers = targets.every(
     (target) => target.environment.serverConfig.environment.platform.os === "darwin",
   );
+  const someMacSleepsWithLidClosed = targets.some(
+    (target) =>
+      target.environment.serverConfig.environment.capabilities.serveModeLidClosed === false,
+  );
   const disabledFor = (key: string) =>
     disabled ||
     (projectSelected &&
@@ -468,7 +472,9 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
                     subtitle={
                       projectSelected
                         ? "Environment-wide setting. Select All projects to change it."
-                        : "Keep the Mac awake so agents keep working and you can connect."
+                        : someMacSleepsWithLidClosed
+                          ? "Keeps the Mac awake with the lid open. Closing the lid still sleeps it until you run sudo scripts/serve-mode/install.sh on it."
+                          : "Keep the Mac awake so agents keep working and you can connect."
                     }
                     value={uniform("serveMode")}
                     disabled={disabledFor("serveMode")}

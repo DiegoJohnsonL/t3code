@@ -3363,7 +3363,13 @@ export function ConnectionsSettings() {
                 <CloudLinkRow canManageRelay={canManageRelay} />
               </>
             ) : null}
-            {primaryServerConfig?.environment.platform.os === "darwin" ? <ServeModeRow /> : null}
+            {primaryServerConfig?.environment.platform.os === "darwin" ? (
+              <ServeModeRow
+                lidClosedHelperInstalled={
+                  primaryServerConfig.environment.capabilities.serveModeLidClosed !== false
+                }
+              />
+            ) : null}
           </SettingsSection>
 
           {isLocalBackendRemotelyReachable ? (
