@@ -61,7 +61,6 @@ import {
 } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BackgroundControls, RangeControl, StudioField } from "./BackgroundControls";
-import { PhoneBackgroundRow } from "./PhoneBackgroundRow";
 import {
   BackgroundImagePicker,
   BackgroundThumbnail,
@@ -699,7 +698,6 @@ export function BackgroundStudioPanel() {
             </Button>
           ) : null}
         </div>
-        <PhoneBackgroundRow record={record} dynamicTheme={dynamicTheme} />
       </div>
       {record ? (
         <>

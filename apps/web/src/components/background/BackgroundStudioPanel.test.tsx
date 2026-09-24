@@ -68,7 +68,6 @@ vi.mock("./BackgroundControls", () => ({
   RangeControl: () => null,
   StudioField: ({ children }: { children: unknown }) => children,
 }));
-vi.mock("./PhoneBackgroundRow", () => ({ PhoneBackgroundRow: () => null }));
 vi.mock("./BackgroundImagePicker", () => ({
   BackgroundImagePicker: () => null,
   BackgroundThumbnail: () => null,

@@ -5,7 +5,11 @@ import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Semaphore from "effect/Semaphore";
-import type { ProviderInstanceId, SidebarProjectGroupingMode } from "@t3tools/contracts";
+import {
+  PhoneBackground,
+  type ProviderInstanceId,
+  type SidebarProjectGroupingMode,
+} from "@t3tools/contracts";
 import type { ComposerEnterBehavior } from "../lib/composerEnterBehavior";
 import { MOBILE_THEME_IDS, type MobileThemeId, type MobileThemeMode } from "../lib/mobileTheme";
 import * as MobileDatabase from "./mobile-database";
@@ -14,6 +18,7 @@ import { MobileStorageDecodeError, MobileStorageEncodeError } from "./mobile-sto
 
 const PREFERENCES_KEY = "t3code.preferences";
 const PREFERENCES_FALLBACK_KEY = "t3code.preferences.fallback";
+const decodePhoneBackground = Schema.decodeUnknownOption(PhoneBackground);
 
 export interface Preferences {
   readonly liveActivitiesEnabled?: boolean;
@@ -43,8 +48,10 @@ export interface Preferences {
   /** Fresh keys reset both shelves to collapsed when users update. */
   readonly threadListSettledShelfExpanded?: boolean;
   readonly threadListSnoozedShelfExpanded?: boolean;
-  /** Draws the background a connected computer publishes behind home and threads. */
-  readonly computerBackgroundEnabled?: boolean;
+  /** The phone's own wallpaper for home and threads; its pictures live in app storage. */
+  readonly phoneBackground?: PhoneBackground | null;
+  /** Hides the phone background without discarding it. */
+  readonly phoneBackgroundEnabled?: boolean;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -105,7 +112,8 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     modelFavorites?: Preferences["modelFavorites"];
     threadListSettledShelfExpanded?: boolean;
     threadListSnoozedShelfExpanded?: boolean;
-    computerBackgroundEnabled?: boolean;
+    phoneBackground?: PhoneBackground;
+    phoneBackgroundEnabled?: boolean;
   } = {};
 
   if (typeof parsed.liveActivitiesEnabled === "boolean") {
@@ -190,8 +198,12 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   if (typeof parsed.threadListSnoozedShelfExpanded === "boolean") {
     preferences.threadListSnoozedShelfExpanded = parsed.threadListSnoozedShelfExpanded;
   }
-  if (typeof parsed.computerBackgroundEnabled === "boolean") {
-    preferences.computerBackgroundEnabled = parsed.computerBackgroundEnabled;
+  const phoneBackground = decodePhoneBackground(parsed.phoneBackground);
+  if (Option.isSome(phoneBackground)) {
+    preferences.phoneBackground = phoneBackground.value;
+  }
+  if (typeof parsed.phoneBackgroundEnabled === "boolean") {
+    preferences.phoneBackgroundEnabled = parsed.phoneBackgroundEnabled;
   }
   return preferences;
 }

@@ -49,11 +49,6 @@ import {
   AttachmentUploadSigningKeyError,
 } from "./assets.ts";
 import {
-  PhoneBackgroundPrepareImagesInput,
-  PhoneBackgroundPrepareImagesResult,
-  PhoneBackgroundStoreError,
-} from "./customBackground.ts";
-import {
   WorktreeSetupCancelInput,
   WorktreeSetupCancelResult,
   WorktreeSetupStreamEvent,
@@ -300,7 +295,6 @@ export const WS_METHODS = {
   assetsCreateUrl: "assets.createUrl",
   attachmentsCreateUploadUrl: "attachments.createUploadUrl",
   attachmentsDelete: "attachments.delete",
-  phoneBackgroundPrepareImages: "phoneBackground.prepareImages",
 
   // Provider methods
   providerUploadFeedback: "provider.uploadFeedback",
@@ -1006,12 +1000,6 @@ const WsAttachmentsDeleteRpc = Rpc.make(WS_METHODS.attachmentsDelete, {
   error: EnvironmentAuthorizationError,
 });
 
-const WsPhoneBackgroundPrepareImagesRpc = Rpc.make(WS_METHODS.phoneBackgroundPrepareImages, {
-  payload: PhoneBackgroundPrepareImagesInput,
-  success: PhoneBackgroundPrepareImagesResult,
-  error: Schema.Union([PhoneBackgroundStoreError, EnvironmentAuthorizationError]),
-});
-
 const WsProviderUploadFeedbackRpc = Rpc.make(WS_METHODS.providerUploadFeedback, {
   payload: ProviderUploadFeedbackInput,
   success: ProviderUploadFeedbackResult,
@@ -1488,7 +1476,6 @@ export const WsRpcGroup = RpcGroup.make(
   WsAssetsCreateUrlRpc,
   WsAttachmentsCreateUploadUrlRpc,
   WsAttachmentsDeleteRpc,
-  WsPhoneBackgroundPrepareImagesRpc,
   WsProviderUploadFeedbackRpc,
   WsSubscribeVcsStatusRpc,
   WsSubscribeWorktreeSetupRpc,

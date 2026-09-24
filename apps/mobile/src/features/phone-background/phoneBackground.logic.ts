@@ -14,9 +14,7 @@ import {
   DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
   DEFAULT_CUSTOM_BACKGROUND_OPACITY,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
-  type EnvironmentId,
   type PhoneBackground,
-  type ServerSettings,
 } from "@t3tools/contracts";
 import {
   type CustomBackgroundFadeLevels,
@@ -28,28 +26,6 @@ import type { MobileThemeAppearance, MobileThemeVariables } from "../../lib/mobi
 // The Android file holds the palette-to-variables mapping every platform can
 // run; the unsuffixed module is a no-op because system colors are Android-only.
 import { materialYouPaletteToMobileThemeVariables } from "../../lib/materialYouTheme.android";
-
-export interface ComputerBackgroundSource {
-  readonly environmentId: EnvironmentId;
-  readonly background: PhoneBackground;
-}
-
-/**
- * Environments arrive in the order the user saved them, so with several
- * computers publishing, the first one wins until the user turns it off there.
- */
-export function selectComputerBackground(
-  configs: ReadonlyMap<
-    EnvironmentId,
-    { readonly settings: Pick<ServerSettings, "phoneBackground"> }
-  >,
-): ComputerBackgroundSource | null {
-  for (const [environmentId, config] of configs) {
-    const background = config.settings.phoneBackground;
-    if (background !== null) return { environmentId, background };
-  }
-  return null;
-}
 
 /** Android's wallpaper scheme, the same one desktop builds its image-colors theme from. */
 export function seedPalette(
@@ -92,7 +68,7 @@ const TRANSPARENT = "#00000000";
  * picture drawn behind navigation shows through, and hands that backdrop
  * color to the picture's own base and fade. Sheets and cards stay opaque.
  */
-export function computerBackgroundThemeVariables(input: {
+export function phoneBackgroundThemeVariables(input: {
   readonly variables: MobileThemeVariables;
   readonly appearance: MobileThemeAppearance;
   /** The current picture's seed when image-colors is on. */
@@ -149,7 +125,7 @@ export interface AddedPicture {
   readonly sourceColor: number | null;
 }
 
-/** Appends pictures, starting the shared playlist when the computer has none yet. */
+/** Appends pictures, starting the playlist when the phone has none yet. */
 export function phoneBackgroundWithPictures(
   current: PhoneBackground | null,
   pictures: ReadonlyArray<AddedPicture>,
@@ -202,7 +178,7 @@ export function phoneBackgroundWithPictures(
   };
 }
 
-/** Drops one picture; removing the last one clears the shared background. */
+/** Drops one picture; removing the last one clears the background. */
 export function phoneBackgroundWithoutPicture(
   current: PhoneBackground,
   imageId: CustomBackgroundImageId,

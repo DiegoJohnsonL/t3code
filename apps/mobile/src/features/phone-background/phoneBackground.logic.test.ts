@@ -1,15 +1,14 @@
-import type { EnvironmentId, PhoneBackground } from "@t3tools/contracts";
+import type { PhoneBackground } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { getMobileThemeRuntimeVariables } from "../../lib/mobileThemeVariables";
 import {
-  computerBackgroundThemeVariables,
   fadeOverlayGradient,
+  phoneBackgroundThemeVariables,
   phoneBackgroundWithoutPicture,
   phoneBackgroundWithPictures,
-  selectComputerBackground,
   sourceColorFromPixels,
-} from "./computerBackground.logic";
+} from "./phoneBackground.logic";
 
 const background: PhoneBackground = {
   record: {
@@ -33,30 +32,11 @@ const background: PhoneBackground = {
   sourceColors: {},
 };
 
-function environment(id: string): EnvironmentId {
-  return id as EnvironmentId;
-}
-
-describe("selectComputerBackground", () => {
-  it("takes the first connected computer that publishes a background", () => {
-    const configs = new Map([
-      [environment("laptop"), { settings: { phoneBackground: null } }],
-      [environment("desktop"), { settings: { phoneBackground: background } }],
-      [environment("server"), { settings: { phoneBackground: { ...background } } }],
-    ]);
-    expect(selectComputerBackground(configs)).toEqual({
-      environmentId: "desktop",
-      background,
-    });
-    expect(selectComputerBackground(new Map())).toBeNull();
-  });
-});
-
-describe("computerBackgroundThemeVariables", () => {
+describe("phoneBackgroundThemeVariables", () => {
   const base = getMobileThemeRuntimeVariables("t3-code", "dark", "android");
 
   it("clears the home and thread backdrops and keeps their color for the picture", () => {
-    const result = computerBackgroundThemeVariables({
+    const result = phoneBackgroundThemeVariables({
       variables: base,
       appearance: "dark",
       sourceColor: null,
@@ -69,7 +49,7 @@ describe("computerBackgroundThemeVariables", () => {
   });
 
   it("recolors the theme from the picture's seed", () => {
-    const seeded = computerBackgroundThemeVariables({
+    const seeded = phoneBackgroundThemeVariables({
       variables: base,
       appearance: "dark",
       sourceColor: 0xff3366cc,

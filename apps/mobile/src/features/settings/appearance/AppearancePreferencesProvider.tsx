@@ -44,10 +44,10 @@ import {
   type MobileThemeRuntimeState,
 } from "../../../lib/mobileThemeRuntime";
 import {
-  useComputerBackgroundImage,
-  useComputerBackgroundSource,
-} from "../../computer-background/computerBackground";
-import { computerBackgroundThemeVariables } from "../../computer-background/computerBackground.logic";
+  usePhoneBackgroundImage,
+  useShownPhoneBackground,
+} from "../../phone-background/phoneBackground";
+import { phoneBackgroundThemeVariables } from "../../phone-background/phoneBackground.logic";
 
 interface AppearancePreferencesContextValue {
   /** Effective values with base-size derivation applied. Use this for rendering. */
@@ -63,8 +63,8 @@ interface AppearancePreferencesContextValue {
     Record<MobileThemeAppearance, MobileThemeVariables>
   >;
   readonly systemColorPalettes: ReturnType<typeof readSystemColorPalettes>;
-  /** The theme's screen color under a connected computer's background; null when none shows. */
-  readonly computerBackdropColor: string | null;
+  /** The theme's screen color under the phone's background; null when none shows. */
+  readonly phoneBackdropColor: string | null;
   readonly isReady: boolean;
   readonly setThemeIdForAppearance: (
     appearance: MobileThemeAppearance,
@@ -133,27 +133,25 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
     };
     return { light: resolve("light"), dark: resolve("dark") };
   }, [themeIds, systemColorPalettes]);
-  const computerBackground = useComputerBackgroundSource();
-  const computerImage = useComputerBackgroundImage(
-    computerBackground?.background.dynamicTheme
-      ? computerBackground.background.record.source
-      : null,
+  const phoneBackground = useShownPhoneBackground();
+  const phoneImage = usePhoneBackgroundImage(
+    phoneBackground?.dynamicTheme ? phoneBackground.record.source : null,
   );
-  const computerTheme = useMemo(
+  const phoneTheme = useMemo(
     () =>
-      computerBackground === null
+      phoneBackground === null
         ? null
-        : computerBackgroundThemeVariables({
+        : phoneBackgroundThemeVariables({
             variables: themeVariablesByAppearance[themeAppearance],
             appearance: themeAppearance,
             sourceColor:
-              computerImage.current === null
+              phoneImage.current === null
                 ? null
-                : (computerBackground.background.sourceColors[computerImage.current] ?? null),
+                : (phoneBackground.sourceColors[phoneImage.current] ?? null),
           }),
-    [computerBackground, computerImage.current, themeAppearance, themeVariablesByAppearance],
+    [phoneBackground, phoneImage.current, themeAppearance, themeVariablesByAppearance],
   );
-  const themeVariables = computerTheme?.variables ?? themeVariablesByAppearance[themeAppearance];
+  const themeVariables = phoneTheme?.variables ?? themeVariablesByAppearance[themeAppearance];
   const activeThemeName = getMobileUniwindThemeName(themeId, themeAppearance);
   const { baseFontSize, codeFontSize, codeWordBreak, terminalFontSize } = preferences;
   const appearance = useMemo(
@@ -311,7 +309,7 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
       themeVariables,
       themeVariablesByAppearance,
       systemColorPalettes,
-      computerBackdropColor: computerTheme?.backdropColor ?? null,
+      phoneBackdropColor: phoneTheme?.backdropColor ?? null,
       isReady,
       setThemeIdForAppearance,
       setThemeIdForBothAppearances,
@@ -331,7 +329,7 @@ export function AppearancePreferencesProvider(props: { readonly children: ReactN
       themeVariables,
       themeVariablesByAppearance,
       systemColorPalettes,
-      computerTheme,
+      phoneTheme,
       isReady,
       setThemeIdForAppearance,
       setThemeIdForBothAppearances,

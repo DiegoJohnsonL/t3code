@@ -279,8 +279,6 @@ export function applyServerSettingsPatch(
     usagePriceOverrides: usagePriceOverridesPatch,
     // Entry replacement: deepMerge would keep keys the client meant to clear.
     projectSettingsOverrides: projectSettingsOverridesPatch,
-    // Whole-value replacement: merging two playlists would mix their pictures.
-    phoneBackground: phoneBackgroundPatch,
     // Already translated into `projectSettingsOverrides` above; the legacy
     // maps are derived views and must never be merged directly.
     projectAgentBrowserAccessOverrides: _legacyBrowserAccess,
@@ -371,7 +369,6 @@ export function applyServerSettingsPatch(
           ),
         }
       : {}),
-    ...(phoneBackgroundPatch !== undefined ? { phoneBackground: phoneBackgroundPatch } : {}),
     ...(patch.defaultModelSelection !== undefined
       ? { defaultModelSelection: patch.defaultModelSelection }
       : {}),

@@ -456,10 +456,9 @@ export const StoredCustomBackgroundRecords = Schema.Array(Schema.Unknown).pipe(
 );
 
 /**
- * The playlist phones connected to a computer show, kept on that computer's
- * server so the desktop and any phone can edit it. Image bytes live in the
- * server's phone background store; `sourceColors` holds each picture's
- * Material seed, scored by whichever client added it.
+ * The phone's own background, kept in the phone's preferences. Its pictures
+ * live in the phone's app storage; `sourceColors` holds each picture's
+ * Material seed, scored when the picture was added.
  */
 export const PhoneBackground = Schema.Struct({
   record: CustomBackgroundRecord,
@@ -467,29 +466,3 @@ export const PhoneBackground = Schema.Struct({
   sourceColors: Schema.Record(CustomBackgroundImageId, Schema.Int),
 });
 export type PhoneBackground = typeof PhoneBackground.Type;
-
-/** Clients upload 1920px renditions, which stay well under this. */
-export const PHONE_BACKGROUND_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
-
-export const PhoneBackgroundPrepareImagesInput = Schema.Struct({
-  /** Every picture the next background uses; the store drops the rest. */
-  imageIds: Schema.Array(CustomBackgroundImageId).check(Schema.isMaxLength(500)),
-});
-export type PhoneBackgroundPrepareImagesInput = typeof PhoneBackgroundPrepareImagesInput.Type;
-
-export const PhoneBackgroundPrepareImagesResult = Schema.Struct({
-  /** Only the pictures the store does not hold yet. */
-  uploads: Schema.Array(
-    Schema.Struct({ imageId: CustomBackgroundImageId, relativeUrl: TrimmedNonEmptyString }),
-  ),
-});
-export type PhoneBackgroundPrepareImagesResult = typeof PhoneBackgroundPrepareImagesResult.Type;
-
-export class PhoneBackgroundStoreError extends Schema.TaggedError<PhoneBackgroundStoreError>()(
-  "PhoneBackgroundStoreError",
-  { cause: Schema.Defect() },
-) {
-  override get message(): string {
-    return "Failed to prepare the phone background store.";
-  }
-}

@@ -64,23 +64,16 @@ crossfade or a plain cut. Rotation follows the clock, so every window and reload
 shows the same image at the same time. The picture button at the bottom of the sidebar
 steps to the next or previous image; the panel has the same **Next** and **Previous**
 buttons for trying transitions out. Images stay on this client when you
-connect to remote environments; other browsers and devices keep their own appearance. Phones
-only get a playlist you send them.
+connect to remote environments; other browsers and devices keep their own appearance.
 
 ## Phone background
 
-Each computer keeps one background for the phones connected to it, directly or through
-T3 Connect. In the background panel, pick a playlist and select **Send playlist** next to
-**Phones** to copy it there. It is a one-time copy: editing the playlist here does not
-change the phones until you send it again, and sending replaces what the phones show.
-**Remove** clears it.
-
-T3 Code Mobile shows it behind home and threads, cropped to fill the screen, with the
-same fade, rotation, and image colors. Filters stay on the computer. On the phone,
-**Settings → Appearance → Background** can add photos from the phone's library, remove a
-picture by tapping it, and turn image colors on or off. Those edits change the copy on the
-computer, so every phone connected to it sees them. **Show behind home and threads** hides
-it on that phone only.
+T3 Code Mobile has its own background, set on the phone. In **Settings → Appearance →
+Background**, **Add photos** picks pictures from the phone's library; tap a picture to remove
+it. The pictures stay on the phone, so the background works with any computer, or none.
+It shows behind home and threads, cropped to fill the screen, with the same fade and rotation
+as the desktop. **Colors from pictures** themes the app from the picture showing, and **Show
+behind home and threads** hides the background without deleting it.
 
 ## New chats and conversations
 

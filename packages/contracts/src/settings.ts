@@ -35,7 +35,6 @@ import {
   DEFAULT_AGENT_BUBBLE_BLUR,
   DEFAULT_AGENT_BUBBLE_OPACITY,
   StoredCustomBackgroundRecords,
-  PhoneBackground,
 } from "./customBackground.ts";
 import {
   DEFAULT_PREVIEW_APPEARANCE,
@@ -1202,10 +1201,6 @@ export const ServerSettings = Schema.Struct({
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_SIDEBAR_AUTO_SETTLE_AFTER_DAYS)),
   ),
   sidebarAutoSettleOnMerge: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
-  /** The shared playlist phones render while connected to this environment. */
-  phoneBackground: Schema.NullOr(PhoneBackground).pipe(
-    Schema.withDecodingDefault(Effect.succeed(null)),
-  ),
   /**
    * Keeps a macOS server's machine awake while the server runs, so agents keep
    * working and phones can connect. The display still sleeps and locks.
@@ -1546,7 +1541,6 @@ export const ServerSettingsPatch = Schema.Struct({
   deviceHosts: Schema.optionalKey(SshDeviceHostConfigs),
   sidebarAutoSettleAfterDays: Schema.optionalKey(Schema.NullOr(SidebarAutoSettleAfterDays)),
   sidebarAutoSettleOnMerge: Schema.optionalKey(Schema.Boolean),
-  phoneBackground: Schema.optionalKey(Schema.NullOr(PhoneBackground)),
   serveMode: Schema.optionalKey(Schema.Boolean),
   backgroundActivity: Schema.optionalKey(
     Schema.Struct({
