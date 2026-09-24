@@ -17,6 +17,7 @@ on:
 permissions:
   contents: write
   issues: write
+  id-token: write
 
 concurrency:
   group: custom-nightly
@@ -37,13 +38,20 @@ jobs:
     steps:
       # github.token can never push .github/workflows changes, which upstream merges often carry.
       - id: app-token
-        name: Mint Chamaquita token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.CHAMAQUITA_CLIENT_ID }}
-          private-key: ${{ secrets.CHAMAQUITA_PRIVATE_KEY }}
-          permission-contents: write
-          permission-workflows: write
+        name: Get a Chamaquita token
+        shell: bash
+        run: |
+          set -euo pipefail
+          oidc_token="$(
+            curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=chamaquita" | jq -r .value
+          )"
+          token="$(
+            curl -fsS -X POST -H "Authorization: Bearer $oidc_token" \
+              https://chamaquita.d3labs.dev/github/actions/token | jq -r .token
+          )"
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
 
       - name: Checkout customization branch
         shell: bash
