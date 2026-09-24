@@ -1772,7 +1772,10 @@ function QueuedMessageTimelineRow({
       : "Sends after the messages above it";
   return (
     <div className="flex flex-col items-end" data-queued-message-id={queuedMessage.id}>
-      <div className="max-w-[80%] rounded-2xl border border-dashed border-border p-3 text-message-foreground/80">
+      <div
+        data-queued-message-bubble
+        className="max-w-[80%] rounded-2xl border border-dashed border-border p-3 text-message-foreground/80"
+      >
         {text.length > 0 ? (
           <UserMessageBody text={text} skills={ctx.skills} markdownCwd={ctx.markdownCwd} />
         ) : null}
