@@ -55,9 +55,9 @@ and fade it ends up with.
 
 **Bubbles behind agent replies**, under **Theme and chats** at the bottom of the panel, sets
 the text of agent replies on a translucent bubble, like your own messages. **Bubble opacity**
-and **Bubble blur** tune it; blur costs some scrolling smoothness, so it starts off.
-**Shadow under reply text** outlines reply text in your theme's background color, which keeps
-it readable on a clear bubble or with no bubble at all. The pencil next to the playlist renames it.
+and **Bubble blur** tune both kinds of bubble; blur costs some scrolling smoothness, so it starts off.
+**Thicker reply text** adds a glow in the text's own color, which keeps replies readable on a
+clear bubble or with no bubble at all. The pencil next to the playlist renames it.
 
 ## Images
 
