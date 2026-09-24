@@ -122,6 +122,7 @@ import {
 } from "../../promptStashStore";
 import { ComposerStashBadge } from "./ComposerStashBadge";
 import { ComposerStashMenu } from "./ComposerStashMenu";
+import { ComposerVoiceControl } from "./ComposerVoiceControl";
 import { useComposerMenuState } from "./useComposerMenuState";
 import { useComposerTriggerState } from "./useComposerTriggerState";
 import { useComposerFocusState } from "./useComposerFocusState";
@@ -177,6 +178,7 @@ import {
 } from "../../lib/attachmentUploadState";
 import { isCommandPaletteOpen } from "../../commandPaletteBus";
 import { getTerminalFocusOwner } from "../../lib/terminalFocus";
+import { useComposerVoiceInput } from "../../voice/useComposerVoiceInput";
 import type { AssistantCitationSourceAnchor } from "~/lib/assistantTextSelection";
 import { resolveShortcutCommand, shortcutLabelForCommand } from "../../keybindings";
 import {
@@ -1274,6 +1276,8 @@ export interface ChatComposerHandle {
   openControl: (command: KeybindingCommand) => void;
   isModelPickerOpen: () => boolean;
   compactContext: () => void;
+  /** Starts or finishes hands-free voice input; false when voice input is unavailable. */
+  toggleVoiceInput: () => boolean;
   readSnapshot: () => {
     value: string;
     cursor: number;
@@ -2111,6 +2115,20 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const [isComposerFooterCompact, setIsComposerFooterCompact] = useState(false);
   const [isComposerPrimaryActionsCompact, setIsComposerPrimaryActionsCompact] = useState(false);
   const [isComposerModelPickerOpen, setIsComposerModelPickerOpen] = useState(false);
+  const insertVoiceTranscriptRef = useRef<(text: string) => boolean>(() => false);
+  const voice = useComposerVoiceInput({
+    environmentId,
+    ownerKey: composerTargetKey(composerDraftTarget),
+    insertTranscript: (text) => insertVoiceTranscriptRef.current(text),
+    keybindings,
+    shortcutContext: () => ({
+      context: {
+        terminalFocus: getTerminalFocusOwner() !== null,
+        terminalOpen,
+        modelPickerOpen: isComposerModelPickerOpen,
+      },
+    }),
+  });
   const isMobileViewport = useMediaQuery("max-sm");
   const {
     isComposerFocused,
@@ -4711,6 +4729,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   // it, so they do not hold the composer open; only surface-internal chrome
   // does.
   const composerHasExpandedChrome =
+    voice.state.phase !== "idle" ||
     showComposerTopDrawer ||
     isTasksDrawerOpen ||
     composerMenuOpen ||
@@ -5701,6 +5720,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     ],
   );
 
+  useLayoutEffect(() => {
+    insertVoiceTranscriptRef.current = (text) =>
+      insertComposerText(text, "cursor", { ensureLeadingBoundary: true });
+  }, [insertComposerText]);
+
   const insertComposerTextAtEnd = useCallback<ChatComposerHandle["insertTextAtEnd"]>(
     (text, options) => {
       const inserted = insertComposerText(text, "end", options);
@@ -5949,6 +5973,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         trigger.click();
       },
       compactContext: compactThreadContext,
+      toggleVoiceInput: () => {
+        if (!voice.isAvailable) return false;
+        voice.toggle();
+        return true;
+      },
       isModelPickerOpen: () => isComposerModelPickerOpen,
       readSnapshot: () => {
         return readComposerSnapshot();
@@ -6046,6 +6075,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     [
       activeThread,
       addComposerAttachments,
+      voice,
       foldPastedText,
       composerDraftTarget,
       composerCursor,
@@ -6973,6 +7003,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                   }
                   className="flex shrink-0 flex-nowrap items-center justify-end gap-2"
                 >
+                  {voice.isAvailable && (!isComposerResting || voice.state.phase !== "idle") ? (
+                    <ComposerVoiceControl
+                      voice={voice}
+                      shortcutLabel={shortcutLabelForCommand(keybindings, "composer.dictate")}
+                    />
+                  ) : null}
                   {showComposerAttachAction ? (
                     <>
                       <input

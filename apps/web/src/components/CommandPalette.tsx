@@ -57,6 +57,7 @@ import {
   SquarePenIcon,
   SunIcon,
   TextSearchIcon,
+  MicIcon,
 } from "lucide-react";
 import {
   useCallback,
@@ -694,6 +695,7 @@ function OpenCommandPaletteDialog(props: {
   readonly clearOpenIntent: () => void;
 }) {
   const navigate = useNavigate();
+  const composerHandleRef = useComposerHandleContext();
   const pathname = useLocation({ select: (location) => location.pathname });
   const { clearOpenIntent, openIntent, openOverlayMode, setOpen } = props;
   const [query, setQuery] = useState(openIntent?.kind === "search" ? openIntent.query : "");
@@ -1744,6 +1746,23 @@ function OpenCommandPaletteDialog(props: {
   ]);
 
   const actionItems: Array<CommandPaletteActionItem | CommandPaletteSubmenuItem> = [];
+
+  actionItems.push({
+    kind: "action",
+    value: "action:voice-input",
+    searchTerms: ["voice", "dictation", "dictate", "speech", "microphone", "talk", "transcribe"],
+    title: "Voice input",
+    icon: <MicIcon className={ITEM_ICON_CLASS} />,
+    shortcutCommand: "composer.dictate",
+    run: async () => {
+      if (composerHandleRef?.current?.toggleVoiceInput()) return;
+      toastManager.add({
+        type: "info",
+        title: "Voice input is not set up",
+        description: "Add a Groq API key in Settings → General → Voice input.",
+      });
+    },
+  });
 
   if (projects.length > 0) {
     const activeProjectTitle =

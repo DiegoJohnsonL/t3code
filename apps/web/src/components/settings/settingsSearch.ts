@@ -478,6 +478,20 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["generated thread titles source control content default provider"],
   },
   {
+    id: "voice-input-api-key",
+    title: "Voice input API key",
+    to: "/settings/general",
+    scope: "environment-defaults",
+    searchTerms: ["dictation speech to text transcription microphone groq whisper wispr key"],
+  },
+  {
+    id: "voice-input-vocabulary",
+    title: "Voice input vocabulary",
+    to: "/settings/general",
+    scope: "environment-defaults",
+    searchTerms: ["dictation speech words names terms spelling custom dictionary"],
+  },
+  {
     id: "diagnostics",
     title: "Diagnostics",
     to: "/settings/general",

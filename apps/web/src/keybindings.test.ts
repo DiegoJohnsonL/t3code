@@ -1025,6 +1025,28 @@ describe("resolveShortcutCommand", () => {
     );
   });
 
+  it("matches Option+Space on macOS, where it types a no-break space", () => {
+    const keybindings = compile([
+      {
+        shortcut: {
+          key: " ",
+          metaKey: false,
+          ctrlKey: false,
+          shiftKey: false,
+          altKey: true,
+          modKey: false,
+        },
+        command: "composer.dictate",
+      },
+    ]);
+    assert.strictEqual(
+      resolveShortcutCommand(event({ key: "\u00a0", code: "Space", altKey: true }), keybindings, {
+        platform: "MacIntel",
+      }),
+      "composer.dictate",
+    );
+  });
+
   it("matches non-Latin layout letters using the physical key code", () => {
     const keybindings = compile([{ shortcut: modShortcut("d"), command: "diff.toggle" }]);
 

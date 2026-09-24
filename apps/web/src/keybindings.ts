@@ -78,6 +78,7 @@ const EVENT_CODE_SHORTCUT_KEYS: Readonly<Record<string, string>> = {
   Quote: "'",
   Semicolon: ";",
   Slash: "/",
+  Space: " ",
 };
 
 function normalizeEventKey(key: string): string {
