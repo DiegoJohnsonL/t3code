@@ -75,8 +75,8 @@ html[data-theme-id]:not([data-theme-id=""]) {
   }
 
   /* Only the reply's text sits on the bubble, not its copy button or timestamp.
-     A flat translucent fill rather than the user bubble's glass: backdrop blur
-     on every reply would re-sample the picture on each scrolled frame. */
+     Blur is off by default: backdrop blur on every reply re-samples the
+     picture on each scrolled frame. BackgroundThemeSync sets both variables. */
   [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-agent-bubbles])
     [data-assistant-reply]
     > [data-assistant-citation-source] {
@@ -84,7 +84,13 @@ html[data-theme-id]:not([data-theme-id=""]) {
     max-width: 100%;
     border-radius: var(--radius-2xl);
     padding: calc(var(--spacing) * 3);
-    background-color: color-mix(in srgb, var(--message-surface) 82%, transparent);
+    background-color: color-mix(
+      in srgb,
+      var(--message-surface) var(--agent-bubble-opacity, 82%),
+      transparent
+    );
+    -webkit-backdrop-filter: var(--agent-bubble-backdrop, none);
+    backdrop-filter: var(--agent-bubble-backdrop, none);
   }
 
   /* Wallpaper is painted at viewport width and shifted left by this amount so

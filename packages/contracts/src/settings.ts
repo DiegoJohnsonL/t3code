@@ -28,8 +28,12 @@ import {
 } from "./orchestration.ts";
 import { BrowserProfile, BrowserProfileId, DEFAULT_BROWSER_PROFILE_ID } from "./browserProfile.ts";
 import {
+  AgentBubbleBlur,
+  AgentBubbleOpacity,
   CustomBackgroundId,
   CustomBackgroundRecords,
+  DEFAULT_AGENT_BUBBLE_BLUR,
+  DEFAULT_AGENT_BUBBLE_OPACITY,
   StoredCustomBackgroundRecords,
   PhoneBackground,
 } from "./customBackground.ts";
@@ -329,6 +333,12 @@ export const ClientSettingsSchema = Schema.Struct({
   /** Sets agent replies on a translucent bubble over a background, like user messages. */
   customBackgroundAgentBubbles: Schema.Boolean.pipe(
     Schema.withDecodingDefault(Effect.succeed(false)),
+  ),
+  customBackgroundAgentBubbleOpacity: AgentBubbleOpacity.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_AGENT_BUBBLE_OPACITY)),
+  ),
+  customBackgroundAgentBubbleBlur: AgentBubbleBlur.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_AGENT_BUBBLE_BLUR)),
   ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
@@ -1613,6 +1623,8 @@ export const ClientSettingsPatch = Schema.Struct({
   customBackgroundDynamicTheme: Schema.optionalKey(Schema.Boolean),
   customBackgroundTextGlow: Schema.optionalKey(Schema.Boolean),
   customBackgroundAgentBubbles: Schema.optionalKey(Schema.Boolean),
+  customBackgroundAgentBubbleOpacity: Schema.optionalKey(AgentBubbleOpacity),
+  customBackgroundAgentBubbleBlur: Schema.optionalKey(AgentBubbleBlur),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

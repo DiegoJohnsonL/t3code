@@ -1033,6 +1033,13 @@ describe("ClientSettings custom backgrounds", () => {
     expect(decodeClientSettings({}).customBackgroundEnabled).toBe(true);
   });
 
+  it("keeps the flat agent bubble fill for clients that never moved the sliders", () => {
+    const settings = decodeClientSettings({});
+    expect(settings.customBackgroundAgentBubbleOpacity).toBe(82);
+    expect(settings.customBackgroundAgentBubbleBlur).toBe(0);
+    expect(() => decodeClientSettingsPatch({ customBackgroundAgentBubbleBlur: 21 })).toThrow();
+  });
+
   it("round-trips a library and its active entry", () => {
     const settings = decodeClientSettings({
       customBackgrounds: [record],

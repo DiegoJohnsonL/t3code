@@ -11,6 +11,7 @@ import {
   type ImageDitheringPreset,
   type CustomBackgroundFilterKind,
   type CustomBackgroundRecord,
+  MAX_AGENT_BUBBLE_BLUR,
   MAX_CUSTOM_BACKGROUND_FADE,
   MIN_CUSTOM_BACKGROUND_FADE,
   defaultCustomBackgroundFilter,
@@ -477,6 +478,10 @@ export function BackgroundStudioPanel() {
   const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
   const textGlow = useClientSettings((settings) => settings.customBackgroundTextGlow);
   const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
+  const bubbleOpacity = useClientSettings(
+    (settings) => settings.customBackgroundAgentBubbleOpacity,
+  );
+  const bubbleBlur = useClientSettings((settings) => settings.customBackgroundAgentBubbleBlur);
   const updateSettings = useUpdateClientSettings();
 
   const selectedId = activeId;
@@ -664,6 +669,28 @@ export function BackgroundStudioPanel() {
               }
             />
           </label>
+          {agentBubbles ? (
+            <>
+              <RangeControl
+                label="Bubble opacity"
+                min={0}
+                max={100}
+                step={1}
+                value={bubbleOpacity}
+                format={(value) => `${value}%`}
+                onChange={(value) => updateSettings({ customBackgroundAgentBubbleOpacity: value })}
+              />
+              <RangeControl
+                label="Bubble blur"
+                min={0}
+                max={MAX_AGENT_BUBBLE_BLUR}
+                step={1}
+                value={bubbleBlur}
+                format={(value) => `${value}px`}
+                onChange={(value) => updateSettings({ customBackgroundAgentBubbleBlur: value })}
+              />
+            </>
+          ) : null}
         </div>
         <div className="flex items-center justify-between gap-2">
           <span className="text-[13px] font-medium text-foreground">Playlist</span>

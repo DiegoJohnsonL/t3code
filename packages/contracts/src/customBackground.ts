@@ -208,6 +208,19 @@ export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
 
+/** Fill of the bubble behind agent replies, in percent of the message surface color. */
+export const AgentBubbleOpacity = Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 }));
+export type AgentBubbleOpacity = typeof AgentBubbleOpacity.Type;
+export const DEFAULT_AGENT_BUBBLE_OPACITY: AgentBubbleOpacity = 82;
+
+export const MAX_AGENT_BUBBLE_BLUR = 20;
+/** Backdrop blur behind agent reply bubbles, in pixels. 0 applies no backdrop filter. */
+export const AgentBubbleBlur = Schema.Int.check(
+  Schema.isBetween({ minimum: 0, maximum: MAX_AGENT_BUBBLE_BLUR }),
+);
+export type AgentBubbleBlur = typeof AgentBubbleBlur.Type;
+export const DEFAULT_AGENT_BUBBLE_BLUR: AgentBubbleBlur = 0;
+
 export type ImageDitheringFilter = typeof IMAGE_DITHERING_FILTER.schema.Type;
 
 export interface ImageDitheringPreset {

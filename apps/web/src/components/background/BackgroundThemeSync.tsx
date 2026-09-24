@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+
+import { applyAgentBubbleSurface } from "~/customBackground/agentBubbles";
 import {
   useBackgroundStudioOpen,
   useBackgroundStudioStore,
@@ -12,14 +15,22 @@ import { useClientSettings } from "~/hooks/useSettings";
 const NO_SOURCE = { kind: "none" } as const;
 
 /**
- * Keeps the image-colors theme applied on every route. The picture itself only
- * draws behind chats, but the palette it seeds stays put in settings and the
- * rest of the app, the way a phone keeps its wallpaper colors on every screen.
+ * Keeps the image-colors theme and the agent bubble surface applied on every
+ * route. The picture itself only draws behind chats, but the palette it seeds
+ * stays put in settings and the rest of the app, the way a phone keeps its
+ * wallpaper colors on every screen.
  */
 export function BackgroundThemeSync() {
   const selected = useActiveBackground();
   const enabled = useClientSettings((settings) => settings.customBackgroundEnabled);
   const dynamicTheme = useClientSettings((settings) => settings.customBackgroundDynamicTheme);
+  const bubbleOpacity = useClientSettings(
+    (settings) => settings.customBackgroundAgentBubbleOpacity,
+  );
+  const bubbleBlur = useClientSettings((settings) => settings.customBackgroundAgentBubbleBlur);
+  useEffect(() => {
+    applyAgentBubbleSurface(document.documentElement, { opacity: bubbleOpacity, blur: bubbleBlur });
+  }, [bubbleOpacity, bubbleBlur]);
   const editing = useBackgroundStudioOpen();
   const preview = useBackgroundStudioStore((store) => store.preview);
   const record = dynamicTheme
