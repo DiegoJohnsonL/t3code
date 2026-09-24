@@ -1635,7 +1635,9 @@ code {
   -webkit-app-region: no-drag;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling. Thumbs show only while scrolling (flagged by
+   lib/scrollbarVisibility.ts) or under the pointer, so a hidden thumb can
+   still be grabbed. Chromium cannot transition scrollbar parts, so it snaps. */
 ::-webkit-scrollbar {
   width: var(--app-scrollbar-width);
 }
@@ -1645,8 +1647,12 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--app-scrollbar-thumb);
+  background: transparent;
   border-radius: 3px;
+}
+
+[data-native-scrolling]::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
 }
 
 ::-webkit-scrollbar-thumb:hover {
