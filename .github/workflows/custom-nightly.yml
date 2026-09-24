@@ -128,7 +128,6 @@ jobs:
                   gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Superseded by ${upstream_tag}."
                 done
                 # Chamaquita works issues labeled chamaquita and merges the pull request of one labeled automerge.
-                # A label problem must not stop the issue that tells the owner the build stalled.
                 gh label create chamaquita --repo "$GITHUB_REPOSITORY" --force --color 5319e7 \
                   --description "Chamaquita works this issue as a Job" ||
                   echo "::warning::Could not create the chamaquita label."
