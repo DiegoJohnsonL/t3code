@@ -12,6 +12,7 @@ import { ThreadArrangementHost } from "./features/threads/ThreadArrangementSheet
 import { ConfirmDialogHost } from "./components/ConfirmDialogHost";
 import { CloudAuthProvider } from "./features/cloud/CloudAuthProvider";
 import { PhoneBackgroundLayer } from "./features/phone-background/PhoneBackgroundLayer";
+import { PhoneBackgroundQuickAdjust } from "./features/phone-background/PhoneBackgroundQuickAdjust";
 import { prepareNativeShowcaseCapture } from "./features/showcase/nativeShowcaseScene";
 import { IncomingShareProvider } from "./features/sharing/IncomingShareProvider";
 import {
@@ -91,6 +92,7 @@ function AppContent() {
               <IncomingShareProvider>
                 <Navigation linking={appLinking} theme={navigationTheme} />
               </IncomingShareProvider>
+              <PhoneBackgroundQuickAdjust />
               <ConfirmDialogHost />
               <ThreadArrangementHost />
             </View>

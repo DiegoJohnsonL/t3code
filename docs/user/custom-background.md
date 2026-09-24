@@ -77,7 +77,9 @@ The same screen sets how often the pictures change, their order, and whether the
 plus the bottom fade and picture opacity. **Bubbles behind agent replies** sets each reply on a
 translucent bubble so it stays readable over bright pictures; it starts on, and **Bubble
 opacity** tunes it. **Colors from pictures** themes the app from the picture showing, and **Show
-behind home and threads** hides the background without deleting it.
+behind home and threads** hides the background without deleting it. Turn on **Quick adjust
+button** to get a small button on home and threads that opens the fade and bubble
+controls in a drawer, so you see each change on the screen behind it.
 
 While a picture's colors theme the app, on the phone or the desktop, the theme cards are hidden,
 since no theme choice would show. Turn off the picture colors to pick a theme again.

@@ -35,6 +35,13 @@ export function usePhoneBackgroundEnabled(): boolean {
   );
 }
 
+export function usePhoneBackgroundQuickAdjust(): boolean {
+  const preferences = useAtomValue(mobilePreferencesAtom);
+  return (
+    AsyncResult.isSuccess(preferences) && preferences.value.phoneBackgroundQuickAdjust === true
+  );
+}
+
 /** Edits the stored background; does nothing while the phone has none. */
 export function useUpdatePhoneBackground() {
   const savePreferences = useAtomSet(updateMobilePreferencesAtom);

@@ -6,8 +6,6 @@ import {
   type CustomBackgroundRecord,
   type CustomBackgroundRotationOrder,
   type CustomBackgroundTransition,
-  MAX_CUSTOM_BACKGROUND_FADE,
-  MIN_CUSTOM_BACKGROUND_FADE,
   type PhoneBackground,
 } from "@t3tools/contracts";
 import { Image } from "expo-image";
@@ -20,7 +18,6 @@ import { AppText as Text } from "../../components/AppText";
 import { ControlPillMenu } from "../../components/ControlPillMenu";
 import { ScreenScrollView } from "../../components/ScreenScrollView";
 import { updateMobilePreferencesAtom } from "../../state/preferences";
-import { FontSizeSliderRow as SliderRow } from "../settings/appearance/components/FontSizeSliderRow";
 import { SettingsActionRow } from "../settings/components/SettingsActionRow";
 import { SettingsControlRow } from "../settings/components/SettingsControlRow";
 import { SettingsScreen } from "../settings/components/SettingsScreen";
@@ -29,6 +26,7 @@ import { SettingsSwitchRow } from "../settings/components/SettingsSwitchRow";
 import {
   usePhoneBackground,
   usePhoneBackgroundEnabled,
+  usePhoneBackgroundQuickAdjust,
   useUpdatePhoneBackground,
 } from "./phoneBackground";
 import {
@@ -36,11 +34,12 @@ import {
   phoneBackgroundWithPictures,
 } from "./phoneBackground.logic";
 import { deletePhonePicture, phonePictureFile, pickPhonePictures } from "./phonePictures";
+import {
+  PhoneBackgroundBubbleControls,
+  PhoneBackgroundLookSliders,
+} from "./PhoneBackgroundControls";
 
 type SymbolName = ComponentProps<typeof SymbolView>["name"];
-
-// Material draws a tick per step, so percentages move in fives.
-const PERCENT_STEP = 5;
 
 function formatRotationMinutes(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -62,17 +61,6 @@ const TRANSITION_OPTIONS: ReadonlyArray<{ value: CustomBackgroundTransition; lab
   { value: "fade", label: "Fade" },
   { value: "cut", label: "Cut" },
 ];
-
-const LOOK_SLIDERS = [
-  { key: "fade", label: "Bottom fade", icon: "slider.horizontal.3" },
-  { key: "fadeHeight", label: "Fade height", icon: "arrow.up" },
-  { key: "fadeSoftness", label: "Fade softness", icon: "circle" },
-  { key: "opacity", label: "Picture opacity", icon: "eye" },
-] as const satisfies ReadonlyArray<{
-  key: keyof CustomBackgroundRecord;
-  label: string;
-  icon: SymbolName;
-}>;
 
 function ChoiceRow<Value extends string | number>(props: {
   readonly icon: SymbolName;
@@ -132,6 +120,7 @@ function PictureTile(props: {
 
 function PicturesSection(props: { readonly background: PhoneBackground | null }) {
   const enabled = usePhoneBackgroundEnabled();
+  const quickAdjust = usePhoneBackgroundQuickAdjust();
   const savePreferences = useAtomSet(updateMobilePreferencesAtom);
   const [busy, setBusy] = useState(false);
   const source = props.background?.record.source;
@@ -190,6 +179,15 @@ function PicturesSection(props: { readonly background: PhoneBackground | null })
             subtitle={`${imageIds.length} ${imageIds.length === 1 ? "picture" : "pictures"}`}
             value={enabled}
             onValueChange={(phoneBackgroundEnabled) => savePreferences({ phoneBackgroundEnabled })}
+          />
+          <SettingsSwitchRow
+            icon="slider.horizontal.3"
+            label="Quick adjust button"
+            subtitle="Tune the look from home and threads while you see it."
+            value={quickAdjust}
+            onValueChange={(phoneBackgroundQuickAdjust) =>
+              savePreferences({ phoneBackgroundQuickAdjust })
+            }
           />
           <ScrollView
             horizontal
@@ -264,27 +262,9 @@ function RotationSection(props: { readonly source: CustomBackgroundImageSource }
 }
 
 function LookSection(props: { readonly record: CustomBackgroundRecord }) {
-  const update = useUpdatePhoneBackground();
   return (
     <SettingsSection title="Look">
-      {LOOK_SLIDERS.map(({ key, label, icon }) => (
-        <SliderRow
-          key={key}
-          icon={icon}
-          label={label}
-          min={MIN_CUSTOM_BACKGROUND_FADE}
-          max={MAX_CUSTOM_BACKGROUND_FADE}
-          step={PERCENT_STEP}
-          value={props.record[key]}
-          valueLabel={`${props.record[key]}%`}
-          onChange={(value) =>
-            update((background) => ({
-              ...background,
-              record: { ...background.record, [key]: value },
-            }))
-          }
-        />
-      ))}
+      <PhoneBackgroundLookSliders record={props.record} />
     </SettingsSection>
   );
 }
@@ -299,27 +279,7 @@ function ThemeAndRepliesSection(props: { readonly background: PhoneBackground })
         value={props.background.dynamicTheme}
         onValueChange={(dynamicTheme) => update((background) => ({ ...background, dynamicTheme }))}
       />
-      <SettingsSwitchRow
-        icon="text.bubble"
-        label="Bubbles behind agent replies"
-        subtitle="Keeps replies readable over bright pictures."
-        value={props.background.agentBubbles}
-        onValueChange={(agentBubbles) => update((background) => ({ ...background, agentBubbles }))}
-      />
-      {props.background.agentBubbles ? (
-        <SliderRow
-          icon="sun.max"
-          label="Bubble opacity"
-          min={0}
-          max={100}
-          step={PERCENT_STEP}
-          value={props.background.agentBubbleOpacity}
-          valueLabel={`${props.background.agentBubbleOpacity}%`}
-          onChange={(agentBubbleOpacity) =>
-            update((background) => ({ ...background, agentBubbleOpacity }))
-          }
-        />
-      ) : null}
+      <PhoneBackgroundBubbleControls background={props.background} />
     </SettingsSection>
   );
 }

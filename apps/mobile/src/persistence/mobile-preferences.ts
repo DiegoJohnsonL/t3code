@@ -52,6 +52,8 @@ export interface Preferences {
   readonly phoneBackground?: PhoneBackground | null;
   /** Hides the phone background without discarding it. */
   readonly phoneBackgroundEnabled?: boolean;
+  /** Shows a button on home and threads that opens the background's look controls. */
+  readonly phoneBackgroundQuickAdjust?: boolean;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -114,6 +116,7 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     threadListSnoozedShelfExpanded?: boolean;
     phoneBackground?: PhoneBackground;
     phoneBackgroundEnabled?: boolean;
+    phoneBackgroundQuickAdjust?: boolean;
   } = {};
 
   if (typeof parsed.liveActivitiesEnabled === "boolean") {
@@ -204,6 +207,9 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (typeof parsed.phoneBackgroundEnabled === "boolean") {
     preferences.phoneBackgroundEnabled = parsed.phoneBackgroundEnabled;
+  }
+  if (typeof parsed.phoneBackgroundQuickAdjust === "boolean") {
+    preferences.phoneBackgroundQuickAdjust = parsed.phoneBackgroundQuickAdjust;
   }
   return preferences;
 }
