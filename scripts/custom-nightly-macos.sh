@@ -4,14 +4,14 @@ set -euo pipefail
 
 readonly repository="${T3CODE_CUSTOM_REPOSITORY:-d3labs-dev/t3code}"
 readonly signing_identity="${T3CODE_LOCAL_SIGNING_IDENTITY:-T3 Code Local Development}"
-readonly app_path="${T3CODE_CUSTOM_APP_PATH:-$HOME/Applications/T3 Code Custom Nightly.app}"
-readonly updater_home="${T3CODE_CUSTOM_UPDATER_HOME:-$HOME/Library/Application Support/T3 Code Custom Updater}"
+readonly app_path="${T3CODE_CUSTOM_APP_PATH:-$HOME/Applications/D3 Code.app}"
+readonly updater_home="${T3CODE_CUSTOM_UPDATER_HOME:-$HOME/Library/Application Support/D3 Code Updater}"
 readonly installed_script="$updater_home/update.sh"
-readonly launch_agent_path="${T3CODE_CUSTOM_LAUNCH_AGENT_PATH:-$HOME/Library/LaunchAgents/com.diegojohnson.t3code-custom-nightly.plist}"
-readonly launch_agent_label="com.diegojohnson.t3code-custom-nightly"
+readonly launch_agent_path="${T3CODE_CUSTOM_LAUNCH_AGENT_PATH:-$HOME/Library/LaunchAgents/com.diegojohnson.d3code.updater.plist}"
+readonly launch_agent_label="com.diegojohnson.d3code.updater"
 
 log() {
-  printf '[t3code-custom-nightly] %s\n' "$*"
+  printf '[d3code-updater] %s\n' "$*"
 }
 
 require_macos() {
@@ -130,7 +130,7 @@ builtin_updater_is_configured() {
 }
 
 app_is_running() {
-  osascript -e 'application id "com.diegojohnson.t3code.custom-nightly" is running' 2>/dev/null \
+  osascript -e 'application id "com.diegojohnson.d3code" is running' 2>/dev/null \
     | grep -qx 'true'
 }
 
@@ -140,7 +140,7 @@ quit_app() {
     return
   fi
 
-  osascript -e 'tell application id "com.diegojohnson.t3code.custom-nightly" to quit' >/dev/null
+  osascript -e 'tell application id "com.diegojohnson.d3code" to quit' >/dev/null
   for attempt in {1..20}; do
     if ! app_is_running; then
       return
@@ -148,7 +148,7 @@ quit_app() {
     sleep 0.5
   done
 
-  echo "T3 Code did not quit. Close it and run the updater again." >&2
+  echo "D3 Code did not quit. Close it and run the updater again." >&2
   exit 1
 }
 
@@ -232,7 +232,7 @@ update_app() (
   local staged_app
 
   if builtin_updater_is_configured; then
-    log "The built-in updater is configured; use Check for updates in T3 Code."
+    log "The built-in updater is configured; use Check for updates in D3 Code."
     return
   fi
 
@@ -251,7 +251,7 @@ update_app() (
     return
   fi
   if [[ "$allow_restart" != "true" ]] && app_is_running; then
-    log "T3 Code is running; the update will retry after it closes."
+    log "D3 Code is running; the update will retry after it closes."
     return
   fi
 
@@ -298,7 +298,7 @@ update_app() (
   install_app "$staged_app" "$temporary_directory" "$allow_restart" || install_status=$?
   if [[ "$install_status" -ne 0 ]]; then
     if [[ "$install_status" -eq 3 ]]; then
-      log "T3 Code started during the update; the update will retry after it closes."
+      log "D3 Code started during the update; the update will retry after it closes."
       return
     fi
     return "$install_status"

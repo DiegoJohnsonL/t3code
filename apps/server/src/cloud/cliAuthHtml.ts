@@ -8,7 +8,7 @@ function resolveLoopbackAuthorizationStage(): LoopbackAuthorizationStage {
 
 const stageBrands = {
   dev: "T3 Code (Dev)",
-  nightly: "T3 Code (Nightly)",
+  nightly: "D3 Code",
   latest: "T3 Code",
 } as const satisfies Record<LoopbackAuthorizationStage, string>;
 

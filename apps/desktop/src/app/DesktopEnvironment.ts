@@ -94,6 +94,8 @@ export class DesktopEnvironment extends Context.Service<
 >()("@t3tools/desktop/app/DesktopEnvironment") {}
 
 const APP_BASE_NAME = "T3 Code";
+/** This fork ships its nightly builds as its own app; must match the build's productName. */
+const FORK_APP_NAME = "D3 Code";
 
 function resolveDesktopAppStageLabel(input: {
   readonly isDevelopment: boolean;
@@ -111,6 +113,9 @@ export function resolveDesktopAppBranding(input: {
   readonly appVersion: string;
 }): DesktopAppBranding {
   const stageLabel = resolveDesktopAppStageLabel(input);
+  if (stageLabel === "Nightly") {
+    return { baseName: FORK_APP_NAME, stageLabel, displayName: FORK_APP_NAME };
+  }
   return {
     baseName: APP_BASE_NAME,
     stageLabel,
@@ -237,7 +242,7 @@ const make = Effect.fn("desktop.environment.make")(function* (
     branding,
     displayName,
     appUserModelId: Option.getOrElse(config.appUserModelIdOverride, () =>
-      isDevelopment ? "com.t3tools.t3code.dev" : "com.diegojohnson.t3code.custom-nightly",
+      isDevelopment ? "com.t3tools.t3code.dev" : "com.diegojohnson.d3code",
     ),
     linuxDesktopEntryName: resolveLinuxDesktopEntryName(isDevelopment),
     linuxWmClass: isDevelopment ? "t3code-dev" : "t3code",

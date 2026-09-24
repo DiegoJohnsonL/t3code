@@ -200,7 +200,7 @@ jobs:
           echo "upstream_tag=$upstream_tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
-          echo "release_name=T3 Code Custom Nightly $version" >> "$GITHUB_OUTPUT"
+          echo "release_name=D3 Code $version" >> "$GITHUB_OUTPUT"
           # Minutes since the epoch keep Android version codes increasing across runs and reruns.
           echo "android_version_code=$(( $(date -u +%s) / 60 ))" >> "$GITHUB_OUTPUT"
 

@@ -1,6 +1,6 @@
 # Custom nightly builds
 
-This fork follows released T3 Code nightlies and publishes a macOS arm64 build signed with a private development certificate, plus a signed Android APK. Both apps update from the fork's GitHub releases.
+This fork follows released T3 Code nightlies and publishes them as D3 Code: a macOS arm64 build signed with a private development certificate, plus a signed Android APK. Both apps update from the fork's GitHub releases.
 
 The automation merges upstream nightly tags into the fork's default branch. A merge conflict stops the workflow so a customization cannot disappear silently, and opens an issue on the fork listing the conflicted files. Merge the tag, resolve, and push; the next run closes the issue. The workflow retries the build until a release records the upstream tag it contains.
 
@@ -25,12 +25,12 @@ The first run creates a self-signed `T3 Code Local Development` code-signing ide
 The bootstrap updater checks hourly and installs the app at:
 
 ```text
-~/Applications/T3 Code Custom Nightly.app
+~/Applications/D3 Code.app
 ```
 
 It keeps the existing T3 Code data under `~/.t3/userdata` and the existing desktop data directory. The custom application does not support passkeys because its local certificate has no Apple provisioning profile. Other T3 Connect sign-in methods use the public production configuration in `.env.example`.
 
-Once a build with `app-update.yml` is installed, the bootstrap updater becomes idle. Use the update control inside T3 Code to check, download, and install later releases.
+Once a build with `app-update.yml` is installed, the bootstrap updater becomes idle. Use the update control inside D3 Code to check, download, and install later releases.
 
 Inspect or run the bootstrap updater manually:
 
@@ -39,7 +39,7 @@ Inspect or run the bootstrap updater manually:
 ./scripts/custom-nightly-macos.sh update
 ```
 
-Bootstrap checks defer while T3 Code is running. To install the first feed-enabled build immediately, quit and reopen the app as part of the update:
+Bootstrap checks defer while D3 Code is running. To install the first feed-enabled build immediately, quit and reopen the app as part of the update:
 
 ```bash
 ./scripts/custom-nightly-macos.sh update-now
@@ -53,9 +53,9 @@ Remove the hourly job without deleting the application, data, or signing identit
 
 ## Android app
 
-Install the `-android-arm64.apk` from a release. It installs as `com.t3tools.t3code.preview` (T3 Code Preview), next to the Play Store app and local development builds. Its Clerk sign-in callback is already allowlisted, so T3 Connect works. It never takes Expo over-the-air updates.
+Install the `-android-arm64.apk` from a release. It installs as `com.t3tools.t3code.preview` under the name D3 Code, next to the Play Store app and local development builds. Its Clerk sign-in callback is already allowlisted, so T3 Connect works. It never takes Expo over-the-air updates.
 
-The app checks the fork's releases at launch and after 15 minutes in the background, and offers newer APKs. **Settings > About > Check for updates** checks on demand. Android asks to confirm every install; the first update also asks to allow T3 Code to install unknown apps.
+The app checks the fork's releases at launch and after 15 minutes in the background, and offers newer APKs. **Settings > About > Check for updates** checks on demand. Android asks to confirm every install; the first update also asks to allow D3 Code to install unknown apps.
 
 ### Signing key
 
