@@ -127,12 +127,41 @@ jobs:
                 for number in $(open_conflict_issues); do
                   gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Superseded by ${upstream_tag}."
                 done
-                gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$(cat <<EOF
-          @DiegoJohnsonL merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved.
+                # Chamaquita works issues labeled chamaquita and merges the pull request of one labeled automerge.
+                gh label create chamaquita --repo "$GITHUB_REPOSITORY" --force --color 5319e7 \
+                  --description "Chamaquita works this issue as a Job"
+                gh label create automerge --repo "$GITHUB_REPOSITORY" --force --color 0e8a16 \
+                  --description "Chamaquita merges the Job's pull request once its checks pass"
+                job_branch="chamaquita/upstream-${upstream_tag}"
+                gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label chamaquita --label automerge --body "$(cat <<EOF
+          @DiegoJohnsonL merging upstream nightly [${upstream_tag}](https://github.com/pingdotgg/t3code/releases/tag/${upstream_tag}) into \`${GITHUB_REF_NAME}\` stopped on conflicts, so no custom build is published until they are resolved. Chamaquita resolves them and, because this issue carries \`automerge\`, merges its pull request once every check passes.
 
+          Base branch: \`${GITHUB_REF_NAME}\`
+          Job branch: \`${job_branch}\`
+          Upstream tag: \`${upstream_tag}\` from https://github.com/pingdotgg/t3code.git
+
+          Conflicted files:
           ${conflicted_files:-See the run log.}
 
-          Merge the tag into \`${GITHUB_REF_NAME}\`, resolve the conflicts, and push. The next run closes this issue.
+          ## Task
+
+          1. Start \`${job_branch}\` from \`origin/${GITHUB_REF_NAME}\`, or continue it if an earlier attempt pushed it. Fetch the tag with \`git fetch --no-tags https://github.com/pingdotgg/t3code.git tag ${upstream_tag}\` and merge it with \`git merge --no-ff ${upstream_tag}\`. Never rebase, squash, or cherry-pick: the nightly decides what is new with \`git merge-base --is-ancestor ${upstream_tag} HEAD\`, so only a merge commit keeps the tag an ancestor.
+          2. Resolve each conflicted hunk:
+             - Classify it as disjoint (the sides changed different things, so keep both), same question with different answers (pick one side on the evidence), or superseded (one side's change makes the other's moot).
+             - Touch only the conflicted regions, and leave every line git merged cleanly as it is.
+             - Keep the fork's customizations and take upstream's changes. The fork's intent is in \`git log ${upstream_tag}..origin/${GITHUB_REF_NAME}\`; upstream's is in \`git log origin/${GITHUB_REF_NAME}..${upstream_tag}\` and its pull requests.
+             - Regenerate lockfiles and generated files instead of merging them by hand: take upstream's \`pnpm-lock.yaml\` and run \`pnpm install\` to reconcile it with the merged manifests.
+             - Leave no conflict markers: \`git grep -nE '^(<<<<<<<|>>>>>>>) '\` finds nothing.
+          3. Run the fork's checks on the merged tree. Each must pass:
+             - \`pnpm install --frozen-lockfile\`
+             - \`pnpm run typecheck\`
+             - \`pnpm exec vp fmt --check\`
+             - \`pnpm exec vp lint\` on each file you resolved, adding no error that file does not already have on \`${GITHUB_REF_NAME}\`, whose styling already fails \`shadcn(no-restyle)\`
+             - \`pnpm exec vp run --filter t3 test\`
+             - \`pnpm exec vp run --parallel --concurrency-limit 2 --filter '!t3' --filter '!@t3tools/monorepo' test\`
+             - \`pnpm run build:desktop\`
+          4. Commit the merge, push \`${job_branch}\`, and open a pull request into \`${GITHUB_REF_NAME}\`. Its body has a table with one row per conflicted hunk and the columns File:lines, Class, ${GITHUB_REF_NAME}, Upstream, Kept, and Why, followed by each check and its result.
+          5. Report whether every check passed. Chamaquita merges the pull request as a merge commit only then, and only when GitHub finds it mergeable. The next run finds the tag merged, publishes the build, and closes this issue.
 
           Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           EOF
