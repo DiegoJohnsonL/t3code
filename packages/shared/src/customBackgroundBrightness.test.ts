@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { adaptToBrightness } from "./customBackgroundBrightness";
+import { adaptToBrightness } from "./customBackgroundBrightness.js";
 
 const chosen = { opacity: 90, fade: 0 };
 const nightSky = { lightness: 0.2, colorfulness: 0.1 };
