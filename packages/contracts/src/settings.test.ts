@@ -1033,10 +1033,10 @@ describe("ClientSettings custom backgrounds", () => {
     expect(decodeClientSettings({}).customBackgroundEnabled).toBe(true);
   });
 
-  it("starts agent bubbles at 65% fill with a 2px blur", () => {
+  it("starts agent bubbles at 77% fill with a 2px blur", () => {
     const settings = decodeClientSettings({});
     expect(settings.customBackgroundAgentBubbles).toBe(true);
-    expect(settings.customBackgroundAgentBubbleOpacity).toBe(65);
+    expect(settings.customBackgroundAgentBubbleOpacity).toBe(77);
     expect(settings.customBackgroundAgentBubbleBlur).toBe(2);
     expect(() => decodeClientSettingsPatch({ customBackgroundAgentBubbleBlur: 21 })).toThrow();
   });

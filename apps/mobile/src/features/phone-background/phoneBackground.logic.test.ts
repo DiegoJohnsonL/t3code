@@ -152,6 +152,6 @@ describe("stored phone backgrounds", () => {
     const { agentBubbles: _bubbles, agentBubbleOpacity: _opacity, ...saved } = background;
     const decoded = decodePhoneBackground(saved);
     expect(decoded.agentBubbles).toBe(true);
-    expect(decoded.agentBubbleOpacity).toBe(65);
+    expect(decoded.agentBubbleOpacity).toBe(77);
   });
 });

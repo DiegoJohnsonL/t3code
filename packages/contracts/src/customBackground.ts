@@ -195,7 +195,7 @@ export const DEFAULT_CUSTOM_BACKGROUND_FADE = 0;
  * How far up the pane, in percent, the fade reaches before it has eased away
  * completely; at 100 it reaches the top, where the chat text fades out.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 59;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 69;
 /**
  * How long, in percent of the pane, the ease below the fade height is. The
  * curve lives in `@t3tools/shared/customBackgroundFade` so every client draws
@@ -224,7 +224,7 @@ export const CustomBackgroundBlur = Schema.Int.check(
 /** Fill of the bubble behind agent replies, in percent of the message surface color. */
 export const AgentBubbleOpacity = Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 }));
 export type AgentBubbleOpacity = typeof AgentBubbleOpacity.Type;
-export const DEFAULT_AGENT_BUBBLE_OPACITY: AgentBubbleOpacity = 65;
+export const DEFAULT_AGENT_BUBBLE_OPACITY: AgentBubbleOpacity = 77;
 
 export const MAX_AGENT_BUBBLE_BLUR = 20;
 /** Backdrop blur behind agent reply bubbles, in pixels. 0 applies no backdrop filter. */
