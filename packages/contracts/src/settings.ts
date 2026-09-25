@@ -1225,12 +1225,15 @@ export const ServerSettings = Schema.Struct({
   ),
   sidebarAutoSettleOnMerge: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
   /**
-   * Keeps a macOS server's machine awake while the server runs, so agents keep
-   * working and phones can connect. The display still sleeps and locks.
-   * Running with the lid closed and Low Power Mode come from the optional root
-   * helper in `scripts/serve-mode`. Other platforms ignore this setting.
+   * Keeps a macOS or Windows server's machine awake while the server runs, so
+   * agents keep working and phones can connect. The display still sleeps and
+   * locks. On macOS, running with the lid closed and Low Power Mode come from
+   * the optional root helper in `scripts/serve-mode`. Other platforms ignore
+   * this setting.
    */
   serveMode: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  /** Windows only: serve mode also switches Power mode to Best power efficiency. */
+  serveModePowerSaving: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   backgroundActivity: BackgroundActivitySettings,
   // Legacy flat fields retained for old settings files and old clients. New
   // consumers should resolve `backgroundActivity` instead.
@@ -1566,6 +1569,7 @@ export const ServerSettingsPatch = Schema.Struct({
   sidebarAutoSettleAfterDays: Schema.optionalKey(Schema.NullOr(SidebarAutoSettleAfterDays)),
   sidebarAutoSettleOnMerge: Schema.optionalKey(Schema.Boolean),
   serveMode: Schema.optionalKey(Schema.Boolean),
+  serveModePowerSaving: Schema.optionalKey(Schema.Boolean),
   backgroundActivity: Schema.optionalKey(
     Schema.Struct({
       schemaVersion: Schema.optionalKey(Schema.Literal(1)),

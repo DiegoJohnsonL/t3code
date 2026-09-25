@@ -798,6 +798,13 @@ export const SETTINGS_SEARCH_ITEMS = [
     ],
   },
   {
+    id: "serve-mode-power-saving",
+    title: "Power saving in serve mode",
+    to: "/settings/connections",
+    targetId: "connections-environment",
+    searchTerms: ["serve mode windows pc power mode best power efficiency energy saver battery"],
+  },
+  {
     id: "wsl-backend",
     title: "WSL backend",
     to: "/settings/connections",

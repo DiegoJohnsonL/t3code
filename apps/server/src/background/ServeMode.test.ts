@@ -41,7 +41,7 @@ const recordingSpawner = (events: Queue.Queue<ProcessEvent>) =>
       });
       return ChildProcessSpawner.makeHandle({
         pid: ChildProcessSpawner.ProcessId(1),
-        exitCode: Effect.never,
+        exitCode: Effect.succeed(ChildProcessSpawner.ExitCode(0)),
         isRunning: Effect.succeed(true),
         kill: () => Effect.void,
         unref: Effect.succeed(Effect.void),
@@ -59,19 +59,32 @@ const startServeMode = Effect.fn(function* (platform: ServeMode.ServeModeHost["p
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const events = yield* Queue.unbounded<ProcessEvent>();
-  const requestDir = path.join(yield* fs.makeTempDirectoryScoped(), "requests");
+  const tempDir = yield* fs.makeTempDirectoryScoped();
+  const requestDir = path.join(tempDir, "requests");
   const requestPath = path.join(requestDir, String(process.pid));
+  const powerModeStatePath = path.join(tempDir, "serve-mode-power-mode");
   const serveModeScope = yield* Scope.make();
-  yield* ServeMode.make(platform === "darwin" ? { platform, requestDir } : { platform }).pipe(
+  yield* ServeMode.make(
+    platform === "darwin" ? { platform, requestDir } : { platform, powerModeStatePath },
+  ).pipe(
     Scope.provide(serveModeScope),
     Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, recordingSpawner(events)),
   );
   return {
     events,
     requestExists: fs.exists(requestPath),
+    powerModeStatePath,
     stop: Scope.close(serveModeScope, Exit.void),
   };
 });
+
+const powerShellScript = (event: ProcessEvent) => {
+  assert(event.type === "started");
+  const [command, ...args] = event.argv.split(" ");
+  assert.strictEqual(command, "powershell.exe");
+  assert.deepStrictEqual(args.slice(0, 3), ["-NoProfile", "-NonInteractive", "-EncodedCommand"]);
+  return Buffer.from(args[3] ?? "", "base64").toString("utf16le");
+};
 
 it.layer(NodeServices.layer)("serve mode", (it) => {
   it.effect("holds caffeinate and a helper request only while serve mode is on", () =>
@@ -119,23 +132,67 @@ it.layer(NodeServices.layer)("serve mode", (it) => {
         const serveMode = yield* startServeMode("win32");
 
         yield* settings.updateSettings({ serveMode: true });
-        const started = yield* Queue.take(serveMode.events);
-        assert(started.type === "started");
-        const [command, ...args] = started.argv.split(" ");
-        assert.strictEqual(command, "powershell.exe");
-        assert.deepStrictEqual(args.slice(0, 3), [
-          "-NoProfile",
-          "-NonInteractive",
-          "-EncodedCommand",
-        ]);
-        const script = Buffer.from(args[3] ?? "", "base64").toString("utf16le");
+        const script = powerShellScript(yield* Queue.take(serveMode.events));
         assert.include(script, "SetThreadExecutionState(2147483649)");
         assert.include(script, `Wait-Process -Id ${process.pid}`);
+        assert.notInclude(script, "PowerSetActiveOverlayScheme($saver)");
         assert.isFalse(yield* serveMode.requestExists);
 
         yield* settings.updateSettings({ serveMode: false });
         assert.deepStrictEqual(yield* Queue.take(serveMode.events), { type: "stopped" });
         yield* serveMode.stop;
+      }),
+    ).pipe(Effect.provide(settingsLayer())),
+  );
+
+  it.effect("switches Windows to Best power efficiency and restores it when opted in", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const settings = yield* ServerSettings.ServerSettingsService;
+        const serveMode = yield* startServeMode("win32");
+
+        yield* settings.updateSettings({ serveMode: true, serveModePowerSaving: true });
+        const script = powerShellScript(yield* Queue.take(serveMode.events));
+        assert.include(script, "PowerSetActiveOverlayScheme($saver)");
+        assert.include(script, `'${serveMode.powerModeStatePath}'`);
+        assert.isAbove(
+          script.indexOf("Remove-Item"),
+          script.indexOf(`Wait-Process -Id ${process.pid}`),
+        );
+
+        yield* fs.writeFileString(
+          serveMode.powerModeStatePath,
+          "00000000-0000-0000-0000-000000000000",
+        );
+        yield* settings.updateSettings({ serveModePowerSaving: false });
+        assert.deepStrictEqual(yield* Queue.take(serveMode.events), { type: "stopped" });
+        const restore = powerShellScript(yield* Queue.take(serveMode.events));
+        assert.include(restore, "Remove-Item");
+        assert.notInclude(restore, "Wait-Process");
+        assert.deepStrictEqual(yield* Queue.take(serveMode.events), { type: "stopped" });
+        assert.notInclude(
+          powerShellScript(yield* Queue.take(serveMode.events)),
+          "PowerSetActiveOverlayScheme($saver)",
+        );
+        yield* serveMode.stop;
+      }),
+    ).pipe(Effect.provide(settingsLayer())),
+  );
+
+  it.effect("restores a Power mode left behind by a server that died", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const events = yield* Queue.unbounded<ProcessEvent>();
+        const powerModeStatePath = path.join(yield* fs.makeTempDirectoryScoped(), "power-mode");
+        yield* fs.writeFileString(powerModeStatePath, "00000000-0000-0000-0000-000000000000");
+
+        yield* ServeMode.make({ platform: "win32", powerModeStatePath }).pipe(
+          Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, recordingSpawner(events)),
+        );
+        assert.include(powerShellScript(yield* Queue.take(events)), "Remove-Item");
       }),
     ).pipe(Effect.provide(settingsLayer())),
   );

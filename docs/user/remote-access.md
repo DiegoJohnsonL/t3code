@@ -157,6 +157,12 @@ On a Windows laptop, closing the lid still follows your power settings. To keep 
 running lid-closed while plugged in, open **Control Panel → Power Options → Choose
 what closing the lid does** and set **Plugged in** to **Do nothing**.
 
+To save power on a Windows PC while serving, turn on **Power saving in serve mode** next
+to the serve mode setting. While serve mode is on, T3 Code switches **Power mode** to
+**Best power efficiency** for the power source in use, and switches it back when serve
+mode turns off or T3 Code quits. If you pick a different Power mode in the meantime,
+T3 Code leaves your choice alone.
+
 To keep the Mac running with the lid closed and in Low Power Mode, install the
 helper once from a checkout of T3 Code with `sudo scripts/serve-mode/install.sh`.
 Running with the lid closed only applies while the Mac is plugged in. On

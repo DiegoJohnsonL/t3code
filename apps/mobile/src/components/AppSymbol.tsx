@@ -64,6 +64,7 @@ import IconHome from "@tabler/icons-react-native/IconHome";
 import IconInfoCircle from "@tabler/icons-react-native/IconInfoCircle";
 import IconKeyboard from "@tabler/icons-react-native/IconKeyboard";
 import IconKeyboardHide from "@tabler/icons-react-native/IconKeyboardHide";
+import IconLeaf from "@tabler/icons-react-native/IconLeaf";
 import IconLock from "@tabler/icons-react-native/IconLock";
 import IconLayoutColumns from "@tabler/icons-react-native/IconLayoutColumns";
 import IconLayoutSidebar from "@tabler/icons-react-native/IconLayoutSidebar";
@@ -169,6 +170,7 @@ const ANDROID_ICON_BY_SF_SYMBOL = {
   internaldrive: IconDatabase,
   keyboard: IconKeyboard,
   laptopcomputer: IconDeviceLaptop,
+  leaf: IconLeaf,
   link: IconLink,
   "line.3.horizontal": IconMenu2,
   "line.3.horizontal.decrease": IconFilter,

@@ -1,5 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
-import { serveModeComputerName } from "@t3tools/client-runtime/serve-mode";
+import {
+  serveModeComputerName,
+  WINDOWS_POWER_SAVING_DESCRIPTION,
+} from "@t3tools/client-runtime/serve-mode";
 import { SettingsRow } from "./components/SettingsRow";
 import { ScreenScrollView as ScrollView } from "../../components/ScreenScrollView";
 import { SymbolView } from "../../components/AppSymbol";
@@ -485,6 +488,20 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
                     disabled={disabledFor("serveMode")}
                     onValueChange={(value) => write({ serveMode: value })}
                   />
+                  {serveModeComputer === "PC" ? (
+                    <FanoutSwitchRow
+                      icon="leaf"
+                      label="Power saving in serve mode"
+                      subtitle={
+                        projectSelected
+                          ? "Environment-wide setting. Select All projects to change it."
+                          : WINDOWS_POWER_SAVING_DESCRIPTION
+                      }
+                      value={uniform("serveModePowerSaving")}
+                      disabled={disabledFor("serveModePowerSaving")}
+                      onValueChange={(value) => write({ serveModePowerSaving: value })}
+                    />
+                  ) : null}
                 </SettingsSection>
               ) : null}
             </>
