@@ -213,7 +213,7 @@ export const CustomBackgroundFade = Schema.Int.check(
  * fade up, 0 to 100. At 0 every picture shows at the chosen values.
  */
 export const CustomBackgroundBrightnessAdapt = CustomBackgroundFade;
-export const DEFAULT_CUSTOM_BACKGROUND_BRIGHTNESS_ADAPT = 96;
+export const DEFAULT_CUSTOM_BACKGROUND_BRIGHTNESS_ADAPT = 100;
 
 export const MAX_CUSTOM_BACKGROUND_BLUR = 40;
 /** Blur of the picture itself, in pixels. */
