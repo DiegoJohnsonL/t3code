@@ -51,6 +51,8 @@ Remove the hourly job without deleting the application, data, or signing identit
 ./scripts/custom-nightly-macos.sh uninstall
 ```
 
+While D3 Code runs, its Dock icon shows the cat in a mood that follows your threads: an unseen failure, questions waiting on you, agents at work, finished work you have not opened, a big day, a long idle stretch, or everything settled. The pictures live in `apps/desktop/resources/mascot/`, and `apps/web/src/mascotMood.ts` picks one.
+
 ## Windows app
 
 Install the `-x64.exe` from a release and accept the SmartScreen prompt; the installer is unsigned. Like the Mac app, it downloads later releases from the fork in the background and installs them on restart.

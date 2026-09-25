@@ -113,6 +113,22 @@ export interface DesktopAppBranding {
   displayName: string;
 }
 
+/** Which mascot the macOS Dock shows, from the state of every thread. */
+export const DesktopMascotMoodSchema = Schema.Literals([
+  "default",
+  "waiting",
+  "urgent",
+  "thinking",
+  "confused",
+  "broke",
+  "excited",
+  "celebrating",
+  "bored",
+  "grumpy",
+  "sleeping",
+]);
+export type DesktopMascotMood = typeof DesktopMascotMoodSchema.Type;
+
 export const DesktopAppBrandingSchema = Schema.Struct({
   baseName: Schema.String,
   stageLabel: DesktopAppStageLabelSchema,
@@ -1132,6 +1148,7 @@ export interface DesktopBridge {
   getClientPlatform?: () => string;
   setNotificationBadge?: (badge: { count: number; image: string | null }) => Promise<void>;
   onNotificationBadgeClear?: (listener: () => void) => () => void;
+  setDockMood?: (mood: DesktopMascotMood) => Promise<void>;
   onTrackpadScrollEnd?: (listener: () => void) => () => void;
   /**
    * The OS locale as a BCP-47 tag, which the renderer cannot read for itself:
