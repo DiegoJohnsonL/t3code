@@ -1,5 +1,9 @@
 # Usage and limits
 
+Open the full **Usage** page from the sidebar usage panel or the command palette, or press
+`mod+u` on web and desktop when the terminal is not focused. Customize `usage.open` in
+**Settings → Keybindings**.
+
 ## Check usage at a glance
 
 The chart button at the bottom of the sidebar opens a usage panel in its place, so your
@@ -111,4 +115,5 @@ settings section when you no longer need it.
 
 Add **Subscription usage** from your iOS or Android widget gallery to see remaining Codex and
 Claude quotas. Tap it to open **Usage → Limits**. On iOS, use **Edit Widget** to choose Session,
-Weekly, or both for each provider. Reopen T3 to refresh expired readings.
+Weekly, or both for each provider. Reopen T3 to refresh expired readings. The Android widget
+requires Android 12L or later.
