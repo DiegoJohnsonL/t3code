@@ -17,6 +17,7 @@ import {
   MIN_CUSTOM_BACKGROUND_FADE,
   defaultCustomBackgroundFilter,
 } from "@t3tools/contracts";
+import { adaptToBrightness } from "@t3tools/shared/customBackgroundBrightness";
 import {
   BanIcon,
   ChevronLeftIcon,
@@ -29,7 +30,6 @@ import {
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
-import { adaptToBrightness } from "~/customBackground/brightnessAdapt";
 import { storeBackgroundImage, useBackgroundImageTone } from "~/customBackground/imageStore";
 import { stepBackgroundImage, useRotatingBackgroundImage } from "~/customBackground/rotation";
 import { isWebGlAvailable } from "~/customBackground/webgl";

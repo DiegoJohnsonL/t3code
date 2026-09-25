@@ -1,3 +1,4 @@
+import { adaptToBrightness } from "@t3tools/shared/customBackgroundBrightness";
 import { useState } from "react";
 
 import type { BackgroundRendererProps } from "~/components/background/BackgroundRenderer";
@@ -5,7 +6,6 @@ import { useClientSettings } from "~/hooks/useSettings";
 import { useTheme } from "~/hooks/useTheme";
 
 import { useBackgroundStudioOpen, useBackgroundStudioStore } from "./backgroundStudioStore";
-import { adaptToBrightness } from "./brightnessAdapt";
 import { useBackgroundImageTone, useBackgroundImageUrl } from "./imageStore";
 import {
   type CustomBackgroundRouteKind,

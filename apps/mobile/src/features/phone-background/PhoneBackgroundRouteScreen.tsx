@@ -34,11 +34,7 @@ import {
   phoneBackgroundWithPictures,
 } from "./phoneBackground.logic";
 import { deletePhonePicture, phonePictureFile, pickPhonePictures } from "./phonePictures";
-import {
-  PhoneBackgroundBubbleControls,
-  PhoneBackgroundLookSliders,
-  PhoneBackgroundStepButtons,
-} from "./PhoneBackgroundControls";
+import { PhoneBackgroundLookSliders, PhoneBackgroundStepButtons } from "./PhoneBackgroundControls";
 
 type SymbolName = ComponentProps<typeof SymbolView>["name"];
 
@@ -274,17 +270,16 @@ function LookSection(props: { readonly record: CustomBackgroundRecord }) {
   );
 }
 
-function ThemeAndRepliesSection(props: { readonly background: PhoneBackground }) {
+function ThemeSection(props: { readonly background: PhoneBackground }) {
   const update = useUpdatePhoneBackground();
   return (
-    <SettingsSection title="Theme and replies">
+    <SettingsSection title="Theme">
       <SettingsSwitchRow
         icon="paintbrush"
         label="Colors from pictures"
         value={props.background.dynamicTheme}
         onValueChange={(dynamicTheme) => update((background) => ({ ...background, dynamicTheme }))}
       />
-      <PhoneBackgroundBubbleControls background={props.background} />
     </SettingsSection>
   );
 }
@@ -308,7 +303,7 @@ export function PhoneBackgroundRouteScreen() {
           <>
             {source?.kind === "image" ? <RotationSection source={source} /> : null}
             <LookSection record={background.record} />
-            <ThemeAndRepliesSection background={background} />
+            <ThemeSection background={background} />
           </>
         ) : null}
       </ScreenScrollView>

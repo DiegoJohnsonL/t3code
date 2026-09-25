@@ -1,7 +1,12 @@
 import type { CustomBackgroundRecord } from "@t3tools/contracts";
 
-import type { ThemeAppearance } from "~/themePalette";
-import type { PictureTone } from "./sourceColor";
+import type { ThemeAppearance } from "./themePalettes";
+
+/** How loud a picture is behind text: its mean lightness and colorfulness, each 0 to 1. */
+export interface PictureTone {
+  readonly lightness: number;
+  readonly colorfulness: number;
+}
 
 /**
  * How far a picture may lean toward the text color before it gets adjusted:

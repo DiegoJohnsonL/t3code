@@ -1,9 +1,11 @@
 import type { CustomBackgroundImageId } from "@t3tools/contracts";
+import type { PictureTone } from "@t3tools/shared/customBackgroundBrightness";
 import { CryptoDigestAlgorithm, digest } from "expo-crypto";
+import type { ImageRef } from "expo-image-manipulator";
 import { Directory, File, Paths } from "expo-file-system";
 
 import { beginForegroundHandoff } from "../../lib/foreground-handoff";
-import { type AddedPicture, sourceColorFromPixels } from "./phoneBackground.logic";
+import { type AddedPicture, sourceColorFromPixels, toneFromPixels } from "./phoneBackground.logic";
 import { decodePngPixels } from "./pngPixels";
 
 // Enough to cover a phone screen without keeping the camera original.
@@ -18,24 +20,38 @@ export function phonePictureFile(imageId: CustomBackgroundImageId): File {
   return new File(Paths.document, PICTURE_DIRECTORY, `${imageId}.webp`);
 }
 
+type ImageManipulatorModule = typeof import("expo-image-manipulator");
+const fitWithin = (image: ImageRef, edge: number) =>
+  image.width >= image.height
+    ? { width: Math.min(edge, image.width) }
+    : { height: Math.min(edge, image.height) };
+
+/** The picture's pixels at the desktop's color sample size, as RGBA. */
+async function samplePixels(
+  { ImageManipulator, SaveFormat }: ImageManipulatorModule,
+  source: ImageRef,
+): Promise<Uint8Array | null> {
+  const sample = await ImageManipulator.manipulate(source)
+    .resize(fitWithin(source, COLOR_SAMPLE_EDGE))
+    .renderAsync();
+  const sampled = await sample.saveAsync({ format: SaveFormat.PNG, base64: true });
+  sample.release();
+  if (!sampled.base64) return null;
+  return decodePngPixels(Uint8Array.from(atob(sampled.base64), (char) => char.charCodeAt(0))).rgba;
+}
+
 async function storePicture(uri: string): Promise<AddedPicture> {
-  const { ImageManipulator, SaveFormat } = await import("expo-image-manipulator");
+  const manipulator = await import("expo-image-manipulator");
+  const { ImageManipulator, SaveFormat } = manipulator;
   const source = await ImageManipulator.manipulate(uri).renderAsync();
-  const fit = (edge: number) =>
-    source.width >= source.height
-      ? { width: Math.min(edge, source.width) }
-      : { height: Math.min(edge, source.height) };
+  const fit = (edge: number) => fitWithin(source, edge);
   try {
     const full = await ImageManipulator.manipulate(source)
       .resize(fit(PICTURE_MAX_EDGE))
       .renderAsync();
     const saved = await full.saveAsync({ format: SaveFormat.WEBP, compress: PICTURE_QUALITY });
     full.release();
-    const sample = await ImageManipulator.manipulate(source)
-      .resize(fit(COLOR_SAMPLE_EDGE))
-      .renderAsync();
-    const sampled = await sample.saveAsync({ format: SaveFormat.PNG, base64: true });
-    sample.release();
+    const pixels = await samplePixels(manipulator, source);
     const rendered = new File(saved.uri);
     const hash = new Uint8Array(await digest(CryptoDigestAlgorithm.SHA256, await rendered.bytes()));
     const imageId = Array.from(hash, (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -51,12 +67,7 @@ async function storePicture(uri: string): Promise<AddedPicture> {
     }
     return {
       imageId,
-      sourceColor: sampled.base64
-        ? sourceColorFromPixels(
-            decodePngPixels(Uint8Array.from(atob(sampled.base64), (char) => char.charCodeAt(0)))
-              .rgba,
-          )
-        : null,
+      sourceColor: pixels ? sourceColorFromPixels(pixels) : null,
     };
   } finally {
     source.release();
@@ -88,6 +99,29 @@ export async function pickPhonePictures(): Promise<ReadonlyArray<AddedPicture>> 
   const pictures: AddedPicture[] = [];
   for (const asset of picked.assets) pictures.push(await storePicture(asset.uri));
   return pictures;
+}
+
+/**
+ * Measured from the stored file on first use, like the desktop, so pictures
+ * added before brightness adapt existed get a tone too. Null when unreadable.
+ */
+export async function measurePhonePictureTone(
+  imageId: CustomBackgroundImageId,
+): Promise<PictureTone | null> {
+  try {
+    const manipulator = await import("expo-image-manipulator");
+    const source = await manipulator.ImageManipulator.manipulate(
+      phonePictureFile(imageId).uri,
+    ).renderAsync();
+    try {
+      const pixels = await samplePixels(manipulator, source);
+      return pixels ? toneFromPixels(pixels) : null;
+    } finally {
+      source.release();
+    }
+  } catch {
+    return null;
+  }
 }
 
 export function deletePhonePicture(imageId: CustomBackgroundImageId): void {

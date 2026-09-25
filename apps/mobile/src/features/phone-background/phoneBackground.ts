@@ -1,15 +1,22 @@
 import { useAtomSet, useAtomValue } from "@effect/atom-react";
-import type { CustomBackgroundSource, PhoneBackground } from "@t3tools/contracts";
+import type {
+  CustomBackgroundImageId,
+  CustomBackgroundSource,
+  PhoneBackground,
+} from "@t3tools/contracts";
+import type { PictureTone } from "@t3tools/shared/customBackgroundBrightness";
 import {
   currentBackgroundImageId,
   nextBackgroundRotationAt,
   upcomingBackgroundImageId,
 } from "@t3tools/shared/customBackgroundRotation";
+import * as Effect from "effect/Effect";
 import * as Equal from "effect/Equal";
 import { AsyncResult, Atom } from "effect/unstable/reactivity";
 import { useCallback, useEffect, useState } from "react";
 
 import { mobilePreferencesAtom, updateMobilePreferencesAtom } from "../../state/preferences";
+import { measurePhonePictureTone } from "./phonePictures";
 
 let previousBackground: PhoneBackground | null = null;
 
@@ -96,4 +103,18 @@ export function usePhoneBackgroundImage(source: CustomBackgroundSource | null) {
     current: currentBackgroundImageId(rotation, now, offset),
     upcoming: upcomingBackgroundImageId(rotation, now, offset),
   };
+}
+
+const pictureToneAtom = Atom.family((imageId: CustomBackgroundImageId | null) =>
+  Atom.make(
+    imageId === null
+      ? Effect.succeed(null)
+      : Effect.promise(() => measurePhonePictureTone(imageId)),
+  ).pipe(Atom.keepAlive, Atom.withLabel(`phone-background-tone:${imageId}`)),
+);
+
+/** The picture's tone for brightness adapt; null while it measures or when it cannot. */
+export function usePhonePictureTone(imageId: CustomBackgroundImageId | null): PictureTone | null {
+  const tone = useAtomValue(pictureToneAtom(imageId));
+  return AsyncResult.isSuccess(tone) ? tone.value : null;
 }

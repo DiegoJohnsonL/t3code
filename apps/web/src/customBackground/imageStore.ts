@@ -1,10 +1,11 @@
 import { sha256 } from "@noble/hashes/sha2";
 import type { CustomBackgroundImageId } from "@t3tools/contracts";
+import type { PictureTone } from "@t3tools/shared/customBackgroundBrightness";
 import { useSyncExternalStore } from "react";
 
 import { type ImageCompressionFailureReason, reencodeImage } from "~/lib/imageCompression";
 
-import { type PictureTone, sourceColorFromImage, toneFromImage } from "./sourceColor";
+import { sourceColorFromImage, toneFromImage } from "./sourceColor";
 
 const DATABASE_NAME = "t3code:custom-backgrounds";
 const DATABASE_VERSION = 3;

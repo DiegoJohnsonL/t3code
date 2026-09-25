@@ -193,7 +193,6 @@ import {
 } from "../files/filePath";
 import { fileChipMenu, resolveFileChipTarget, type FileChipAction } from "./fileChipMenu";
 import { useFileChipShare } from "./useFileChipShare";
-import { PhoneReplyBubble } from "../phone-background/PhoneReplyBubble";
 import {
   MarkdownImageAvailableWidthContext,
   ThreadMarkdownImage,
@@ -1697,7 +1696,7 @@ function renderFeedEntry(
         {...(enterAnimated ? { entering: FadeIn.duration(220) } : {})}
       >
         {renderedText.trim().length > 0 ? (
-          <PhoneReplyBubble contentWidth={props.markdownContentWidth}>
+          <MarkdownImageAvailableWidthContext value={props.markdownContentWidth}>
             <AssistantMarkdownContent
               markdown={renderedText}
               markdownStyles={styles}
@@ -1706,7 +1705,7 @@ function renderFeedEntry(
               renderImage={props.renderMarkdownImage}
               skills={props.skills}
             />
-          </PhoneReplyBubble>
+          </MarkdownImageAvailableWidthContext>
         ) : null}
         {attachments.map((attachment) => {
           return isImageAttachment(attachment) ? (

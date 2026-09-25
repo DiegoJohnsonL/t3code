@@ -1,5 +1,7 @@
 import { Hct, QuantizerCelebi, Score } from "@material/material-color-utilities";
 
+import type { PictureTone } from "@t3tools/shared/customBackgroundBrightness";
+
 import { createCanvas } from "~/lib/imageCompression";
 
 /**
@@ -57,12 +59,6 @@ export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
   const pixels = await samplePixels(blob);
   if (!pixels) return null;
   return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE_BUCKETS))[0] ?? null;
-}
-
-/** How loud a picture is behind text: its mean lightness and colorfulness, each 0 to 1. */
-export interface PictureTone {
-  readonly lightness: number;
-  readonly colorfulness: number;
 }
 
 // Material's chroma tops out near 120 for the most saturated sRGB colors.

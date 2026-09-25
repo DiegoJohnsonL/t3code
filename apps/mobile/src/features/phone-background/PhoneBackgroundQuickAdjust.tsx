@@ -13,11 +13,7 @@ import {
   usePhoneBackgroundEnabled,
   usePhoneBackgroundQuickAdjust,
 } from "./phoneBackground";
-import {
-  PhoneBackgroundBubbleControls,
-  PhoneBackgroundLookSliders,
-  PhoneBackgroundStepButtons,
-} from "./PhoneBackgroundControls";
+import { PhoneBackgroundLookSliders, PhoneBackgroundStepButtons } from "./PhoneBackgroundControls";
 
 /**
  * A floating button, on while the quick adjust mode is, that opens the
@@ -78,7 +74,6 @@ export function PhoneBackgroundQuickAdjust() {
               }
             />
             <PhoneBackgroundLookSliders record={background.record} />
-            <PhoneBackgroundBubbleControls background={background} />
           </ScrollView>
         </View>
       </Modal>

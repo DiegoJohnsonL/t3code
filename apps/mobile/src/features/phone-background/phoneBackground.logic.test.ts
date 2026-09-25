@@ -1,5 +1,4 @@
-import { PhoneBackground } from "@t3tools/contracts";
-import * as Schema from "effect/Schema";
+import type { PhoneBackground } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { getMobileThemeRuntimeVariables } from "../../lib/mobileThemeVariables";
@@ -9,9 +8,8 @@ import {
   phoneBackgroundWithoutPicture,
   phoneBackgroundWithPictures,
   sourceColorFromPixels,
+  toneFromPixels,
 } from "./phoneBackground.logic";
-
-const decodePhoneBackground = Schema.decodeUnknownSync(PhoneBackground);
 
 const background: PhoneBackground = {
   record: {
@@ -35,8 +33,6 @@ const background: PhoneBackground = {
   },
   dynamicTheme: true,
   sourceColors: {},
-  agentBubbles: true,
-  agentBubbleOpacity: 82,
 };
 
 describe("phoneBackgroundThemeVariables", () => {
@@ -111,8 +107,8 @@ describe("editing the shared phone playlist", () => {
       fadeSoftness: 65,
       opacity: 20,
       blur: 0,
+      brightnessAdapt: 100,
     });
-    expect(started.agentBubbles).toBe(false);
   });
 
   it("appends new photos without duplicating ones already in the playlist", () => {
@@ -145,13 +141,12 @@ describe("editing the shared phone playlist", () => {
     expect(sourceColorFromPixels(Uint8Array.from([...orange, ...orange]))).not.toBeNull();
     expect(sourceColorFromPixels(Uint8Array.from([255, 120, 0, 0]))).toBeNull();
   });
-});
 
-describe("stored phone backgrounds", () => {
-  it("turn reply bubbles on for backgrounds saved before bubbles existed", () => {
-    const { agentBubbles: _bubbles, agentBubbleOpacity: _opacity, ...saved } = background;
-    const decoded = decodePhoneBackground(saved);
-    expect(decoded.agentBubbles).toBe(true);
-    expect(decoded.agentBubbleOpacity).toBe(77);
+  it("measures a white picture as light and a vivid one as colorful", () => {
+    const white = toneFromPixels(Uint8Array.from([255, 255, 255, 255]))!;
+    const orange = toneFromPixels(Uint8Array.from([255, 120, 0, 255]))!;
+    expect(white.lightness).toBeCloseTo(1);
+    expect(orange.colorfulness).toBeGreaterThan(white.colorfulness + 0.5);
+    expect(toneFromPixels(Uint8Array.from([255, 255, 255, 0]))).toBeNull();
   });
 });
