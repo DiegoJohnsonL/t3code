@@ -16,7 +16,7 @@ import {
   usePreventRemove,
   type NavigationAction,
 } from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, View } from "react-native";
 import {
   KeyboardController,
@@ -25,6 +25,7 @@ import {
 } from "react-native-keyboard-controller";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { cn } from "../../lib/cn";
 import { useUniwindTheme } from "../../lib/useUniwindTheme";
 import { useFontFamily } from "../../lib/useFontFamily";
 import {
@@ -117,6 +118,8 @@ import { armAgentAwarenessLiveActivityForLocalWork } from "../agent-awareness/re
 import { enqueueThreadOutboxMessage } from "../../state/thread-outbox";
 import { useRemoteConnectionStatus } from "../../state/use-remote-environment-registry";
 import { useNewTaskFlow } from "./new-task-flow-provider";
+import { PhoneBackgroundLayer } from "../phone-background/PhoneBackgroundLayer";
+import { useShownPhoneBackground } from "../phone-background/phoneBackground";
 import { resolveProjectThreadCreationBranch } from "./projectThreadCreationValidation";
 import { resolveDraftProjectSelection } from "./new-task-project-selection";
 import {
@@ -182,6 +185,7 @@ export function NewTaskDraftScreen(props: {
 }) {
   const projects = useProjects();
   const flow = useNewTaskFlow();
+  const showsPhoneBackground = useShownPhoneBackground() !== null;
   const navigation = useNavigation();
   const {
     consumeShare,
@@ -469,6 +473,9 @@ export function NewTaskDraftScreen(props: {
     disabled: isIncomingShareTransferPending || isImportingShare || flow.submitting,
     onChangeDraftMessage: flow.setPrompt,
     onChangeSelection: composerMenu.onSelectionChange,
+    onSend: () => {
+      if (canStart) void handleStart();
+    },
   });
   const voicePresentation = resolveVoiceComposerPresentation(
     voiceInput.state,
@@ -1319,7 +1326,7 @@ export function NewTaskDraftScreen(props: {
 
   if (!selectedProject) {
     return (
-      <View className="flex-1 bg-sheet" collapsable={false}>
+      <DraftSurface>
         {Platform.OS === "android" ? (
           <>
             <NativeStackScreenOptions options={{ headerShown: false }} />
@@ -1332,7 +1339,7 @@ export function NewTaskDraftScreen(props: {
         ) : (
           <NativeStackScreenOptions options={{ title: "Loading task" }} />
         )}
-      </View>
+      </DraftSurface>
     );
   }
 
@@ -1546,9 +1553,10 @@ export function NewTaskDraftScreen(props: {
 
   const composerDock = (
     <View
-      className={
-        Platform.OS === "android" ? "bg-sheet-solid px-[12px] pt-1" : "bg-sheet px-[12px] pt-1"
-      }
+      className={cn(
+        "px-[12px] pt-1",
+        !showsPhoneBackground && (Platform.OS === "android" ? "bg-sheet-solid" : "bg-sheet"),
+      )}
       style={{ paddingBottom: controlsBottomPadding }}
     >
       {!voiceInput.isBusy &&
@@ -1725,6 +1733,7 @@ export function NewTaskDraftScreen(props: {
                 disabled={isIncomingShareTransferPending || isImportingShare || flow.submitting}
                 onStart={voiceInput.start}
                 onConfirm={voiceInput.stop}
+                onConfirmAndSend={voiceInput.stopAndSend}
                 onCancel={voiceInput.cancel}
               />
               {voicePresentation.showsSend ? (
@@ -1762,7 +1771,7 @@ export function NewTaskDraftScreen(props: {
 
   if (isAndroid) {
     return (
-      <View className="flex-1 bg-sheet" collapsable={false}>
+      <DraftSurface>
         <NativeStackScreenOptions options={{ headerShown: false }} />
         <AndroidScreenHeader title="New thread" hideBottomBorder onBack={closeNewTask} />
         <MaterialScreenContent>
@@ -1775,12 +1784,12 @@ export function NewTaskDraftScreen(props: {
             {composerDock}
           </KeyboardStickyView>
         </MaterialScreenContent>
-      </View>
+      </DraftSurface>
     );
   }
 
   return (
-    <View className="flex-1 bg-sheet" collapsable={false}>
+    <DraftSurface>
       <NativeStackScreenOptions
         options={{
           headerBackVisible: false,
@@ -1810,6 +1819,18 @@ export function NewTaskDraftScreen(props: {
           {composerDock}
         </Animated.View>
       </KeyboardStickyView>
+    </DraftSurface>
+  );
+}
+
+// A compact iPhone opens the draft as a form sheet, above the picture drawn
+// behind navigation, so the draft draws its own copy to match the thread it becomes.
+function DraftSurface(props: { readonly children: ReactNode }) {
+  const showsPhoneBackground = useShownPhoneBackground() !== null;
+  return (
+    <View className={cn("flex-1", !showsPhoneBackground && "bg-sheet")} collapsable={false}>
+      <PhoneBackgroundLayer />
+      {props.children}
     </View>
   );
 }
