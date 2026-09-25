@@ -1,6 +1,6 @@
 import type { CustomBackgroundRecord } from "@t3tools/contracts";
 
-import type { ThemeAppearance } from "./themePalettes";
+import type { ThemeAppearance } from "./themePalettes.js";
 
 /** How loud a picture is behind text: its mean lightness and colorfulness, each 0 to 1. */
 export interface PictureTone {
