@@ -222,6 +222,7 @@ function VoiceActionButton(props: {
   readonly accessibilityLabel: string;
   readonly disabled?: boolean;
   readonly icon: AppSymbolName;
+  readonly iconSize?: number;
   readonly loading?: boolean;
   readonly onPress: () => void;
   readonly variant?: "plain" | "primary";
@@ -261,7 +262,7 @@ function VoiceActionButton(props: {
           ) : (
             <SymbolView
               name={props.icon}
-              size={variant === "primary" ? 16 : 20}
+              size={props.iconSize ?? (variant === "primary" ? 16 : 20)}
               weight={variant === "primary" ? "semibold" : "regular"}
               tintColorClassName={
                 variant === "primary" ? "accent-primary-foreground" : "accent-icon"
@@ -370,22 +371,33 @@ export function ComposerDictationPrimaryAction(props: {
   readonly disabled?: boolean;
   readonly onStart: () => void;
   readonly onConfirm: () => void;
+  readonly onConfirmAndSend: () => void;
   readonly onCancel: () => void;
 }) {
   if (props.presentation.trailingAction === "confirm") {
+    const confirmationEnabled = props.presentation.confirmationEnabled;
     return (
-      <VoiceActionButton
-        accessibilityLabel={
-          props.presentation.confirmationEnabled
-            ? "Finish dictation"
-            : (props.presentation.statusLabel ?? "Preparing voice input")
-        }
-        disabled={!props.presentation.confirmationEnabled}
-        icon="checkmark"
-        loading={!props.presentation.confirmationEnabled}
-        onPress={props.onConfirm}
-        variant="primary"
-      />
+      <>
+        <VoiceActionButton
+          accessibilityLabel="Stop dictation and insert text"
+          disabled={!confirmationEnabled}
+          icon="stop.fill"
+          iconSize={14}
+          onPress={props.onConfirm}
+        />
+        <VoiceActionButton
+          accessibilityLabel={
+            confirmationEnabled
+              ? "Finish dictation and send"
+              : (props.presentation.statusLabel ?? "Preparing voice input")
+          }
+          disabled={!confirmationEnabled}
+          icon="arrow.up"
+          loading={!confirmationEnabled}
+          onPress={props.onConfirmAndSend}
+          variant="primary"
+        />
+      </>
     );
   }
 

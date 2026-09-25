@@ -291,14 +291,17 @@ export const ThreadDetailScreen = memo(function ThreadDetailScreen(props: Thread
   // translation on every Android resume instead; any sign of a live keyboard
   // stream — an owned input gaining focus, or any visibility/height movement —
   // lifts it. A healthy resume sees no visual difference (the translation is
-  // already zero while the keyboard is closed).
+  // already zero while the keyboard is closed). A composer that stayed focused
+  // keeps its keyboard: the microphone permission check pauses the activity
+  // mid-dictation, and quarantining then dropped the composer under the IME.
   const [keyboardStateSuspect, setKeyboardStateSuspect] = useState(false);
+  const composerFocusedRef = useRef(false);
   useEffect(() => {
     if (Platform.OS !== "android") {
       return;
     }
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
+      if (state === "active" && !composerFocusedRef.current) {
         setKeyboardStateSuspect(true);
       }
     });
@@ -330,6 +333,7 @@ export const ThreadDetailScreen = memo(function ThreadDetailScreen(props: Thread
   const [composerFocused, setComposerFocused] = useState(false);
   const handleComposerFocusChange = useCallback(
     (focused: boolean) => {
+      composerFocusedRef.current = focused;
       setComposerFocused(focused);
       handleOwnedInputFocusChange(focused);
     },

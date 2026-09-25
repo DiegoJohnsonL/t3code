@@ -398,6 +398,9 @@ export const ThreadComposer = memo(function ThreadComposer(props: ThreadComposer
     selection: composerMenu.selection,
     onChangeDraftMessage: props.onChangeDraftMessage,
     onChangeSelection: composerMenu.onSelectionChange,
+    onSend: () => {
+      if (canSend) void handleSend();
+    },
   });
   const voicePresentation = resolveVoiceComposerPresentation(
     voiceInput.state,
@@ -984,6 +987,7 @@ export const ThreadComposer = memo(function ThreadComposer(props: ThreadComposer
                     isAvailable={voiceInput.isAvailable}
                     onStart={voiceInput.start}
                     onConfirm={voiceInput.stop}
+                    onConfirmAndSend={voiceInput.stopAndSend}
                     onCancel={voiceInput.cancel}
                   />
                   {showStopAction ? (

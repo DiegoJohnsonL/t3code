@@ -79,8 +79,11 @@ export function useVoiceInputController(input: {
   readonly disabled?: boolean;
   readonly onChangeDraftMessage: (value: string) => void;
   readonly onChangeSelection: (selection: ComposerEditorSelection) => void;
+  /** Sends the draft once a stop-and-send transcript has landed in it. */
+  readonly onSend: () => void;
 }) {
   const [state, setState] = useState<VoiceInputState>(INITIAL_STATE);
+  const [sendRequestCount, setSendRequestCount] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const keepAwakeId = useId();
   const keepAwakeSessionRef = useRef(0);
@@ -259,7 +262,16 @@ export function useVoiceInputController(input: {
   const start = useCallback(() => {
     if (!latestInputRef.current.disabled) void controller.start();
   }, [controller]);
-  const stop = useCallback(() => controller.stop(), [controller]);
+  const stop = useCallback(() => void controller.stop(), [controller]);
+  const stopAndSend = useCallback(() => {
+    void controller.stop().then((inserted) => {
+      if (inserted) setSendRequestCount((count) => count + 1);
+    });
+  }, [controller]);
+  // Sends after the render that carries the transcript, so the host sends the new draft.
+  useEffect(() => {
+    if (sendRequestCount > 0) latestInputRef.current.onSend();
+  }, [sendRequestCount]);
   /** Call once a message leaves this draft so fixes to dictated words are learned. */
   const messageSent = useCallback((sent: string) => {
     const { ownerKey } = latestInputRef.current;
@@ -286,6 +298,7 @@ export function useVoiceInputController(input: {
     blocksSubmission: voiceInputBlocksSubmission(state),
     start,
     stop,
+    stopAndSend,
     cancel,
     messageSent,
   };

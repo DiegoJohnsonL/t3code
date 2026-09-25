@@ -289,7 +289,7 @@ describe("VoiceInputController", () => {
       error: null,
       url: "file:///voice.m4a",
     });
-    await stopping;
+    await expect(stopping).resolves.toBe(true);
 
     expect(harness.commits).toEqual([
       { text: "hello new text", selection: { start: 14, end: 14 } },
@@ -327,7 +327,7 @@ describe("VoiceInputController", () => {
       expect(next.recorder.record).not.toHaveBeenCalled();
 
       transcription.resolve("late text");
-      await stopping;
+      await expect(stopping).resolves.toBe(false);
 
       expect(harness.commits).toEqual([]);
       expect(harness.deleted).toEqual(["file:///voice.m4a"]);
@@ -402,7 +402,7 @@ describe("VoiceInputController", () => {
     const harness = createHarness();
     harness.recorder.stop.mockRejectedValueOnce(new Error("stop failed"));
     await harness.controller.start();
-    await harness.controller.stop();
+    await expect(harness.controller.stop()).resolves.toBe(false);
 
     expect(harness.controller.currentState.phase).toBe("error");
     expect(harness.controller.currentState.error).toContain("finish voice recording");
