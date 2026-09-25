@@ -77,12 +77,12 @@ const running = (startedMinutesAgo: number) =>
 const mood = (...threads: MascotThread[]) => resolveMascotMood({ threads, nowMs: NOW });
 
 describe("resolveMascotMood", () => {
-  it("shows an unseen failure above everything else", () => {
+  it("treats an unseen failure as urgent, above everything else", () => {
     const failed = makeThread({
       latestTurn: turn({ state: "error", completedAt: minutesAgo(5) }),
       lastVisitedAt: minutesAgo(10),
     });
-    expect(mood(failed, makeThread({ hasPendingUserInput: true }), running(1))).toBe("broke");
+    expect(mood(failed, makeThread({ hasPendingUserInput: true }), running(1))).toBe("urgent");
   });
 
   it("forgets a failure once the thread was visited after it", () => {
@@ -99,9 +99,10 @@ describe("resolveMascotMood", () => {
     expect(mood(asking(), asking(), asking())).toBe("urgent");
   });
 
-  it("thinks while agents work and looks confused once one runs long", () => {
-    expect(mood(running(5))).toBe("thinking");
-    expect(mood(running(5), running(60))).toBe("confused");
+  it("thinks while agents work, juggles three at once, and looks confused once one runs long", () => {
+    expect(mood(running(5), running(5))).toBe("thinking");
+    expect(mood(running(5), running(5), running(5))).toBe("juggling");
+    expect(mood(running(5), running(5), running(60))).toBe("confused");
   });
 
   it("gets excited about a finished turn the user has not opened", () => {
@@ -110,12 +111,14 @@ describe("resolveMascotMood", () => {
     );
   });
 
-  it("celebrates ten threads finished today", () => {
+  it("celebrates ten threads finished today only while nothing is working", () => {
     const done = Array.from({ length: 10 }, () => makeThread({ latestTurn: turn({}) }));
     expect(mood(...done)).toBe("celebrating");
+    expect(mood(...done, running(5))).toBe("thinking");
+    expect(mood(...done.slice(1))).toBe("default");
   });
 
-  it("gets bored after eight idle hours and grumpy after three days", () => {
+  it("gets bored after two idle hours and grumpy after six", () => {
     const idleFor = (minutes: number) =>
       makeThread({
         latestUserMessageAt: minutesAgo(minutes),
@@ -125,8 +128,9 @@ describe("resolveMascotMood", () => {
           completedAt: minutesAgo(minutes),
         }),
       });
-    expect(mood(idleFor(9 * 60))).toBe("bored");
-    expect(mood(idleFor(4 * 24 * 60))).toBe("grumpy");
+    expect(mood(idleFor(90))).toBe("default");
+    expect(mood(idleFor(3 * 60))).toBe("bored");
+    expect(mood(idleFor(7 * 60))).toBe("grumpy");
   });
 
   it("sleeps when every thread is settled or snoozed", () => {

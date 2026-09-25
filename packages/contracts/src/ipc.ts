@@ -120,7 +120,7 @@ export const DesktopMascotMoodSchema = Schema.Literals([
   "urgent",
   "thinking",
   "confused",
-  "broke",
+  "juggling",
   "excited",
   "celebrating",
   "bored",

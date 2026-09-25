@@ -12,9 +12,10 @@ import type { SidebarThreadSummary } from "./types";
 const HOUR_MS = 60 * 60 * 1000;
 const STUCK_AFTER_MS = 45 * 60 * 1000;
 const URGENT_AT_WAITING_THREADS = 3;
+const JUGGLING_AT_WORKING_THREADS = 3;
 const CELEBRATE_AT_THREADS_FINISHED_TODAY = 10;
-const BORED_AFTER_MS = 8 * HOUR_MS;
-const GRUMPY_AFTER_MS = 3 * 24 * HOUR_MS;
+const BORED_AFTER_MS = 2 * HOUR_MS;
+const GRUMPY_AFTER_MS = 6 * HOUR_MS;
 
 export interface MascotThread extends SidebarThreadSummary {
   readonly lastVisitedAt: string | undefined;
@@ -56,10 +57,13 @@ export function resolveMascotMood(input: {
   const active = threads.filter((thread) => !effectiveSnoozed(thread, { now }));
   const statuses = active.map((thread) => ({ thread, status: resolveSidebarThreadStatus(thread) }));
 
-  if (statuses.some(({ thread, status }) => hasUnseenFailure(thread, status))) return "broke";
-
   const waiting = statuses.filter(({ status }) => status === "approval" || status === "input");
-  if (waiting.length >= URGENT_AT_WAITING_THREADS) return "urgent";
+  if (
+    waiting.length >= URGENT_AT_WAITING_THREADS ||
+    statuses.some(({ thread, status }) => hasUnseenFailure(thread, status))
+  ) {
+    return "urgent";
+  }
   if (waiting.length > 0) return "waiting";
 
   const working = statuses.filter(({ status }) => status === "working");
@@ -68,7 +72,8 @@ export function resolveMascotMood(input: {
       const startedAt = firstValidTimestampMs(resolveWorkingStartedAt(thread));
       return startedAt > 0 && input.nowMs - startedAt > STUCK_AFTER_MS;
     });
-    return stuck ? "confused" : "thinking";
+    if (stuck) return "confused";
+    return working.length >= JUGGLING_AT_WORKING_THREADS ? "juggling" : "thinking";
   }
 
   if (active.some((thread) => hasUnseenCompletion(thread))) return "excited";

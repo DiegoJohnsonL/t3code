@@ -51,7 +51,7 @@ Remove the hourly job without deleting the application, data, or signing identit
 ./scripts/custom-nightly-macos.sh uninstall
 ```
 
-While D3 Code runs, its Dock icon shows the cat in a mood that follows your threads: an unseen failure, questions waiting on you, agents at work, finished work you have not opened, a big day, a long idle stretch, or everything settled. The pictures live in `apps/desktop/resources/mascot/`, and `apps/web/src/mascotMood.ts` picks one.
+While D3 Code runs, its Dock icon shows the cat in a mood that follows your threads: questions waiting on you or an unseen failure, agents at work (sweating when three or more run at once), finished work you have not opened, a big day, nothing new for two hours or more, or everything settled. The pictures live in `apps/desktop/resources/mascot/`, and `apps/web/src/mascotMood.ts` picks one.
 
 ## Windows app
 
