@@ -1,16 +1,18 @@
 import {
   type CustomBackgroundRecord,
+  type CustomBackgroundSource,
   MAX_CUSTOM_BACKGROUND_BLUR,
   MAX_CUSTOM_BACKGROUND_FADE,
   MIN_CUSTOM_BACKGROUND_FADE,
   type PhoneBackground,
 } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
+import { Pressable, View } from "react-native";
 
-import type { SymbolView } from "../../components/AppSymbol";
+import { SymbolView } from "../../components/AppSymbol";
 import { FontSizeSliderRow as SliderRow } from "../settings/appearance/components/FontSizeSliderRow";
 import { SettingsSwitchRow } from "../settings/components/SettingsSwitchRow";
-import { useUpdatePhoneBackground } from "./phoneBackground";
+import { useStepPhoneBackground, useUpdatePhoneBackground } from "./phoneBackground";
 
 // Material draws a tick per step, so percentages move in fives.
 const PERCENT_STEP = 5;
@@ -85,5 +87,34 @@ export function PhoneBackgroundBubbleControls(props: { readonly background: Phon
         />
       ) : null}
     </>
+  );
+}
+
+function StepButton(props: { readonly direction: 1 | -1; readonly onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={props.direction === 1 ? "Next picture" : "Previous picture"}
+      onPress={props.onPress}
+      className="size-9 items-center justify-center rounded-full bg-subtle active:opacity-70"
+    >
+      <SymbolView
+        name={props.direction === 1 ? "chevron.right" : "chevron.left"}
+        size={16}
+        tintColorClassName="accent-icon"
+      />
+    </Pressable>
+  );
+}
+
+/** Previous and next picture buttons; nothing while there is one picture or none. */
+export function PhoneBackgroundStepButtons(props: { readonly source: CustomBackgroundSource }) {
+  const step = useStepPhoneBackground();
+  if (props.source.kind !== "image" || props.source.imageIds.length < 2) return null;
+  return (
+    <View className="flex-row gap-2">
+      <StepButton direction={-1} onPress={() => step(-1)} />
+      <StepButton direction={1} onPress={() => step(1)} />
+    </View>
   );
 }

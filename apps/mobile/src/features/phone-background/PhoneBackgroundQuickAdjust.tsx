@@ -16,6 +16,7 @@ import {
 import {
   PhoneBackgroundBubbleControls,
   PhoneBackgroundLookSliders,
+  PhoneBackgroundStepButtons,
 } from "./PhoneBackgroundControls";
 
 /**
@@ -55,7 +56,10 @@ export function PhoneBackgroundQuickAdjust() {
           style={{ paddingBottom: insets.bottom, backgroundColor: phoneBackdropColor ?? undefined }}
         >
           <View className="flex-row items-center justify-between px-5 pb-1 pt-4">
-            <Text className="text-lg font-t3-medium text-foreground">Background</Text>
+            <Text className="flex-1 text-lg font-t3-medium text-foreground">Background</Text>
+            <View className="mr-3">
+              <PhoneBackgroundStepButtons source={background.record.source} />
+            </View>
             <Pressable
               accessibilityRole="button"
               onPress={() => setOpen(false)}

@@ -105,6 +105,14 @@ describe("editing the shared phone playlist", () => {
     expect(started.record.source).toMatchObject({ kind: "image", imageIds: [first, second] });
     expect(started.sourceColors).toEqual({ [first]: 7 });
     expect(started.dynamicTheme).toBe(true);
+    expect(started.record).toMatchObject({
+      fade: 55,
+      fadeHeight: 100,
+      fadeSoftness: 65,
+      opacity: 20,
+      blur: 0,
+    });
+    expect(started.agentBubbles).toBe(false);
   });
 
   it("appends new photos without duplicating ones already in the playlist", () => {

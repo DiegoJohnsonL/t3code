@@ -37,6 +37,7 @@ import { deletePhonePicture, phonePictureFile, pickPhonePictures } from "./phone
 import {
   PhoneBackgroundBubbleControls,
   PhoneBackgroundLookSliders,
+  PhoneBackgroundStepButtons,
 } from "./PhoneBackgroundControls";
 
 type SymbolName = ComponentProps<typeof SymbolView>["name"];
@@ -235,7 +236,11 @@ function RotationSection(props: { readonly source: CustomBackgroundImageSource }
             Add another picture to rotate through them. These settings apply once you do.
           </Text>
         </View>
-      ) : null}
+      ) : (
+        <SettingsControlRow icon="photo" label="Showing now">
+          <PhoneBackgroundStepButtons source={props.source} />
+        </SettingsControlRow>
+      )}
       <ChoiceRow
         icon="clock"
         label="Change every"

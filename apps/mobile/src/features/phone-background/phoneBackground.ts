@@ -64,9 +64,24 @@ export function useShownPhoneBackground(): PhoneBackground | null {
 
 const NO_SOURCE: CustomBackgroundSource = { kind: "none" };
 
+// Manual previous/next steps, like the desktop's: in memory only, so a restart
+// lands back on the wall clock every client shares.
+const rotationOffsetAtom = Atom.make(0).pipe(
+  Atom.keepAlive,
+  Atom.withLabel("phone-background-step"),
+);
+
+/** Steps the showing picture one back or forward. */
+export function useStepPhoneBackground(): (delta: 1 | -1) => void {
+  const offset = useAtomValue(rotationOffsetAtom);
+  const setOffset = useAtomSet(rotationOffsetAtom);
+  return useCallback((delta) => setOffset(offset + delta), [offset, setOffset]);
+}
+
 /** The picture showing now and the next one, on the same wall clock the desktop rotates by. */
 export function usePhoneBackgroundImage(source: CustomBackgroundSource | null) {
   const rotation = source ?? NO_SOURCE;
+  const offset = useAtomValue(rotationOffsetAtom);
   const [now, setNow] = useState(Date.now);
   const wakeAt = nextBackgroundRotationAt(rotation, now);
   useEffect(() => {
@@ -78,7 +93,7 @@ export function usePhoneBackgroundImage(source: CustomBackgroundSource | null) {
     return () => clearTimeout(timer);
   }, [wakeAt]);
   return {
-    current: currentBackgroundImageId(rotation, now),
-    upcoming: upcomingBackgroundImageId(rotation, now),
+    current: currentBackgroundImageId(rotation, now, offset),
+    upcoming: upcomingBackgroundImageId(rotation, now, offset),
   };
 }

@@ -9,10 +9,6 @@ import {
 } from "@material/material-color-utilities";
 import {
   type CustomBackgroundImageId,
-  DEFAULT_CUSTOM_BACKGROUND_FADE,
-  DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-  DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
-  DEFAULT_CUSTOM_BACKGROUND_OPACITY,
   DEFAULT_AGENT_BUBBLE_OPACITY,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   type PhoneBackground,
@@ -121,6 +117,15 @@ export function sourceColorFromPixels(rgba: Uint8Array): number | null {
   return Score.score(QuantizerCelebi.quantize(pixels, 128))[0] ?? null;
 }
 
+// A phone screen is small and busy, so its picture starts faint behind the list.
+const PHONE_BACKGROUND_LOOK = {
+  fade: 55,
+  fadeHeight: 100,
+  fadeSoftness: 65,
+  opacity: 20,
+  blur: 0,
+} as const;
+
 export interface AddedPicture {
   readonly imageId: CustomBackgroundImageId;
   readonly sourceColor: number | null;
@@ -138,17 +143,13 @@ export function phoneBackgroundWithPictures(
       name: "Phone photos",
       source: { kind: "none" },
       filter: { kind: "none" },
-      fade: DEFAULT_CUSTOM_BACKGROUND_FADE,
-      fadeHeight: DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
-      fadeSoftness: DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
-      opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
-      blur: 0,
+      ...PHONE_BACKGROUND_LOOK,
       brightnessAdapt: 0,
       createdAt,
     },
     dynamicTheme: true,
     sourceColors: {},
-    agentBubbles: true,
+    agentBubbles: false,
     agentBubbleOpacity: DEFAULT_AGENT_BUBBLE_OPACITY,
   };
   const source = base.record.source;
