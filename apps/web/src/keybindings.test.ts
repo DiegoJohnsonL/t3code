@@ -1025,6 +1025,22 @@ describe("resolveShortcutCommand", () => {
     );
   });
 
+  it("dictates with Option+Space on macOS and Ctrl+Shift+Space elsewhere", () => {
+    const altSpace = event({ key: " ", code: "Space", altKey: true });
+    const ctrlShiftSpace = event({ key: " ", code: "Space", ctrlKey: true, shiftKey: true });
+    const dictateOn = (input: ShortcutEventLike, platform: string) =>
+      resolveShortcutCommand(input, DEFAULT_RESOLVED_KEYBINDINGS, { platform });
+
+    assert.strictEqual(dictateOn(altSpace, "MacIntel"), "composer.dictate");
+    assert.strictEqual(dictateOn(ctrlShiftSpace, "MacIntel"), null);
+    assert.strictEqual(dictateOn(altSpace, "Win32"), null);
+    assert.strictEqual(dictateOn(ctrlShiftSpace, "Win32"), "composer.dictate");
+    assert.strictEqual(
+      shortcutLabelForCommand(DEFAULT_RESOLVED_KEYBINDINGS, "composer.dictate", "Win32"),
+      "Ctrl+Shift+Space",
+    );
+  });
+
   it("matches Option+Space on macOS, where it types a no-break space", () => {
     const keybindings = compile([
       {

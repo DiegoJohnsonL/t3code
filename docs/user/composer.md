@@ -144,7 +144,7 @@ words**, where you can remove it for good. While you dictate into a thread, it a
 reads that thread's recent messages to spell the files and code names in it. All of
 this is stored on the environment, so every device connected to it benefits.
 
-- **Desktop and web:** hold `Option+Space` (`Alt+Space` on Windows and Linux)
+- **Desktop and web:** hold `Option+Space` (`Ctrl+Shift+Space` on Windows and Linux)
   while you speak and release to insert, or click the microphone. Double-tap the
   shortcut to keep recording hands-free, then press it again to finish. `Esc`
   discards the recording.
