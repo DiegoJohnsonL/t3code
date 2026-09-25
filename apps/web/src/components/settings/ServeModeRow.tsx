@@ -25,7 +25,9 @@ export function ServeModeRow(props: {
   const serveMode = usePrimarySettings(selectServeMode);
   const updateSettings = useUpdatePrimarySettings();
   const computer = props.environment ? serveModeComputerName(props.environment.platform.os) : null;
-  if (!props.environment || !computer) return null;
+  if (!props.environment || !computer || props.environment.capabilities.serveMode !== true) {
+    return null;
+  }
   return (
     <>
       <SettingsRow

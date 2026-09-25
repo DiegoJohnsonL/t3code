@@ -213,8 +213,10 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
       target.environment.serverConfig.environment.capabilities.threadRestartContinuation === true,
   );
   const serveModeComputers = new Set(
-    targets.map((target) =>
-      serveModeComputerName(target.environment.serverConfig.environment.platform.os),
+    targets.map(({ environment }) =>
+      environment.serverConfig.environment.capabilities.serveMode === true
+        ? serveModeComputerName(environment.serverConfig.environment.platform.os)
+        : null,
     ),
   );
   const serveModeComputer =

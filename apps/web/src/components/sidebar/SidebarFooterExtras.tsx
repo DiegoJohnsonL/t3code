@@ -73,7 +73,9 @@ function SidebarServeModeItem() {
   const computer = primaryConfig
     ? serveModeComputerName(primaryConfig.environment.platform.os)
     : null;
-  if (!primaryConfig || !computer) return null;
+  if (!primaryConfig || !computer || primaryConfig.environment.capabilities.serveMode !== true) {
+    return null;
+  }
   const sleepsWithLidClosed =
     serveMode && primaryConfig.environment.capabilities.serveModeLidClosed === false;
   return (

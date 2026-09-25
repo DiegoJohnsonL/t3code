@@ -265,6 +265,7 @@ it.layer(NodeServices.layer)("ServerEnvironmentLive", (it) => {
 
       const linux = yield* describeOn("linux");
       expect((yield* linux.getDescriptor).capabilities.serveModeLidClosed).toBeUndefined();
+      expect((yield* linux.getDescriptor).capabilities.serveMode).toBe(true);
     }),
   );
 

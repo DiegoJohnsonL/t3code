@@ -194,6 +194,9 @@ export const ExecutionEnvironmentCapabilities = Schema.Struct({
       lid still sleeps the Mac. Absent on other platforms and older servers,
       so clients only warn on an explicit false. */
   serveModeLidClosed: Schema.optionalKey(Schema.Boolean),
+  /** Servers that act on the `serveMode` setting. Absent on servers without
+      serve mode, so clients hide its switch there. */
+  serveMode: Schema.optionalKey(Schema.Boolean),
 });
 export type ExecutionEnvironmentCapabilities = typeof ExecutionEnvironmentCapabilities.Type;
 
