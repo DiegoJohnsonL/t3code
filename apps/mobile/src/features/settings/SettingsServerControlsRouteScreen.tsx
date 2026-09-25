@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { serveModeComputerName } from "@t3tools/client-runtime/serve-mode";
 import { SettingsRow } from "./components/SettingsRow";
 import { ScreenScrollView as ScrollView } from "../../components/ScreenScrollView";
 import { SymbolView } from "../../components/AppSymbol";
@@ -208,9 +209,13 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
     (target) =>
       target.environment.serverConfig.environment.capabilities.threadRestartContinuation === true,
   );
-  const allMacServers = targets.every(
-    (target) => target.environment.serverConfig.environment.platform.os === "darwin",
+  const serveModeComputers = new Set(
+    targets.map((target) =>
+      serveModeComputerName(target.environment.serverConfig.environment.platform.os),
+    ),
   );
+  const serveModeComputer =
+    (serveModeComputers.size === 1 ? [...serveModeComputers][0] : null) ?? "computer";
   const someMacSleepsWithLidClosed = targets.some(
     (target) =>
       target.environment.serverConfig.environment.capabilities.serveModeLidClosed === false,
@@ -464,7 +469,7 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
                 </>
               ) : null}
 
-              {props.page === "maintenance" && allMacServers ? (
+              {props.page === "maintenance" && !serveModeComputers.has(null) ? (
                 <SettingsSection title="Power">
                   <FanoutSwitchRow
                     icon="bolt.circle"
@@ -474,7 +479,7 @@ function ServerSettingsDetail(props: { readonly page: SettingsPage }) {
                         ? "Environment-wide setting. Select All projects to change it."
                         : someMacSleepsWithLidClosed
                           ? "Keeps the Mac awake with the lid open. Closing the lid still sleeps it until you run sudo scripts/serve-mode/install.sh on it."
-                          : "Keep the Mac awake so agents keep working and you can connect."
+                          : `Keep the ${serveModeComputer} awake so agents keep working and you can connect.`
                     }
                     value={uniform("serveMode")}
                     disabled={disabledFor("serveMode")}

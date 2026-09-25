@@ -1,4 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
+import { serveModeComputerName } from "@t3tools/client-runtime/serve-mode";
 import type { UnifiedSettings } from "@t3tools/contracts";
 import {
   ChevronLeftIcon,
@@ -64,12 +65,15 @@ function SidebarBackgroundMenu() {
 
 const selectServeMode = (settings: UnifiedSettings) => settings.serveMode;
 
-/** Serve mode for this computer's server, which only acts on macOS. */
+/** Serve mode for this computer's server, on the platforms that act on it. */
 function SidebarServeModeItem() {
   const primaryConfig = useAtomValue(serverEnvironment.configValueAtom(usePrimaryEnvironmentId()));
   const serveMode = usePrimarySettings(selectServeMode);
   const updateSettings = useUpdatePrimarySettings();
-  if (primaryConfig?.environment.platform.os !== "darwin") return null;
+  const computer = primaryConfig
+    ? serveModeComputerName(primaryConfig.environment.platform.os)
+    : null;
+  if (!primaryConfig || !computer) return null;
   const sleepsWithLidClosed =
     serveMode && primaryConfig.environment.capabilities.serveModeLidClosed === false;
   return (
@@ -96,8 +100,8 @@ function SidebarServeModeItem() {
           {sleepsWithLidClosed
             ? "Serve mode on, but closing the lid still sleeps this Mac. Run sudo scripts/serve-mode/install.sh to keep it running lid-closed."
             : serveMode
-              ? "Serve mode on: this Mac stays awake for agents and your phone"
-              : "Serve mode off: this Mac can sleep"}
+              ? `Serve mode on: this ${computer} stays awake for agents and your phone`
+              : `Serve mode off: this ${computer} can sleep`}
         </TooltipPopup>
       </Tooltip>
     </SidebarMenuItem>

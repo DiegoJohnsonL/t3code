@@ -143,15 +143,19 @@ running is left alone.
 For Antigravity's Google callback on a remote host, see
 [remote sign-in](./providers-antigravity.md#sign-in-from-a-remote-device).
 
-## Keep a Mac awake (serve mode)
+## Keep your computer awake (serve mode)
 
-On a Mac, select the moon button at the bottom of the sidebar, next to the
+On a Mac or Windows PC, select the moon button at the bottom of the sidebar, next to the
 background button, or turn on **Settings → Connections → Serve mode**. On mobile, it's in **Settings →
-Maintenance**. While serve mode is on, the button shows a coffee cup and the Mac
+Maintenance**. While serve mode is on, the button shows a coffee cup and the computer
 doesn't go to sleep, so agents keep working and you can connect from your phone
 at any time. The display still sleeps and locks as usual; agents and connections
-keep working behind the lock screen. Turn it off and the Mac sleeps normally
+keep working behind the lock screen. Turn it off and the computer sleeps normally
 again, with T3 Code still open.
+
+On a Windows laptop, closing the lid still follows your power settings. To keep it
+running lid-closed while plugged in, open **Control Panel → Power Options → Choose
+what closing the lid does** and set **Plugged in** to **Do nothing**.
 
 To keep the Mac running with the lid closed and in Low Power Mode, install the
 helper once from a checkout of T3 Code with `sudo scripts/serve-mode/install.sh`.

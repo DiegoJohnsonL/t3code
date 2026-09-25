@@ -793,8 +793,9 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: "Serve mode",
     to: "/settings/connections",
     targetId: "connections-environment",
-    searchTerms: ["keep awake sleep caffeinate lid closed clamshell low power mode phone battery"],
-    macOnly: true,
+    searchTerms: [
+      "keep awake sleep caffeinate lid closed clamshell low power mode phone battery windows pc",
+    ],
   },
   {
     id: "wsl-backend",
