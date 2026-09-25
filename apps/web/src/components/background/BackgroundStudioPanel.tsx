@@ -537,7 +537,9 @@ export function BackgroundStudioPanel() {
     (settings) => settings.customBackgroundAgentBubbleOpacity,
   );
   const bubbleBlur = useClientSettings((settings) => settings.customBackgroundAgentBubbleBlur);
-  const replyTextShadow = useClientSettings((settings) => settings.customBackgroundReplyTextShadow);
+  const replyTextEmphasis = useClientSettings(
+    (settings) => settings.customBackgroundReplyTextEmphasis,
+  );
   const updateSettings = useUpdateClientSettings();
 
   const selectedId = activeId;
@@ -943,11 +945,11 @@ export function BackgroundStudioPanel() {
           </>
         ) : null}
         <label className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          Thicker reply text
+          Bolder, brighter reply text
           <Switch
-            checked={replyTextShadow}
+            checked={replyTextEmphasis}
             onCheckedChange={(checked) =>
-              updateSettings({ customBackgroundReplyTextShadow: checked })
+              updateSettings({ customBackgroundReplyTextEmphasis: checked })
             }
           />
         </label>

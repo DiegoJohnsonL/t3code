@@ -19,13 +19,15 @@ export const CustomBackground = memo(function CustomBackground({
 }) {
   const backdrop = useChatBackdrop(routeKind);
   const agentBubbles = useClientSettings((settings) => settings.customBackgroundAgentBubbles);
-  const replyTextShadow = useClientSettings((settings) => settings.customBackgroundReplyTextShadow);
+  const replyTextEmphasis = useClientSettings(
+    (settings) => settings.customBackgroundReplyTextEmphasis,
+  );
   if (!backdrop) return null;
   return (
     <div
       data-chat-backdrop="source"
       data-agent-bubbles={agentBubbles || undefined}
-      data-reply-text-shadow={replyTextShadow || undefined}
+      data-reply-text-emphasis={replyTextEmphasis || undefined}
       className="pointer-events-none absolute inset-0 -z-10"
     >
       <Suspense fallback={null}>

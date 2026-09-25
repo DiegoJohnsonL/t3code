@@ -78,21 +78,6 @@ html[data-theme-id]:not([data-theme-id=""]) {
     backdrop-filter: var(--agent-bubble-backdrop, none);
   }
 
-  /* A glow in the text's own color thickens each glyph, so light text stays
-     light and dark text stays dark instead of blending into the bubble. */
-  [data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-reply-text-shadow])
-    [data-assistant-reply]
-    > [data-assistant-citation-source] {
-    text-shadow:
-      0 0 0.5px currentColor,
-      0 0 1px color-mix(in srgb, currentColor 60%, transparent);
-
-    & pre,
-    & code {
-      text-shadow: none;
-    }
-  }
-
   /* Stands in for the timeline's top mask over a background; ChatBackdropTopFade
      explains why. The mask's alpha, inverted: opaque picture at the top edge. */
   .chat-backdrop-top-fade {
@@ -228,6 +213,26 @@ html[data-theme-id]:not([data-theme-id=""]) {
   );
   -webkit-backdrop-filter: var(--agent-bubble-backdrop, none);
   backdrop-filter: var(--agent-bubble-backdrop, none);
+}
+
+/* 450 sits between regular and medium: the system fonts are variable, and a
+   font without that weight rounds to 400. Dark mode also replaces the reply's
+   80% foreground with an opaque one pulled toward white. Unlayered so it beats
+   ChatMarkdown's text color utility. */
+[data-chat-background-pane]:has(> [data-chat-backdrop="source"][data-reply-text-emphasis])
+  [data-assistant-reply]
+  > [data-assistant-citation-source]
+  .chat-markdown {
+  font-weight: 450;
+
+  @variant dark {
+    color: color-mix(in srgb, var(--foreground) 75%, var(--color-white));
+  }
+
+  & pre,
+  & code {
+    font-weight: normal;
+  }
 }
 
 /* Over a wallpaper the header stays clear so the picture runs to the top edge;
