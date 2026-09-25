@@ -1033,10 +1033,11 @@ describe("ClientSettings custom backgrounds", () => {
     expect(decodeClientSettings({}).customBackgroundEnabled).toBe(true);
   });
 
-  it("keeps the flat agent bubble fill for clients that never moved the sliders", () => {
+  it("starts agent bubbles at 65% fill with a 2px blur", () => {
     const settings = decodeClientSettings({});
-    expect(settings.customBackgroundAgentBubbleOpacity).toBe(82);
-    expect(settings.customBackgroundAgentBubbleBlur).toBe(0);
+    expect(settings.customBackgroundAgentBubbles).toBe(true);
+    expect(settings.customBackgroundAgentBubbleOpacity).toBe(65);
+    expect(settings.customBackgroundAgentBubbleBlur).toBe(2);
     expect(() => decodeClientSettingsPatch({ customBackgroundAgentBubbleBlur: 21 })).toThrow();
   });
 

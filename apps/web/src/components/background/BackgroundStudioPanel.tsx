@@ -22,6 +22,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PencilIcon,
+  ChevronDownIcon,
   PlusIcon,
   Trash2Icon,
   Undo2Icon,
@@ -63,6 +64,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import { BackgroundControls, RangeControl, StudioField } from "./BackgroundControls";
 import {
   BackgroundImagePicker,
@@ -871,36 +873,46 @@ export function BackgroundStudioPanel() {
                 }
               />
             ) : null}
-            {FADE_CONTROLS.map(({ key, label }) => (
-              <RangeControl
-                key={key}
-                label={label}
-                min={MIN_CUSTOM_BACKGROUND_FADE}
-                max={MAX_CUSTOM_BACKGROUND_FADE}
-                step={1}
-                value={record[key]}
-                format={(value) => `${Math.round(value)}%`}
-                onChange={(value) =>
-                  commitRecord({
-                    ...record,
-                    [key]: Math.round(value),
-                  })
-                }
-              />
-            ))}
-            <BrightnessAdaptControl
-              record={record}
-              onChange={(brightnessAdapt) => commitRecord({ ...record, brightnessAdapt })}
-            />
-            <RangeControl
-              label="Background blur"
-              min={0}
-              max={MAX_CUSTOM_BACKGROUND_BLUR}
-              step={1}
-              value={record.blur}
-              format={(value) => `${value}px`}
-              onChange={(value) => commitRecord({ ...record, blur: Math.round(value) })}
-            />
+            <Collapsible>
+              <CollapsibleTrigger className="group flex items-center justify-between text-xs text-muted-foreground hover:text-foreground">
+                Fade, opacity and blur
+                <ChevronDownIcon className="size-3.5 transition-transform group-data-panel-open:rotate-180 motion-reduce:transition-none" />
+              </CollapsibleTrigger>
+              <CollapsiblePanel keepMounted>
+                <div className="mt-3 flex flex-col gap-3 border-l border-border/60 pl-3">
+                  {FADE_CONTROLS.map(({ key, label }) => (
+                    <RangeControl
+                      key={key}
+                      label={label}
+                      min={MIN_CUSTOM_BACKGROUND_FADE}
+                      max={MAX_CUSTOM_BACKGROUND_FADE}
+                      step={1}
+                      value={record[key]}
+                      format={(value) => `${Math.round(value)}%`}
+                      onChange={(value) =>
+                        commitRecord({
+                          ...record,
+                          [key]: Math.round(value),
+                        })
+                      }
+                    />
+                  ))}
+                  <BrightnessAdaptControl
+                    record={record}
+                    onChange={(brightnessAdapt) => commitRecord({ ...record, brightnessAdapt })}
+                  />
+                  <RangeControl
+                    label="Background blur"
+                    min={0}
+                    max={MAX_CUSTOM_BACKGROUND_BLUR}
+                    step={1}
+                    value={record.blur}
+                    format={(value) => `${value}px`}
+                    onChange={(value) => commitRecord({ ...record, blur: Math.round(value) })}
+                  />
+                </div>
+              </CollapsiblePanel>
+            </Collapsible>
           </StudioSection>
         </>
       ) : (

@@ -216,7 +216,7 @@ describe("playlist images", () => {
     expect(toggleBackgroundImage({ kind: "none" }, first)).toEqual({
       kind: "image",
       imageIds: [first],
-      rotationMinutes: 10,
+      rotationMinutes: 15,
       order: "sequential",
       transition: "fade",
     });

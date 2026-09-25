@@ -9,6 +9,7 @@ import {
   DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT,
   DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
   DEFAULT_CUSTOM_BACKGROUND_OPACITY,
+  DEFAULT_CUSTOM_BACKGROUND_BRIGHTNESS_ADAPT,
   DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES,
   defaultCustomBackgroundFilter,
 } from "@t3tools/contracts";
@@ -40,7 +41,7 @@ export function createEmptyBackground(input: {
     fadeSoftness: DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS,
     opacity: DEFAULT_CUSTOM_BACKGROUND_OPACITY,
     blur: 0,
-    brightnessAdapt: 0,
+    brightnessAdapt: DEFAULT_CUSTOM_BACKGROUND_BRIGHTNESS_ADAPT,
     createdAt: input.createdAt,
   };
 }

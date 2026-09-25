@@ -190,20 +190,20 @@ export const MAX_CUSTOM_BACKGROUND_FADE = 100;
  * Intensity of the theme-colored overlay at the bottom edge, 0 to 100. Clients
  * map it onto an ease-out opacity curve, so the slider darkens evenly.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE = 60;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE = 0;
 /**
  * How far up the pane, in percent, the fade reaches before it has eased away
  * completely; at 100 it reaches the top, where the chat text fades out.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 100;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_HEIGHT = 59;
 /**
  * How long, in percent of the pane, the ease below the fade height is. The
  * curve lives in `@t3tools/shared/customBackgroundFade` so every client draws
  * the same shape.
  */
-export const DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS = 66;
+export const DEFAULT_CUSTOM_BACKGROUND_FADE_SOFTNESS = 100;
 /** Opacity of the picture itself over the theme background, 0 to 100. Lower it for more text contrast. */
-export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 75;
+export const DEFAULT_CUSTOM_BACKGROUND_OPACITY = 90;
 export const CustomBackgroundFade = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_CUSTOM_BACKGROUND_FADE, maximum: MAX_CUSTOM_BACKGROUND_FADE }),
 );
@@ -213,6 +213,7 @@ export const CustomBackgroundFade = Schema.Int.check(
  * fade up, 0 to 100. At 0 every picture shows at the chosen values.
  */
 export const CustomBackgroundBrightnessAdapt = CustomBackgroundFade;
+export const DEFAULT_CUSTOM_BACKGROUND_BRIGHTNESS_ADAPT = 96;
 
 export const MAX_CUSTOM_BACKGROUND_BLUR = 40;
 /** Blur of the picture itself, in pixels. */
@@ -223,7 +224,7 @@ export const CustomBackgroundBlur = Schema.Int.check(
 /** Fill of the bubble behind agent replies, in percent of the message surface color. */
 export const AgentBubbleOpacity = Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 }));
 export type AgentBubbleOpacity = typeof AgentBubbleOpacity.Type;
-export const DEFAULT_AGENT_BUBBLE_OPACITY: AgentBubbleOpacity = 82;
+export const DEFAULT_AGENT_BUBBLE_OPACITY: AgentBubbleOpacity = 65;
 
 export const MAX_AGENT_BUBBLE_BLUR = 20;
 /** Backdrop blur behind agent reply bubbles, in pixels. 0 applies no backdrop filter. */
@@ -231,7 +232,7 @@ export const AgentBubbleBlur = Schema.Int.check(
   Schema.isBetween({ minimum: 0, maximum: MAX_AGENT_BUBBLE_BLUR }),
 );
 export type AgentBubbleBlur = typeof AgentBubbleBlur.Type;
-export const DEFAULT_AGENT_BUBBLE_BLUR: AgentBubbleBlur = 0;
+export const DEFAULT_AGENT_BUBBLE_BLUR: AgentBubbleBlur = 2;
 
 export type ImageDitheringFilter = typeof IMAGE_DITHERING_FILTER.schema.Type;
 
@@ -333,7 +334,7 @@ export function defaultCustomBackgroundFilter(
 
 export const MIN_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1;
 export const MAX_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1440;
-export const DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES = 10;
+export const DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES = 15;
 export const CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS = [
   1, 2, 5, 10, 15, 30, 60, 120, 360, 1440,
 ] as const;
