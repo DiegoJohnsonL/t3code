@@ -657,9 +657,14 @@ export const make = Effect.gen(function* () {
       };
     }).pipe(Effect.withSpan("desktop.updates.install"));
 
+  // The custom nightly downloads each update as soon as a background check
+  // finds it, so installing only takes a restart.
+  const checkAndDownload = (reason: "startup" | "poll") =>
+    checkForUpdates(reason).pipe(Effect.andThen(downloadAvailableUpdate));
+
   const startUpdatePollers: Effect.Effect<void, never, Scope.Scope> = Effect.gen(function* () {
     yield* Effect.sleep(AUTO_UPDATE_STARTUP_DELAY).pipe(
-      Effect.andThen(checkForUpdates("startup")),
+      Effect.andThen(checkAndDownload("startup")),
       Effect.catchCause((cause) => {
         if (Cause.hasInterruptsOnly(cause)) {
           return Effect.void;
@@ -673,7 +678,7 @@ export const make = Effect.gen(function* () {
       Effect.forkScoped,
     );
     yield* Effect.sleep(AUTO_UPDATE_POLL_INTERVAL).pipe(
-      Effect.andThen(checkForUpdates("poll")),
+      Effect.andThen(checkAndDownload("poll")),
       Effect.forever,
       Effect.catchCause((cause) => {
         if (Cause.hasInterruptsOnly(cause)) {

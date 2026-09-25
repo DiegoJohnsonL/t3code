@@ -30,7 +30,7 @@ The bootstrap updater checks hourly and installs the app at:
 
 It keeps the existing T3 Code data under `~/.t3/userdata` and the existing desktop data directory. The custom application does not support passkeys because its local certificate has no Apple provisioning profile. Other T3 Connect sign-in methods use the public production configuration in `.env.example`.
 
-Once a build with `app-update.yml` is installed, the bootstrap updater becomes idle. Use the update control inside D3 Code to check, download, and install later releases.
+Once a build with `app-update.yml` is installed, the bootstrap updater becomes idle. D3 Code then downloads each later release in the background as soon as it finds one; restart from its update control to install.
 
 Inspect or run the bootstrap updater manually:
 
@@ -50,6 +50,10 @@ Remove the hourly job without deleting the application, data, or signing identit
 ```bash
 ./scripts/custom-nightly-macos.sh uninstall
 ```
+
+## Windows app
+
+Install the `-x64.exe` from a release and accept the SmartScreen prompt; the installer is unsigned. Like the Mac app, it downloads later releases from the fork in the background and installs them on restart.
 
 ## Android app
 

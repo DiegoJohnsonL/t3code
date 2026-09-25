@@ -85,6 +85,27 @@ describe("DesktopUpdates", () => {
     }).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
   });
 
+  it.effect("downloads an update as soon as a background check finds it", () => {
+    const harness: ReturnType<typeof makeHarness> = makeHarness({
+      checkForUpdates: Effect.suspend(() => {
+        harness.emit("update-available", { version: "1.2.4" });
+        return flushCallbacks;
+      }),
+    });
+
+    return Effect.scoped(
+      Effect.gen(function* () {
+        const updates = yield* DesktopUpdates.DesktopUpdates;
+        yield* updates.configure;
+
+        yield* TestClock.adjust(Duration.millis(15_000));
+        assert.equal(harness.checkCount(), 1);
+        assert.equal(harness.downloadCount(), 1);
+        assert.equal((yield* updates.getState).status, "downloading");
+      }),
+    ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
+  });
+
   it.effect("subscribe delivers the latest state plus subsequent changes", () => {
     const harness = makeHarness();
 
