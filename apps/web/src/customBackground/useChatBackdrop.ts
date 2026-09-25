@@ -6,7 +6,7 @@ import { useTheme } from "~/hooks/useTheme";
 
 import { useBackgroundStudioOpen, useBackgroundStudioStore } from "./backgroundStudioStore";
 import { adaptToBrightness } from "./brightnessAdapt";
-import { useBackgroundImageLightness, useBackgroundImageUrl } from "./imageStore";
+import { useBackgroundImageTone, useBackgroundImageUrl } from "./imageStore";
 import {
   type CustomBackgroundRouteKind,
   backgroundDrawMode,
@@ -47,9 +47,9 @@ export function useChatBackdrop(
       : "full";
   const image = useBackgroundImageUrl(imageId, variant);
   useBackgroundImageUrl(upcoming, variant);
-  const lightness = useBackgroundImageLightness(imageId);
+  const tone = useBackgroundImageTone(imageId);
   // Measured ahead so the next picture arrives with its own look already known.
-  useBackgroundImageLightness(upcoming);
+  useBackgroundImageTone(upcoming);
   // Hold the previous picture while the next one decodes so a rotation never
   // flashes the bare theme between images.
   const [lastImage, setLastImage] = useState<string | null>(null);
@@ -57,10 +57,7 @@ export function useChatBackdrop(
   const shownImage = typeof image === "string" ? image : image === null ? lastImage : null;
   if (!record || !backgroundIsRenderable(record, filtersAvailable)) return null;
   if (imageId !== null && shownImage === null) return null;
-  const look =
-    typeof lightness === "number"
-      ? adaptToBrightness({ ...record, lightness, appearance: resolvedTheme })
-      : record;
+  const look = tone ? adaptToBrightness({ ...record, tone, appearance: resolvedTheme }) : record;
   return {
     filter: record.filter,
     image: shownImage,

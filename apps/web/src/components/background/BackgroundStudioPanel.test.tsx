@@ -41,7 +41,7 @@ vi.mock("~/hooks/useSettings", async () => {
 });
 vi.mock("~/customBackground/imageStore", () => ({
   storeBackgroundImage: state.upload,
-  useBackgroundImageLightness: () => null,
+  useBackgroundImageTone: () => null,
 }));
 vi.mock("~/hooks/useTheme", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 vi.mock("~/customBackground/webgl", () => ({

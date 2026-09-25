@@ -1,4 +1,4 @@
-import { QuantizerCelebi, Score, lstarFromArgb } from "@material/material-color-utilities";
+import { Hct, QuantizerCelebi, Score } from "@material/material-color-utilities";
 
 import { createCanvas } from "~/lib/imageCompression";
 
@@ -59,11 +59,28 @@ export async function sourceColorFromImage(blob: Blob): Promise<number | null> {
   return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE_BUCKETS))[0] ?? null;
 }
 
-/** Mean perceptual lightness (CIE L*) of the picture, 0 to 1; null when it cannot be decoded. */
-export async function lightnessFromImage(blob: Blob): Promise<number | null> {
+/** How loud a picture is behind text: its mean lightness and colorfulness, each 0 to 1. */
+export interface PictureTone {
+  readonly lightness: number;
+  readonly colorfulness: number;
+}
+
+// Material's chroma tops out near 120 for the most saturated sRGB colors.
+const FULL_CHROMA = 100;
+
+/** Mean HCT tone and chroma of the picture; null when it cannot be decoded. */
+export async function toneFromImage(blob: Blob): Promise<PictureTone | null> {
   const pixels = await samplePixels(blob);
   if (!pixels) return null;
-  let total = 0;
-  for (const pixel of pixels) total += lstarFromArgb(pixel);
-  return total / pixels.length / 100;
+  let tone = 0;
+  let chroma = 0;
+  for (const pixel of pixels) {
+    const hct = Hct.fromInt(pixel);
+    tone += hct.tone;
+    chroma += Math.min(FULL_CHROMA, hct.chroma);
+  }
+  return {
+    lightness: tone / pixels.length / 100,
+    colorfulness: chroma / pixels.length / FULL_CHROMA,
+  };
 }

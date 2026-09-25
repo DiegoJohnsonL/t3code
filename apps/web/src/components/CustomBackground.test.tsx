@@ -23,7 +23,7 @@ vi.mock("~/customBackground/backgroundStudioStore", () => ({
 vi.mock("~/customBackground/imageStore", () => ({
   useBackgroundImageUrl: () => false,
   useBackgroundImageSourceColor: () => false,
-  useBackgroundImageLightness: () => false,
+  useBackgroundImageTone: () => false,
 }));
 vi.mock("~/hooks/useTheme", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 vi.mock("~/customBackground/webgl", () => ({ isWebGlAvailable: () => true }));

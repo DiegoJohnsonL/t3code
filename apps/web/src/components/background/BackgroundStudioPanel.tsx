@@ -31,7 +31,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { useBackgroundStudioStore } from "~/customBackground/backgroundStudioStore";
 import { adaptToBrightness } from "~/customBackground/brightnessAdapt";
-import { storeBackgroundImage, useBackgroundImageLightness } from "~/customBackground/imageStore";
+import { storeBackgroundImage, useBackgroundImageTone } from "~/customBackground/imageStore";
 import { stepBackgroundImage, useRotatingBackgroundImage } from "~/customBackground/rotation";
 import { isWebGlAvailable } from "~/customBackground/webgl";
 import {
@@ -225,12 +225,9 @@ function BrightnessAdaptControl({
   onChange: (brightnessAdapt: number) => void;
 }) {
   const { current } = useRotatingBackgroundImage(record.source);
-  const lightness = useBackgroundImageLightness(current);
+  const tone = useBackgroundImageTone(current);
   const { resolvedTheme } = useTheme();
-  const look =
-    typeof lightness === "number"
-      ? adaptToBrightness({ ...record, lightness, appearance: resolvedTheme })
-      : null;
+  const look = tone ? adaptToBrightness({ ...record, tone, appearance: resolvedTheme }) : null;
   return (
     <>
       <RangeControl
@@ -242,11 +239,11 @@ function BrightnessAdaptControl({
         format={(value) => `${Math.round(value)}%`}
         onChange={(value) => onChange(Math.round(value))}
       />
-      {typeof lightness === "number" && look ? (
+      {tone && look ? (
         <StudioField label="This picture">
           <span className="text-xs text-muted-foreground tabular-nums">
-            {Math.round(lightness * 100)}% lightness, shows at {look.opacity}% opacity and{" "}
-            {look.fade}% fade
+            {Math.round(tone.lightness * 100)}% light, {Math.round(tone.colorfulness * 100)}%
+            colorful, shows at {look.opacity}% opacity and {look.fade}% fade
           </span>
         </StudioField>
       ) : null}
