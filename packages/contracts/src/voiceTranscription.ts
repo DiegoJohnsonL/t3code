@@ -5,7 +5,7 @@ import { NonNegativeInt, ThreadId, TrimmedNonEmptyString } from "./baseSchemas.t
 /** A client mints the URL after recording stops, right before it uploads. */
 export const VOICE_TRANSCRIPTION_URL_TTL_MS = 2 * 60_000;
 
-export const VOICE_TRANSCRIPTION_MAX_BYTES = 25 * 1024 * 1024;
+const VOICE_TRANSCRIPTION_MAX_BYTES = 25 * 1024 * 1024;
 
 export const VoiceTranscriptionCreateUrlInput = Schema.Struct({
   mimeType: TrimmedNonEmptyString.check(Schema.isMaxLength(100)),

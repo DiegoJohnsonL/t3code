@@ -12,13 +12,13 @@ const DATABASE_VERSION = 3;
 const IMAGES_STORE = "images";
 
 /** 4K covers the widest display anyone runs this on without upscaling the picture. */
-export const CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION = 4096;
+const CUSTOM_BACKGROUND_IMAGE_MAX_DIMENSION = 4096;
 /**
  * Roomy enough that a 4K WebP never trips the encoder's fallback scales, which
  * would quietly undo the dimension cap, and tight enough that a lossless
  * upload re-encodes instead of parking tens of megabytes per image.
  */
-export const CUSTOM_BACKGROUND_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const CUSTOM_BACKGROUND_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 /**
  * Paper uploads a shader's source as a texture at its natural size, and the
  * dithering canvas never draws more than BackgroundRenderer's MAX_PIXEL_COUNT.
@@ -141,7 +141,7 @@ function isStoredBackgroundImage(value: unknown): value is StoredBackgroundImage
   );
 }
 
-export async function readBackgroundImage(
+async function readBackgroundImage(
   id: CustomBackgroundImageId,
 ): Promise<StoredBackgroundImage | null> {
   const database = await openDatabase();
