@@ -45,24 +45,33 @@ jobs:
           run-install: true
 
       - name: Ensure Electron runtime is installed
+        id: setup
         run: vp run --filter @t3tools/desktop ensure:electron
 
+      # Each check below reports even when an earlier one fails, so one run
+      # shows every failing check.
       - name: Check unused code
         run: vp run knip:check
 
       - name: Check
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: vp check
 
       - name: Typecheck
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: vpr typecheck
 
       - name: Install browser secret helper build libraries
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev pkg-config
 
       - name: Build desktop pipeline
+        id: build
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: vp run build:desktop
 
       - name: Verify preload bundle output
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: node apps/desktop/scripts/verify-preload-bundle.mjs
 
   test:
