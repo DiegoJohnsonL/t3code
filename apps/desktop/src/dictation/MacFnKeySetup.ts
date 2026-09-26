@@ -47,7 +47,7 @@ const MacFnKeyState = Schema.Struct({
 export type MacFnKeyState = typeof MacFnKeyState.Type;
 const decodeMacFnKeyState = Schema.decodeUnknownEffect(Schema.fromJsonString(MacFnKeyState));
 
-export function fnKeySetupFromState(state: MacFnKeyState): DesktopFnKeySetup {
+function fnKeySetupFromState(state: MacFnKeyState): DesktopFnKeySetup {
   return state.fnUsageType === 0 && !state.fnTwiceDictation ? "ready" : "needs-setup";
 }
 

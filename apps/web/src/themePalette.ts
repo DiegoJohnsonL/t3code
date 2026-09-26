@@ -1493,7 +1493,7 @@ export function getThemeColorVariable(role: ThemeColorRole): string {
 export const THEME_PREVIEW_ID = "__preview";
 
 /** Marks the document as wearing colors pulled from the background picture. */
-export const DYNAMIC_THEME_ID = "__background";
+const DYNAMIC_THEME_ID = "__background";
 
 export interface DynamicTheme {
   readonly colors: ThemeColors;

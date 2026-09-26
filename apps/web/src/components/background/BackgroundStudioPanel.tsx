@@ -67,7 +67,7 @@ import { BackgroundControls, RangeControl, StudioField } from "./BackgroundContr
 import {
   BackgroundImagePicker,
   BackgroundThumbnail,
-  backgroundPickerDeleteButtonClass,
+  backgroundPickerDeleteRevealClass,
   backgroundPickerMenuGridClass,
   backgroundPickerTileClass,
   backgroundStudioFieldClass,
@@ -131,35 +131,39 @@ function NameField({
     onDone();
   };
   return (
-    <Input
-      aria-label="Playlist name"
-      autoFocus
-      size="sm"
-      unstyled
+    <span
       className={backgroundStudioFieldClass(
         "[&_[data-slot=input]]:h-full sm:[&_[data-slot=input]]:h-full",
       )}
-      value={draft}
-      onChange={(event) => setDraft(event.currentTarget.value)}
-      onBlur={commit}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          event.currentTarget.blur();
-        }
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onDone();
-        }
-      }}
-    />
+    >
+      <Input
+        aria-label="Playlist name"
+        autoFocus
+        size="sm"
+        unstyled
+        className="flex min-w-0 flex-1 self-stretch"
+        value={draft}
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+          if (event.key === "Escape") {
+            event.preventDefault();
+            onDone();
+          }
+        }}
+      />
+    </span>
   );
 }
 
 function StudioSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3 border-t border-border/60 pt-4">
-      <h3 className="text-[13px] font-medium text-foreground">{title}</h3>
+      <h3 className="text-studio font-medium text-foreground">{title}</h3>
       {children}
     </section>
   );
@@ -446,19 +450,22 @@ function LibraryTile({
         <LibraryThumb record={record} className="aspect-[4/3] w-full" />
         <span className="block space-y-0.5 px-1.5 py-1.5">
           <span className="block truncate text-xs text-foreground">{name}</span>
-          <span className="block truncate text-[11px] text-muted-foreground">{filter}</span>
+          <span className="block truncate text-2xs leading-normal text-muted-foreground">
+            {filter}
+          </span>
         </span>
       </button>
       {onDelete ? (
-        <Button
-          size="icon-xs"
-          variant="outline"
-          className={backgroundPickerDeleteButtonClass}
-          aria-label={`Delete background ${name}`}
-          onClick={onDelete}
-        >
-          <Trash2Icon />
-        </Button>
+        <span className={backgroundPickerDeleteRevealClass}>
+          <Button
+            size="icon-xs"
+            variant="outline"
+            aria-label={`Delete background ${name}`}
+            onClick={onDelete}
+          >
+            <Trash2Icon />
+          </Button>
+        </span>
       ) : null}
     </div>
   );
@@ -490,7 +497,9 @@ function LibraryPicker({
           <LibraryThumb record={selectedRecord} className="size-8 shrink-0 rounded-md" />
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-sm font-medium text-foreground">{name}</span>
-            <span className="block truncate text-[11px] text-muted-foreground">{filter}</span>
+            <span className="block truncate text-2xs leading-tight text-muted-foreground">
+              {filter}
+            </span>
           </span>
         </span>
       </MenuTrigger>
@@ -704,7 +713,7 @@ export function BackgroundStudioPanel() {
       </label>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[13px] font-medium text-foreground">Playlist</span>
+          <span className="text-studio font-medium text-foreground">Playlist</span>
           <Button size="xs" variant="outline" aria-label="Add playlist" onClick={createBackground}>
             <PlusIcon /> New playlist
           </Button>
@@ -903,7 +912,7 @@ export function BackgroundStudioPanel() {
           </StudioSection>
         </>
       ) : (
-        <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-studio text-muted-foreground">
           Add a playlist to get started, or pick one to edit.
         </div>
       )}

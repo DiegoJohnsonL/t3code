@@ -171,7 +171,7 @@ function defineFilter<
   return { kind, controls, schema, defaults };
 }
 
-export const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
+const IMAGE_DITHERING_FILTER = defineFilter("image-dithering", {
   type: select("Type", ["random", "2x2", "4x4", "8x8"], "4x4"),
   size: number("Size", { min: 0.5, max: 20, step: 0.2 }, 3.4),
   colorSteps: integer("Color steps", { min: 1, max: 7 }, 5),
@@ -314,8 +314,7 @@ export const CustomBackgroundFilter = Schema.Union([
 export type CustomBackgroundFilter = typeof CustomBackgroundFilter.Type;
 export type CustomBackgroundFilterKind = CustomBackgroundFilter["kind"];
 
-export const DEFAULT_CUSTOM_BACKGROUND_FILTER: CustomBackgroundFilter =
-  IMAGE_DITHERING_FILTER.defaults;
+const DEFAULT_CUSTOM_BACKGROUND_FILTER: CustomBackgroundFilter = IMAGE_DITHERING_FILTER.defaults;
 
 export function customBackgroundFilterControls(
   kind: Exclude<CustomBackgroundFilterKind, "none">,
@@ -332,8 +331,8 @@ export function defaultCustomBackgroundFilter(
   return filter ? filter.defaults : DEFAULT_CUSTOM_BACKGROUND_FILTER;
 }
 
-export const MIN_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1;
-export const MAX_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1440;
+const MIN_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1;
+const MAX_CUSTOM_BACKGROUND_ROTATION_MINUTES = 1440;
 export const DEFAULT_CUSTOM_BACKGROUND_ROTATION_MINUTES = 15;
 export const CUSTOM_BACKGROUND_ROTATION_MINUTE_OPTIONS = [
   1, 2, 5, 10, 15, 30, 60, 120, 360, 1440,

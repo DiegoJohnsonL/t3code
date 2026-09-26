@@ -218,10 +218,9 @@ export function UsageSidebarPanel() {
   return (
     <>
       <SidebarContent
-        className="gap-0"
         fixedHeader={
-          <SidebarGroup className="relative z-[1] p-[var(--sidebar-content-inset)] pt-1">
-            <div className="flex items-center gap-1">
+          <SidebarGroup className="z-[1]">
+            <div className="-mt-1 flex items-center gap-1">
               <span className="flex h-8 min-w-0 flex-1 items-center px-2 text-sm font-medium text-sidebar-foreground">
                 Usage
               </span>
@@ -248,20 +247,25 @@ export function UsageSidebarPanel() {
           </SidebarGroup>
         }
       >
-        <SidebarGroup className="gap-4 pt-0">
-          {cards.map((card) => (
-            <ProviderUsageCard key={card.key} card={card} now={now} />
-          ))}
-          {cards.length === 0 ? (
-            <p className="px-2 py-6 text-center text-xs text-sidebar-muted-foreground">
-              No provider on the connected environments reports usage yet.
-            </p>
-          ) : null}
-          {notices.map((notice) => (
-            <p key={notice} className="px-1 text-[11px] text-sidebar-muted-foreground/80">
-              {notice}
-            </p>
-          ))}
+        <SidebarGroup>
+          <div className="flex min-w-0 flex-col gap-4">
+            {cards.map((card) => (
+              <ProviderUsageCard key={card.key} card={card} now={now} />
+            ))}
+            {cards.length === 0 ? (
+              <p className="px-2 py-6 text-center text-xs text-sidebar-muted-foreground">
+                No provider on the connected environments reports usage yet.
+              </p>
+            ) : null}
+            {notices.map((notice) => (
+              <p
+                key={notice}
+                className="px-1 text-2xs leading-normal text-sidebar-muted-foreground/80"
+              >
+                {notice}
+              </p>
+            ))}
+          </div>
         </SidebarGroup>
       </SidebarContent>
       <SidebarChromeFooter />
@@ -356,7 +360,7 @@ function WindowMeter({
           style={{ width: `${window.remainingPercent}%`, backgroundColor: color }}
         />
       </div>
-      <div className="flex min-w-0 items-baseline gap-2 text-[11px] tabular-nums">
+      <div className="flex min-w-0 items-baseline gap-2 text-2xs leading-normal tabular-nums">
         <span className="shrink-0 font-medium text-sidebar-foreground">
           {window.remainingPercent}% left
         </span>

@@ -26,7 +26,7 @@ const CURVE = 1.5;
 export type BackgroundLook = Pick<CustomBackgroundRecord, "opacity" | "fade">;
 
 /** How much a picture competes with text under the theme, 0 to 1. */
-export function pictureLoudness(tone: PictureTone, appearance: ThemeAppearance): number {
+function pictureLoudness(tone: PictureTone, appearance: ThemeAppearance): number {
   const towardText = appearance === "dark" ? tone.lightness : 1 - tone.lightness;
   return Math.min(1, towardText + COLORFULNESS_WEIGHT * tone.colorfulness);
 }

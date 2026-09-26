@@ -4,9 +4,11 @@ import * as Encoding from "effect/Encoding";
 import { extendTailwindMerge } from "tailwind-merge";
 import { DraftId } from "../composerDraftStore";
 
-// The theme's extra font sizes (index.css). Unregistered, tailwind-merge reads
-// text-2xs as a colour and drops it next to text-muted-foreground.
-const twMerge = extendTailwindMerge({ extend: { theme: { text: ["2xs", "3xs", "4xs", "5xs"] } } });
+// The theme's extra font sizes (index.css and custom.css). Unregistered,
+// tailwind-merge reads text-2xs as a colour and drops it next to text-muted-foreground.
+const twMerge = extendTailwindMerge({
+  extend: { theme: { text: ["2xs", "3xs", "4xs", "5xs", "studio"] } },
+});
 
 export function cn(...inputs: CxOptions) {
   return twMerge(cx(inputs));

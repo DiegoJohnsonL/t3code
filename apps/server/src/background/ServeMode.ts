@@ -16,7 +16,7 @@ import { ServerSettingsService } from "../serverSettings.ts";
  * server pid. Each server writes its own pid, so a crashed server's leftover
  * file reads as stale instead of holding the Mac awake.
  */
-export const SERVE_MODE_REQUEST_DIR = "/private/tmp/t3code-serve-mode";
+const SERVE_MODE_REQUEST_DIR = "/private/tmp/t3code-serve-mode";
 
 /** Written by `scripts/serve-mode/install.sh`; must match its label. */
 export const SERVE_MODE_HELPER_PLIST = "/Library/LaunchDaemons/com.t3tools.t3code.serve-mode.plist";
@@ -95,7 +95,7 @@ const windowsKeepAwakeScript = (options: {
  * Both commands stop idle sleep but still let the display sleep and lock, and
  * both end with this server even if it is killed before its finalizers run.
  */
-export const keepAwakeCommand = (options: {
+const keepAwakeCommand = (options: {
   readonly host: ServeModeHost;
   readonly serverPid: number;
   readonly powerSaving: boolean;
