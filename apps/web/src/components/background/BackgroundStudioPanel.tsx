@@ -67,7 +67,7 @@ import { BackgroundControls, RangeControl, StudioField } from "./BackgroundContr
 import {
   BackgroundImagePicker,
   BackgroundThumbnail,
-  backgroundPickerDeleteButtonClass,
+  backgroundPickerDeleteRevealClass,
   backgroundPickerMenuGridClass,
   backgroundPickerTileClass,
   backgroundStudioFieldClass,
@@ -456,15 +456,16 @@ function LibraryTile({
         </span>
       </button>
       {onDelete ? (
-        <Button
-          size="icon-xs"
-          variant="outline"
-          className={backgroundPickerDeleteButtonClass}
-          aria-label={`Delete background ${name}`}
-          onClick={onDelete}
-        >
-          <Trash2Icon />
-        </Button>
+        <span className={backgroundPickerDeleteRevealClass}>
+          <Button
+            size="icon-xs"
+            variant="outline"
+            aria-label={`Delete background ${name}`}
+            onClick={onDelete}
+          >
+            <Trash2Icon />
+          </Button>
+        </span>
       ) : null}
     </div>
   );

@@ -75,7 +75,7 @@ vi.mock("./BackgroundControls", () => ({
 vi.mock("./BackgroundImagePicker", () => ({
   BackgroundImagePicker: () => null,
   BackgroundThumbnail: () => null,
-  backgroundPickerDeleteButtonClass: "",
+  backgroundPickerDeleteRevealClass: "",
   backgroundPickerMenuGridClass: "",
   backgroundPickerTileClass: () => "",
   backgroundStudioFieldClass: () => "",

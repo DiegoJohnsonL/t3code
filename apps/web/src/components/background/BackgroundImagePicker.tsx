@@ -54,8 +54,8 @@ function dropTargetOf(element: HTMLElement): DropTarget {
   return target === "input" || target === "folder" ? target : "files";
 }
 
-export const backgroundPickerDeleteButtonClass =
-  "absolute right-1 top-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
+export const backgroundPickerDeleteRevealClass =
+  "absolute right-1 top-1 flex opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 has-focus-visible:opacity-100 pointer-coarse:opacity-100";
 
 function useStoredBackgroundImages(): ReadonlyArray<StoredBackgroundImage> | null {
   const [images, setImages] = useState<ReadonlyArray<StoredBackgroundImage> | null>(null);
@@ -269,22 +269,23 @@ export function BackgroundImagePicker({
                     ) : null}
                   </button>
                   {!referencedImageIds.has(image.id) ? (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            size="icon-micro"
-                            variant="outline"
-                            className={backgroundPickerDeleteButtonClass}
-                            aria-label="Delete unused image"
-                            onClick={() => void deleteBackgroundImage(image.id)}
-                          >
-                            <Trash2Icon />
-                          </Button>
-                        }
-                      />
-                      <TooltipPopup side="top">Delete unused image</TooltipPopup>
-                    </Tooltip>
+                    <span className={backgroundPickerDeleteRevealClass}>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              size="icon-micro"
+                              variant="outline"
+                              aria-label="Delete unused image"
+                              onClick={() => void deleteBackgroundImage(image.id)}
+                            >
+                              <Trash2Icon />
+                            </Button>
+                          }
+                        />
+                        <TooltipPopup side="top">Delete unused image</TooltipPopup>
+                      </Tooltip>
+                    </span>
                   ) : null}
                 </div>
               );
