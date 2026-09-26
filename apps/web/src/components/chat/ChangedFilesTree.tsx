@@ -54,7 +54,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
     >
       <div
         data-changed-files-header=""
-        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-[color-mix(in_srgb,var(--glass-fill,var(--glass-surface))_var(--glass-opacity),transparent)] px-3 py-2 backdrop-blur-(--glass-blur) backdrop-saturate-(--glass-saturation)"
+        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-glass px-3 py-2 backdrop-blur-(--glass-blur) backdrop-saturate-(--glass-saturation)"
       >
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-foreground">
           <span>

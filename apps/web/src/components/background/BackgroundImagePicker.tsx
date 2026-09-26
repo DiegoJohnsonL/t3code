@@ -25,9 +25,9 @@ const BACKGROUND_FILE_TYPES_LABEL = CUSTOM_BACKGROUND_ACCEPTED_TYPES.map((type) 
 export function backgroundStudioFieldClass(className?: string): string {
   return cn(
     "relative inline-flex h-7.5 min-w-0 w-full flex-1 items-center rounded-lg border border-input bg-background text-sm text-foreground shadow-xs/5 outline-none not-dark:bg-clip-padding ring-ring/24 transition-shadow sm:h-6.5",
-    "before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)]",
-    "not-has-disabled:not-has-focus-visible:not-focus-visible:before:shadow-[0_1px_--theme(--color-black/4%)] dark:not-has-disabled:not-has-focus-visible:not-focus-visible:before:shadow-[0_-1px_--theme(--color-white/6%)]",
-    "has-focus-visible:border-ring has-focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-[3px]",
+    "before:pointer-events-none before:absolute before:inset-0 before:rounded-studio-field-inner",
+    "not-has-disabled:not-has-focus-visible:not-focus-visible:before:shadow-studio-field dark:not-has-disabled:not-has-focus-visible:not-focus-visible:before:shadow-studio-field-dark",
+    "has-focus-visible:border-ring has-focus-visible:ring-3 focus-visible:border-ring focus-visible:ring-3",
     "has-[:disabled,:focus-visible]:shadow-none focus-visible:shadow-none",
     "has-disabled:opacity-64 disabled:opacity-64",
     "dark:bg-input/32",
@@ -55,7 +55,7 @@ function dropTargetOf(element: HTMLElement): DropTarget {
 }
 
 export const backgroundPickerDeleteButtonClass =
-  "absolute right-1 top-1 bg-popover opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
+  "absolute right-1 top-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
 
 function useStoredBackgroundImages(): ReadonlyArray<StoredBackgroundImage> | null {
   const [images, setImages] = useState<ReadonlyArray<StoredBackgroundImage> | null>(null);
@@ -229,7 +229,9 @@ export function BackgroundImagePicker({
               >
                 <UploadIcon className="size-4" />
                 <span>Upload or drop images</span>
-                <span className="text-[11px]">{BACKGROUND_FILE_TYPES_LABEL}</span>
+                <span className="text-2xs leading-(--text-xs--line-height)">
+                  {BACKGROUND_FILE_TYPES_LABEL}
+                </span>
               </button>
               <button
                 type="button"
@@ -242,7 +244,9 @@ export function BackgroundImagePicker({
               >
                 <FolderPlusIcon className="size-4" />
                 <span>Add or drop a folder</span>
-                <span className="text-[11px]">Only new images import</span>
+                <span className="text-2xs leading-(--text-xs--line-height)">
+                  Only new images import
+                </span>
               </button>
             </div>
             {images?.map((image) => {
@@ -259,7 +263,7 @@ export function BackgroundImagePicker({
                   >
                     <BackgroundThumbnail imageId={image.id} className="aspect-[4/3] w-full" />
                     {selected && selectedImageIds.length > 1 ? (
-                      <span className="absolute left-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      <span className="absolute left-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary text-3xs leading-normal font-medium text-primary-foreground">
                         {position + 1}
                       </span>
                     ) : null}
@@ -286,7 +290,7 @@ export function BackgroundImagePicker({
               );
             })}
           </div>
-          <p className="px-2 pb-1 text-[11px] text-muted-foreground">
+          <p className="px-2 pb-1 text-2xs leading-normal text-muted-foreground">
             Pick several images to rotate through them.
           </p>
         </MenuPopup>

@@ -64,7 +64,7 @@ export function StudioField({
   align?: "center" | "start";
   children: ReactNode;
 }) {
-  const Label = htmlFor === undefined ? "span" : "label";
+  const LabelElement = htmlFor === undefined ? "span" : "label";
   return (
     <div
       className={cn(
@@ -72,15 +72,15 @@ export function StudioField({
         align === "center" ? "@sm/studio:items-center" : "@sm/studio:items-start",
       )}
     >
-      <Label
+      <LabelElement
         htmlFor={htmlFor}
         className={cn(
-          "truncate text-[13px] text-muted-foreground @sm/studio:w-28 @sm/studio:shrink-0",
+          "truncate text-studio text-muted-foreground @sm/studio:w-28 @sm/studio:shrink-0",
           align === "start" && "@sm/studio:pt-1",
         )}
       >
         {label}
-      </Label>
+      </LabelElement>
       <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
     </div>
   );

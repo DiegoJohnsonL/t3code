@@ -5,6 +5,22 @@
  * classes; that keeps upstream nightlies merging without conflicts.
  */
 
+/* studio is the background studio's 13px text, between text-xs and text-sm.
+   It sets no line height, so it keeps the one it inherits. The studio-field
+   tokens are the inset edge the form controls in components/ui draw. glass is
+   the fill of surface-glass without its no-backdrop-filter fallback. */
+@theme inline {
+  --text-studio: 0.8125rem;
+  --radius-studio-field-inner: calc(var(--radius-lg) - 1px);
+  --shadow-studio-field: 0 1px --theme(--color-black/4%);
+  --shadow-studio-field-dark: 0 -1px --theme(--color-white/6%);
+  --color-glass: color-mix(
+    in srgb,
+    var(--glass-fill, var(--glass-surface)) var(--glass-opacity),
+    transparent
+  );
+}
+
 /* Glass takes the raised surface color rather than the page background. */
 :root {
   --glass-surface: var(--card);
@@ -149,6 +165,12 @@ html[data-theme-id]:not([data-theme-id=""]) {
   [data-panel-animations="true"] .custom-background-layer {
     transition: left var(--panel-animation-duration) ease-out;
   }
+}
+
+/* The thread view leaves its inset clear so the wallpaper behind it shows. */
+[data-thread-route-inset] {
+  background-color: transparent;
+  color: var(--contrast-foreground);
 }
 
 /* The no-projects screen paints its wallpaper inside the inset itself. */
